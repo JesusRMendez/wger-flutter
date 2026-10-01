@@ -21,8 +21,11 @@ import 'package:logging/logging.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/consts.dart';
 import 'package:wger/features/exercises/widgets/autocompleter.dart';
+import 'package:wger/features/glossary/glossary_term.dart';
+import 'package:wger/features/glossary/widgets/glossary_widgets.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
+import 'package:wger/features/routines/widgets/gym_mode/zone_chip.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
 /// Animates to the given set page and closes the menu. If this skips exercises
@@ -108,6 +111,7 @@ class NavigationTab extends ConsumerWidget {
                   decoration: page.allLogsDone ? TextDecoration.lineThrough : TextDecoration.none,
                 ),
               ),
+              subtitle: ZoneChip(page),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _jumpToPage(context, _controller, page),
             );
@@ -192,6 +196,12 @@ class _ProgressionTabState extends ConsumerState<ProgressionTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(pageExerciseTitle, style: Theme.of(context).textTheme.bodyLarge),
+                  if (isSuperset)
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: AbbreviationChip(GlossaryTerm.superset),
+                    ),
+                  ZoneChip(page),
                   ...page.slotPages.where((slotPage) => slotPage.type == SlotPageType.log).map(
                     (slotPage) {
                       String setPrefix = '';

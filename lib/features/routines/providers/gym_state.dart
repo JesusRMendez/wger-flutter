@@ -20,6 +20,7 @@ import 'package:clock/clock.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/uuid.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
+import 'package:wger/features/locations/models/zone_order.dart';
 import 'package:wger/features/routines/models/day_data.dart';
 import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/models/set_config_data.dart';
@@ -206,6 +207,16 @@ class GymModeState {
   final bool showDistinctLogs;
   final bool showWorkoutDuration;
 
+  // Planning data
+  /// The training location the workout is planned for
+  final int? locationId;
+
+  /// Suggested order of the exercises by zone for [locationId]
+  final ZoneOrder? zoneOrder;
+
+  /// Time the workout should fit into, in minutes
+  final int? timeBudgetMinutes;
+
   // Routine data
   late final int dayId;
   late final int iteration;
@@ -227,6 +238,9 @@ class GymModeState {
     this.logScopeWeeks,
     this.showDistinctLogs = true,
     this.showWorkoutDuration = true,
+    this.locationId,
+    this.zoneOrder,
+    this.timeBudgetMinutes,
     int? dayId,
     int? iteration,
     Routine? routine,
@@ -274,6 +288,14 @@ class GymModeState {
     bool clearLogScopeWeeks = false,
     bool? showDistinctLogs,
     bool? showWorkoutDuration,
+
+    // Planning data
+    int? locationId,
+    ZoneOrder? zoneOrder,
+    int? timeBudgetMinutes,
+    bool clearLocationId = false,
+    bool clearZoneOrder = false,
+    bool clearTimeBudget = false,
   }) {
     return GymModeState(
       isInitialized: isInitialized ?? this.isInitialized,
@@ -299,6 +321,9 @@ class GymModeState {
       logScopeWeeks: clearLogScopeWeeks ? null : (logScopeWeeks ?? this.logScopeWeeks),
       showDistinctLogs: showDistinctLogs ?? this.showDistinctLogs,
       showWorkoutDuration: showWorkoutDuration ?? this.showWorkoutDuration,
+      locationId: clearLocationId ? null : (locationId ?? this.locationId),
+      zoneOrder: clearZoneOrder ? null : (zoneOrder ?? this.zoneOrder),
+      timeBudgetMinutes: clearTimeBudget ? null : (timeBudgetMinutes ?? this.timeBudgetMinutes),
     );
   }
 

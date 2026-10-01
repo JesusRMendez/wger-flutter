@@ -24,6 +24,10 @@ import 'package:wger/core/consts.dart';
 import 'package:wger/core/shared_preferences.dart';
 import 'package:wger/features/account/providers/user_profile_notifier.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
+import 'package:wger/features/locations/models/zone_order.dart';
+import 'package:wger/features/locations/providers/locations_repository.dart';
+import 'package:wger/features/routines/logic/time_budget.dart';
+import 'package:wger/features/routines/logic/zone_order_logic.dart';
 import 'package:wger/features/routines/models/log.dart';
 import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/models/set_config_data.dart';
@@ -592,6 +596,159 @@ class GymStateNotifier extends _$GymStateNotifier {
     return moveSlot(pageUuid, movable[up ? rank - 1 : rank + 1]);
   }
 
+  /// Sets the training location the workout is planned for. The zone order of
+  /// another location does not apply, so it is dropped.
+  void setLocationId(int? locationId) {
+    if (locationId == state.locationId) {
+      return;
+    }
+    state = state.copyWith(
+      locationId: locationId,
+      clearLocationId: locationId == null,
+      clearZoneOrder: true,
+    );
+  }
+
+  void setZoneOrder(ZoneOrder? order) {
+    state = state.copyWith(zoneOrder: order, clearZoneOrder: order == null);
+  }
+
+  /// Fetches the suggested zone order of the day for the selected location (or
+  /// the user's default one). A failure only means that there are no zones,
+  /// the workout still works as planned.
+  Future<ZoneOrder?> loadZoneOrder() async {
+    final locationId = state.locationId;
+    try {
+      final order = await ref
+          .read(locationsRepositoryProvider)
+          .fetchZoneOrder(
+            routineId: state.routine.id!,
+            dayId: state.dayId,
+            locationId: locationId,
+          );
+      // The user may have picked another location in the meantime
+      if (state.locationId == locationId) {
+        state = state.copyWith(zoneOrder: order);
+      }
+      return order;
+    } catch (e, stk) {
+      _logger.warning('Could not load the zone order', e, stk);
+      if (state.locationId == locationId) {
+        state = state.copyWith(clearZoneOrder: true);
+      }
+      return null;
+    }
+  }
+
+  /// Reorders the exercises that are still to be done by zone, following the
+  /// server's suggestion, with [moveSlot]. Returns whether the order changed.
+  bool orderByZone() {
+    final order = state.zoneOrder;
+    if (order == null || !order.hasZones) {
+      return false;
+    }
+
+    final target = suggestedPageOrder(state.pages, order);
+    var changed = false;
+    for (var rank = 0; rank < target.length; rank++) {
+      final movable = state.movablePageIndices;
+      if (rank >= movable.length) {
+        break;
+      }
+      if (moveSlot(target[rank], movable[rank])) {
+        changed = true;
+      }
+    }
+
+    _logger.fine('Ordered by zone, changed=$changed');
+    return changed;
+  }
+
+  void setTimeBudget(int? minutes) {
+    state = state.copyWith(timeBudgetMinutes: minutes, clearTimeBudget: minutes == null);
+  }
+
+  /// The sets still to be done, for the time estimate
+  List<BudgetItem> budgetItems() {
+    final defaultRest = state.useCountdownBetweenSets
+        ? state.countdownDuration.inSeconds
+        : DEFAULT_REST_SECONDS;
+
+    final items = <BudgetItem>[];
+    for (final page in state.pages) {
+      if (page.type != PageType.set) {
+        continue;
+      }
+      final open = page.slotPages
+          .where((s) => s.type == SlotPageType.log && !s.logDone && s.setConfigData != null)
+          .toList();
+      if (open.isEmpty) {
+        continue;
+      }
+
+      items.add(
+        BudgetItem(
+          id: page.uuid,
+          setSeconds: [
+            for (final s in open)
+              estimateWorkSeconds(s.setConfigData!) +
+                  estimateRestSeconds(s.setConfigData!, defaultRest: defaultRest),
+          ],
+          granularity: page.exercises.length > 1 ? page.exercises.length : 1,
+          minKeep: page.anyLogDone ? 0 : (page.exercises.length > 1 ? page.exercises.length : 1),
+        ),
+      );
+    }
+    return items;
+  }
+
+  /// Removes the last [count] sets that are not done yet from the page with
+  /// [pageUuid], together with the timer pages that follow them. Returns the
+  /// number of sets that were removed.
+  int dropSets(String pageUuid, int count) {
+    final page = state.pages.firstWhereOrNull((p) => p.uuid == pageUuid);
+    if (page == null || page.type != PageType.set || count <= 0) {
+      return 0;
+    }
+
+    final slotPages = [...page.slotPages];
+    var removed = 0;
+    while (removed < count) {
+      final index = slotPages.lastIndexWhere((s) => s.type == SlotPageType.log && !s.logDone);
+      if (index == -1) {
+        break;
+      }
+      // The timer after the set goes as well
+      if (index + 1 < slotPages.length && slotPages[index + 1].type == SlotPageType.timer) {
+        slotPages.removeAt(index + 1);
+      }
+      slotPages.removeAt(index);
+      removed++;
+    }
+
+    if (removed == 0) {
+      return 0;
+    }
+
+    state = state.copyWith(
+      pages: [
+        for (final p in state.pages)
+          if (p.uuid == pageUuid) p.copyWith(slotPages: slotPages) else p,
+      ],
+    );
+    recalculateIndices();
+    return removed;
+  }
+
+  /// Drops the sets of a [BudgetSuggestion]. Returns the number of sets removed.
+  int applyBudgetDrops(Map<String, int> drops) {
+    var total = 0;
+    for (final entry in drops.entries) {
+      total += dropSets(entry.key, entry.value);
+    }
+    return total;
+  }
+
   /// Resets the workout start time to now, e.g. when the user taps "start"
   void startWorkout() {
     _logger.fine('Setting workout start time');
@@ -607,6 +764,8 @@ class GymStateNotifier extends _$GymStateNotifier {
 
       validUntil: clock.now().add(DEFAULT_DURATION),
       workoutStart: clock.now(),
+      clearZoneOrder: true,
+      clearTimeBudget: true,
     );
   }
 }

@@ -24,6 +24,8 @@ import 'package:wger/features/routines/models/day.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/navigation.dart';
+import 'package:wger/features/routines/widgets/gym_mode/planning_card.dart';
+import 'package:wger/features/routines/widgets/music_bpm_card.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
 class GymModeOptions extends ConsumerStatefulWidget {
@@ -298,6 +300,8 @@ class StartPage extends ConsumerWidget {
                       ],
                     );
                   }),
+              const GymPlanningCard(),
+              const MusicBpmCard(),
             ],
           ),
         ),

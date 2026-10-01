@@ -24,6 +24,7 @@ import 'package:wger/features/exercises/widgets/exercises.dart';
 import 'package:wger/features/exercises/widgets/images.dart';
 import 'package:wger/features/routines/models/day_data.dart';
 import 'package:wger/features/routines/models/slot_data.dart';
+import 'package:wger/features/routines/screens/guided_mode.dart';
 import 'package:wger/features/routines/screens/gym_mode.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
@@ -156,7 +157,23 @@ class DayHeader extends StatelessWidget {
       ),
       subtitle: Text(_dayData.day!.description),
       leading: _viewMode ? null : const Icon(Icons.play_arrow),
-      trailing: _dayData.date.isSameDayAs(DateTime.now()) ? const Icon(Icons.today) : null,
+      trailing: _viewMode
+          ? (_dayData.date.isSameDayAs(DateTime.now()) ? const Icon(Icons.today) : null)
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  key: ValueKey('guided-mode-button-${_dayData.day!.id}'),
+                  tooltip: i18n.guidedMode,
+                  icon: const Icon(Icons.timer_outlined),
+                  onPressed: () => Navigator.of(context).pushNamed(
+                    GuidedModeScreen.routeName,
+                    arguments: GymModeArguments(_routineId, _dayData.day!.id!, _dayData.iteration),
+                  ),
+                ),
+                if (_dayData.date.isSameDayAs(DateTime.now())) const Icon(Icons.today),
+              ],
+            ),
       minLeadingWidth: 8,
       onTap: () {
         if (!_viewMode) {

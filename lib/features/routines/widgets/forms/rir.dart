@@ -18,6 +18,8 @@
 
 import 'package:logging/logging.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/features/glossary/glossary_term.dart';
+import 'package:wger/features/glossary/widgets/glossary_widgets.dart';
 import 'package:wger/features/routines/models/slot_entry.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
@@ -28,9 +30,12 @@ class RiRInputWidget extends StatefulWidget {
   final num? _initialValue;
   final ValueChanged<String> onChanged;
 
+  /// Shows the RiR label as a chip that explains the abbreviation
+  final bool showHelp;
+
   static const SLIDER_START = -0.5;
 
-  RiRInputWidget(this._initialValue, {super.key, required this.onChanged}) {
+  RiRInputWidget(this._initialValue, {super.key, required this.onChanged, this.showHelp = false}) {
     _logger.finer('Initializing with initial value: $_initialValue');
   }
 
@@ -90,7 +95,10 @@ class _RiRInputWidgetState extends State<RiRInputWidget> {
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
-        Text(AppLocalizations.of(context).rir),
+        if (widget.showHelp)
+          AbbreviationChip(GlossaryTerm.rir, label: AppLocalizations.of(context).rir)
+        else
+          Text(AppLocalizations.of(context).rir),
         Expanded(
           child: Slider(
             value: _currentSetSliderValue,
