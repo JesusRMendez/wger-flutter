@@ -3323,5 +3323,85 @@
         "type": "String"
       }
     }
+  },
+  "guidedSetupSubtitle": "Time, reps or weight per exercise",
+  "@guidedSetupSubtitle": {
+    "description": "Subtitle of the guided routine setup"
+  },
+  "guidedAdjustWork": "Work",
+  "@guidedAdjustWork": {
+    "description": "Setup of the guided routine: adjusts the time of timed sets"
+  },
+  "guidedAdjustWorkHint": "added to the timed sets",
+  "@guidedAdjustWorkHint": {
+    "description": "Hint under the work adjustment"
+  },
+  "guidedAdjustRest": "Rest",
+  "@guidedAdjustRest": {
+    "description": "Setup of the guided routine: adjusts the rests"
+  },
+  "guidedAdjustRestHint": "added to every rest",
+  "@guidedAdjustRestHint": {
+    "description": "Hint under the rest adjustment"
+  },
+  "guidedEstimatedDuration": "Estimated duration",
+  "@guidedEstimatedDuration": {
+    "description": "Setup of the guided routine"
+  },
+  "guidedStart": "Start",
+  "@guidedStart": {
+    "description": "Button that starts the guided routine"
+  },
+  "guidedRestShort": "rest {time}",
+  "@guidedRestShort": {
+    "description": "Rest after an exercise in the guided setup list",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedSetsLine": "{count, plural, =1{1 set} other{{count} sets}}",
+  "@guidedSetsLine": {
+    "description": "Number of sets of an exercise in the guided setup list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "guidedSeconds": "{value} s",
+  "@guidedSeconds": {
+    "description": "Seconds, e.g. in the guided setup adjustment",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedProgressLine": "Step {current} of {total}",
+  "@guidedProgressLine": {
+    "description": "Position in the guided routine, in the header",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "guidedTimeLeft": "{left} left",
+  "@guidedTimeLeft": {
+    "description": "Estimated time left in the guided routine",
+    "placeholders": {
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedPrevious": "Previous",
+  "@guidedPrevious": {
+    "description": "Tooltip of the previous set button"
   }
 }
