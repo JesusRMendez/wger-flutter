@@ -34,6 +34,15 @@ import '../../../../../test_data/routines.dart';
 import '../../helpers/routine_form_test_overrides.dart';
 import 'slot_test.mocks.dart';
 
+/// Opens a card of the list; the tall surface fits the expanded form
+Future<void> openSlot(WidgetTester tester, int id) async {
+  tester.view.physicalSize = const Size(800, 4000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+  await tester.tap(find.byKey(ValueKey('slot-toggle-$id')));
+  await tester.pumpAndSettle();
+}
+
 @GenerateMocks([RoutinesRepository])
 void main() {
   group('computeSlotGroups', () {
@@ -202,18 +211,22 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Superset 1'), findsOne);
-      expect(find.text('Exercise 1'), findsNothing);
+      expect(find.byIcon(Icons.link), findsOne);
+      // The card names both exercises
+      expect(find.textContaining(' + '), findsOne);
     });
 
     testWidgets('renders "Exercise N" for normal slots', (tester) async {
       await tester.pumpWidget(buildWidget(day.slots));
       await tester.pumpAndSettle();
 
-      expect(find.text('Exercise 1'), findsOne);
-      expect(find.text('Exercise 2'), findsOne);
+      final names = day.slots.map((s) => s.entries[0].exerciseObj.getTranslation('en').name);
+      for (final name in names) {
+        expect(find.text(name), findsOne);
+      }
     });
 
-    testWidgets('renders "Set N" instead of "Exercise N" for grouped slots', (tester) async {
+    testWidgets('renders a "Set N" chip for grouped slots', (tester) async {
       // Two bench press slots in a row → should be grouped
       final benchEntry1 = day.slots[0].entries[0];
       final slot1 = Slot.withData(id: 1, day: day.id, order: 1);
@@ -226,10 +239,9 @@ void main() {
 
       expect(find.text('Set 1'), findsOne);
       expect(find.text('Set 2'), findsOne);
-      expect(find.text('Exercise 1'), findsNothing);
     });
 
-    testWidgets('shows exercise name as subtitle for first slot in a group', (tester) async {
+    testWidgets('titles every slot of a group with the exercise', (tester) async {
       final benchEntry = day.slots[0].entries[0];
       final slot1 = Slot.withData(id: 1, day: day.id, order: 1);
       slot1.entries.add(benchEntry);
@@ -239,11 +251,11 @@ void main() {
       await tester.pumpWidget(buildWidget([slot1, slot2]));
       await tester.pumpAndSettle();
 
-      // Exercise name should appear once (as group subtitle for Set 1)
-      expect(find.text(benchEntry.exerciseObj.getTranslation('en').name), findsOne);
+      // Every card of the group is titled with the exercise
+      expect(find.text(benchEntry.exerciseObj.getTranslation('en').name), findsNWidgets(2));
     });
 
-    testWidgets('exercise name is only shown for the first slot of a group', (tester) async {
+    testWidgets('each slot of a group shows the exercise name once', (tester) async {
       final benchEntry = day.slots[0].entries[0];
       final exerciseName = benchEntry.exerciseObj.getTranslation('en').name;
       final slot1 = Slot.withData(id: 1, day: day.id, order: 1);
@@ -256,8 +268,7 @@ void main() {
       await tester.pumpWidget(buildWidget([slot1, slot2, slot3]));
       await tester.pumpAndSettle();
 
-      // Name appears exactly once (subtitle of Set 1), not on Set 2 or Set 3
-      expect(find.text(exerciseName), findsOne);
+      expect(find.text(exerciseName), findsNWidgets(3));
     });
 
     testWidgets('"Add Set" is blocked when offline', (tester) async {
@@ -266,9 +277,8 @@ void main() {
       await tester.pumpWidget(buildWidget([day.slots[0]], isOnline: false));
       await tester.pumpAndSettle();
 
-      final addSet = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.content_copy).first,
-      );
+      await openSlot(tester, day.slots[0].id!);
+      final addSet = tester.widget<OutlinedButton>(find.byKey(ValueKey('add-set-${day.slots[0].id}')));
       expect(addSet.onPressed, isNull);
       verifyNever(mockRepo.addSlotServer(any));
     });
@@ -276,7 +286,9 @@ void main() {
     testWidgets('shows "Add Set" button for single-entry slot', (tester) async {
       await tester.pumpWidget(buildWidget([day.slots[0]]));
       await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.content_copy), findsNothing);
 
+      await openSlot(tester, day.slots[0].id!);
       expect(find.byIcon(Icons.content_copy), findsOne);
     });
 
@@ -299,6 +311,7 @@ void main() {
 
       await tester.pumpWidget(buildWidget([supersetSlot]));
       await tester.pumpAndSettle();
+      await openSlot(tester, 10);
 
       expect(find.byIcon(Icons.content_copy), findsNothing);
     });
@@ -307,6 +320,7 @@ void main() {
       final slot = day.slots[0];
       await tester.pumpWidget(buildWidget([slot]));
       await tester.pumpAndSettle();
+      await openSlot(tester, slot.id!);
 
       await tester.tap(find.byIcon(Icons.content_copy));
       await tester.pump();
@@ -341,6 +355,7 @@ void main() {
 
       await tester.pumpWidget(buildWidget([slot1, slot2]));
       await tester.pumpAndSettle();
+      await openSlot(tester, 1);
 
       await tester.tap(find.byIcon(Icons.content_copy).first);
       await tester.pump();
@@ -364,6 +379,9 @@ void main() {
 
       await tester.pumpWidget(buildWidget([slot1, slot2, slot3]));
       await tester.pumpAndSettle();
+      for (final id in [1, 2, 3]) {
+        await openSlot(tester, id);
+      }
 
       // Only one copy button for the whole group (on the last slot)
       expect(find.byIcon(Icons.content_copy), findsOne);

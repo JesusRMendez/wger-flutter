@@ -3211,5 +3211,63 @@
   "coachSuggestDeload": "How do I deload?",
   "@coachSuggestDeload": {
     "description": "Quick question chip of the coach chat"
+  },
+  "progression": "Progression",
+  "@progression": {
+    "description": "Label above the progression rule chips of an exercise"
+  },
+  "progressionLinear": "Linear",
+  "@progressionLinear": {
+    "description": "Progression rule: add a fixed weight each week"
+  },
+  "progressionDouble": "Double progression",
+  "@progressionDouble": {
+    "description": "Progression rule: reps first, then weight"
+  },
+  "progressionManual": "Manual",
+  "@progressionManual": {
+    "description": "Progression rule: no automatic progression"
+  },
+  "changeExercise": "Change exercise",
+  "@changeExercise": {
+    "description": "Button that swaps the exercise of a slot"
+  },
+  "superset": "Superset",
+  "@superset": {
+    "description": "Button and label for a superset"
+  },
+  "removeSet": "Remove set",
+  "@removeSet": {
+    "description": "Tooltip of the minus button of the sets stepper"
+  },
+  "editDayTitle": "Edit {name}",
+  "@editDayTitle": {
+    "description": "Title of the routine edit screen",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dragToReorderHint": "Drag to reorder · tap to set up the sets",
+  "@dragToReorderHint": {
+    "description": "Hint above the exercises of a day in the editor"
+  },
+  "deleteDay": "Delete day",
+  "@deleteDay": {
+    "description": "Button that deletes the day in the editor"
+  },
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "description": "Number of days of a routine",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "restShort": "Rest",
+  "@restShort": {
+    "description": "Short label of the rest time field"
   }
 }
