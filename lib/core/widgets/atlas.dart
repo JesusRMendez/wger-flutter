@@ -552,7 +552,9 @@ class MacroBar extends StatelessWidget {
 
   final String label;
   final num value;
-  final num target;
+
+  /// The goal; without one only the value is shown and the bar stays empty
+  final num? target;
   final Color color;
   final String unit;
 
@@ -560,7 +562,8 @@ class MacroBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final atlas = context.atlas;
     final theme = Theme.of(context);
-    final frac = target > 0 ? value / target : 0.0;
+    final goal = target;
+    final frac = goal != null && goal > 0 ? value / goal : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -572,7 +575,7 @@ class MacroBar extends StatelessWidget {
             Flexible(child: Text(label, style: theme.textTheme.bodySmall, maxLines: 1)),
             const SizedBox(width: 8),
             MonoText(
-              '${value.round()}/${target.round()}$unit',
+              goal == null ? '${value.round()}$unit' : '${value.round()}/${goal.round()}$unit',
               size: 12,
               weight: FontWeight.w500,
               color: atlas.ink3,
@@ -641,6 +644,69 @@ class RiseIn extends StatelessWidget {
         child: Transform.translate(offset: Offset(0, (1 - v) * 10), child: child),
       ),
       child: child,
+    );
+  }
+}
+
+/// Header row of a card: an icon badge, a title with an optional muted line
+/// below and a trailing widget (a chip, a button, a chevron).
+class CardHeader extends StatelessWidget {
+  const CardHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.icon,
+    this.leading,
+    this.trailing,
+    this.iconColor,
+    this.iconBackground,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData? icon;
+
+  /// Replaces the icon badge, e.g. with a font awesome icon
+  final Widget? leading;
+  final Widget? trailing;
+  final Color? iconColor;
+  final Color? iconBackground;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+
+    return Row(
+      children: [
+        if (leading != null) ...[
+          leading!,
+          const SizedBox(width: 12),
+        ] else if (icon != null) ...[
+          IconBadge(icon!, size: 40, color: iconColor, background: iconBackground),
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title, style: theme.textTheme.titleSmall, maxLines: 2),
+              if (subtitle != null && subtitle!.isNotEmpty)
+                Text(
+                  subtitle!,
+                  style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+        ),
+        if (trailing != null) ...[
+          const SizedBox(width: 8),
+          trailing!,
+        ],
+      ],
     );
   }
 }

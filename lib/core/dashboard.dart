@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/app_settings_notifier.dart';
 import 'package:wger/core/material.dart';
@@ -76,18 +78,24 @@ class DashboardScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: MainAppBar(AppLocalizations.of(context).labelDashboard),
+      appBar: MainAppBar(
+        AppLocalizations.of(context).labelDashboard,
+        subtitle: DateFormat.MMMMEEEEd(Localizations.localeOf(context).languageCode).format(
+          clock.now(),
+        ),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: MATERIAL_LG_BREAKPOINT),
           child: isMobile
-              ? ListView.builder(
-                  padding: const EdgeInsets.all(10),
+              ? ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                   itemBuilder: (context, index) => _getDashboardWidget(visibleWidgets[index]),
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
                   itemCount: visibleWidgets.length,
                 )
               : GridView.builder(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(16),
                   itemBuilder: (context, index) => SingleChildScrollView(
                     child: _getDashboardWidget(visibleWidgets[index]),
                   ),
@@ -95,6 +103,8 @@ class DashboardScreen extends ConsumerWidget {
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
                     childAspectRatio: 0.7,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
                   ),
                 ),
         ),

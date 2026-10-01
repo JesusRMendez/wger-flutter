@@ -17,10 +17,10 @@
  */
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/formatting/formatting.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/dashboard/widgets/nothing_found.dart';
 import 'package:wger/core/widgets/error.dart';
 import 'package:wger/core/widgets/progress_indicator.dart';
@@ -40,19 +40,14 @@ class DashboardWeightWidget extends ConsumerWidget {
   const DashboardWeightWidget();
 
   Widget _shell(BuildContext context, Widget body) {
-    return Card(
+    return AtlasCard(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            title: Text(
-              AppLocalizations.of(context).weight,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            leading: FaIcon(
-              FontAwesomeIcons.weightScale,
-              color: Theme.of(context).textTheme.headlineSmall!.color,
-            ),
+          CardHeader(
+            icon: Icons.monitor_weight_outlined,
+            title: AppLocalizations.of(context).weight,
           ),
           body,
         ],
