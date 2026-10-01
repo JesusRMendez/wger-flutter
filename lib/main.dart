@@ -53,6 +53,12 @@ import 'package:wger/core/widgets/scroll_behavior.dart';
 import 'package:wger/features/account/widgets/settings.dart';
 import 'package:wger/features/auth/screens/auth_screen.dart';
 import 'package:wger/features/auth/screens/auto_login_error_screen.dart';
+import 'package:wger/features/coach/screens/coach_screen.dart';
+import 'package:wger/features/coach/screens/goals_screen.dart';
+import 'package:wger/features/coach/screens/meal_plan_screen.dart';
+import 'package:wger/features/coach/screens/memory_screen.dart';
+import 'package:wger/features/coach/screens/my_ai_screen.dart';
+import 'package:wger/features/coach/screens/workout_plan_screen.dart';
 import 'package:wger/features/exercises/screens/add_exercise_screen.dart';
 import 'package:wger/features/exercises/screens/exercise_screen.dart';
 import 'package:wger/features/exercises/screens/exercises_screen.dart';
@@ -304,6 +310,12 @@ class MainApp extends ConsumerWidget {
                 ConfigureDashboardWidgetsScreen.routeName: (ctx) =>
                     const ConfigureDashboardWidgetsScreen(),
                 TrophyScreen.routeName: (ctx) => const TrophyScreen(),
+                CoachScreen.routeName: (ctx) => const CoachScreen(),
+                WorkoutPlanScreen.routeName: (ctx) => const WorkoutPlanScreen(),
+                MealPlanScreen.routeName: (ctx) => const MealPlanScreen(),
+                GoalsScreen.routeName: (ctx) => const GoalsScreen(),
+                MemoryScreen.routeName: (ctx) => const MemoryScreen(),
+                MyAiScreen.routeName: (ctx) => const MyAiScreen(),
               },
               localeListResolutionCallback: resolveLocale,
               localizationsDelegates: appLocalizationsDelegates,

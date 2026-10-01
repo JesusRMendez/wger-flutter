@@ -57,6 +57,7 @@ void main() {
           DashboardWidget.weight,
           DashboardWidget.measurements,
           DashboardWidget.calendar,
+          DashboardWidget.coach,
         ]),
       );
       expect(items.isWidgetVisible(DashboardWidget.routines), true);
@@ -156,8 +157,9 @@ void main() {
       await notifier.setDashboardOrder(0, 1);
 
       final items = container.read(appSettingsProvider).requireValue.dashboardItems;
-      expect(items.allWidgets[0], DashboardWidget.measurements);
-      expect(items.allWidgets[1], DashboardWidget.calendar);
+      // Reversed order: coach, calendar, measurements, ... then item 0 moves to 1
+      expect(items.allWidgets[0], DashboardWidget.calendar);
+      expect(items.allWidgets[1], DashboardWidget.coach);
     });
   });
 
