@@ -1,0 +1,190 @@
+name: Publish iOS
+# Reusable: builds the customized, signed .ipa and uploads it to TestFlight (qa)
+# or App Store Connect (production). Called by publish-qa.yml and
+# publish-production.yml. See docs/ci-publishing.md for the secrets and
+# variables.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'GitHub Environment the job runs in (qa or production)'
+        required: true
+        type: string
+      ref:
+        description: 'Branch, tag or SHA to build'
+        required: true
+        type: string
+      lane:
+        description: 'fastlane ios lane: qa or production_custom'
+        required: true
+        type: string
+      server_url_var:
+        description: 'Name of the variable holding the default server (QA_SERVER_URL or PROD_SERVER_URL)'
+        required: true
+        type: string
+      submit_for_review:
+        description: 'production_custom only: also submit the build for App Store review'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: iOS (${{ inputs.environment }})
+    runs-on: macos-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 90
+    env:
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_OPT_OUT_USAGE: '1'
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Check secrets and variables
+        env:
+          PREFLIGHT_ENVIRONMENT: ${{ inputs.environment }}
+          IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          APP_ID_IOS: ${{ vars.APP_ID_IOS }}
+          APP_NAME: ${{ vars.APP_NAME }}
+          QA_SERVER_URL: ${{ vars.QA_SERVER_URL }}
+          PROD_SERVER_URL: ${{ vars.PROD_SERVER_URL }}
+        run: |
+          ./.github/scripts/preflight.sh \
+            secret:IOS_DIST_CERT_P12_BASE64 \
+            secret:IOS_DIST_CERT_PASSWORD \
+            secret:IOS_PROVISIONING_PROFILE_BASE64 \
+            secret:ASC_KEY_ID \
+            secret:ASC_ISSUER_ID \
+            secret:ASC_KEY_P8_BASE64 \
+            var:APP_ID_IOS \
+            var:APP_NAME \
+            "var:${{ inputs.server_url_var }}"
+
+      - name: Resolve app identity, server and build number
+        id: config
+        uses: ./.github/actions/publish-config
+        with:
+          platform: ios
+          app-id: ${{ vars.APP_ID_IOS }}
+          app-name: ${{ vars.APP_NAME }}
+          server-url: ${{ vars[inputs.server_url_var] }}
+          build-number-offset: ${{ vars.BUILD_NUMBER_OFFSET }}
+          run-number: ${{ github.run_number }}
+
+      - name: Xcode setup
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Common flutter setup
+        uses: ./.github/actions/flutter-common
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 4.0
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Set up signing
+        id: signing
+        uses: ./.github/actions/ios-sign
+        with:
+          cert-p12-base64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          cert-password: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          profile-base64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          bundle-id: ${{ steps.config.outputs.app-id }}
+
+      # Rewrites bundle id, display name and signing settings in the checked out
+      # project only. The committed project keeps the upstream values.
+      - name: Apply custom identity to the project
+        working-directory: ios
+        env:
+          APP_ID: ${{ steps.config.outputs.app-id }}
+          APP_NAME: ${{ steps.config.outputs.app-name }}
+          TEAM_ID: ${{ steps.signing.outputs.team-id }}
+          PROFILE_NAME: ${{ steps.signing.outputs.profile-name }}
+          IDENTITY: ${{ steps.signing.outputs.identity }}
+        run: |
+          bundle exec fastlane ios customize \
+            app_id:"$APP_ID" \
+            app_name:"$APP_NAME" \
+            team_id:"$TEAM_ID" \
+            profile_name:"$PROFILE_NAME" \
+            code_sign_identity:"$IDENTITY"
+
+      - name: Build ipa
+        id: build
+        env:
+          BUILD_NUMBER: ${{ steps.config.outputs.build-number }}
+          SERVER_URL: ${{ steps.config.outputs.server-url }}
+          EXPORT_OPTIONS: ${{ steps.signing.outputs.export-options-plist }}
+        run: |
+          flutter build ipa --release \
+            --build-number "$BUILD_NUMBER" \
+            --dart-define="WGER_DEFAULT_SERVER=$SERVER_URL" \
+            --export-options-plist="$EXPORT_OPTIONS"
+          shopt -s nullglob
+          ipas=(build/ios/ipa/*.ipa)
+          if [[ ${#ipas[@]} -ne 1 ]]; then
+            echo "::error::Expected exactly one .ipa in build/ios/ipa, found ${#ipas[@]}"
+            exit 1
+          fi
+          echo "ipa=$PWD/${ipas[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload ipa
+        uses: actions/upload-artifact@v7
+        with:
+          name: ipa-${{ inputs.environment }}-${{ github.run_number }}
+          path: ${{ steps.build.outputs.ipa }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload to App Store Connect
+        working-directory: ios
+        env:
+          APP_ID_IOS: ${{ steps.config.outputs.app-id }}
+          IPA_PATH: ${{ steps.build.outputs.ipa }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          LANE: ${{ inputs.lane }}
+          SUBMIT_FOR_REVIEW: ${{ inputs.submit_for_review }}
+        run: bundle exec fastlane ios "$LANE" submit_for_review:"$SUBMIT_FOR_REVIEW"
+
+      - name: Summary
+        env:
+          APP_ID: ${{ steps.config.outputs.app-id }}
+          BUILD_NUMBER: ${{ steps.config.outputs.build-number }}
+          SERVER_URL: ${{ steps.config.outputs.server-url }}
+        run: |
+          {
+            echo "### iOS uploaded to App Store Connect"
+            echo "- Environment: \`${{ inputs.environment }}\`, lane: \`${{ inputs.lane }}\`"
+            echo "- Bundle identifier: \`$APP_ID\`, build: \`$BUILD_NUMBER\`"
+            echo "- Default server: \`$SERVER_URL\`"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Apple processes the build for a few minutes before it shows up."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove signing material
+        if: ${{ always() }}
+        run: |
+          if [[ -n "${WGER_SIGNING_KEYCHAIN:-}" ]]; then
+            security delete-keychain "$WGER_SIGNING_KEYCHAIN" || true
+          fi
+          rm -f "${WGER_PROFILE_PATH:-}" \
+            "$RUNNER_TEMP/dist-cert.p12" \
+            "$RUNNER_TEMP/profile.mobileprovision" \
+            "$RUNNER_TEMP/profile.plist"

@@ -1,0 +1,129 @@
+name: 'Publish configuration'
+description: >
+  Validates the identity, server and build number of a customized build and
+  exposes them as normalized outputs. Fails on values that would publish the
+  app under the upstream wger identity by accident.
+
+inputs:
+  platform:
+    description: 'android or ios'
+    required: true
+  app-id:
+    description: 'Application id (android) or bundle identifier (ios)'
+    required: true
+  app-name:
+    description: 'Name shown below the app icon'
+    required: true
+  server-url:
+    description: 'Default server of the app, https://...'
+    required: true
+  build-number-offset:
+    description: 'Added to the run number to get the build number, default 0'
+    required: false
+    default: ''
+  run-number:
+    description: 'github.run_number'
+    required: true
+
+outputs:
+  app-id:
+    description: 'Validated application id / bundle identifier'
+    value: ${{ steps.config.outputs.app_id }}
+  app-name:
+    description: 'Trimmed app name'
+    value: ${{ steps.config.outputs.app_name }}
+  server-url:
+    description: 'Server url without trailing slash'
+    value: ${{ steps.config.outputs.server_url }}
+  build-number:
+    description: 'Monotonic build number shared by all workflows: minutes since 2024-01-01 x10 + run number mod 10 + offset'
+    value: ${{ steps.config.outputs.build_number }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate and normalize
+      id: config
+      shell: bash
+      env:
+        PLATFORM: ${{ inputs.platform }}
+        APP_ID: ${{ inputs.app-id }}
+        APP_NAME: ${{ inputs.app-name }}
+        SERVER_URL: ${{ inputs.server-url }}
+        OFFSET: ${{ inputs.build-number-offset }}
+        RUN_NUMBER: ${{ inputs.run-number }}
+      run: |
+        errors=()
+        trim() { local v="$1"; v="${v#"${v%%[![:space:]]*}"}"; printf '%s' "${v%"${v##*[![:space:]]}"}"; }
+
+        APP_ID="$(trim "$APP_ID")"
+        APP_NAME="$(trim "$APP_NAME")"
+        SERVER_URL="$(trim "$SERVER_URL")"
+        OFFSET="$(trim "$OFFSET")"
+        OFFSET="${OFFSET:-0}"
+
+        case "$PLATFORM" in
+          android)
+            upstream="de.wger.flutter"
+            id_regex='^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$'
+            id_hint="Java package style, e.g. com.example.fitness"
+            ;;
+          ios)
+            upstream="de.wger.flutter.community"
+            id_regex='^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$'
+            id_hint="reverse DNS style, e.g. com.example.fitness"
+            ;;
+          *) echo "::error::platform must be android or ios, got '$PLATFORM'"; exit 1 ;;
+        esac
+
+        if ! [[ "$APP_ID" =~ $id_regex ]]; then
+          errors+=("The app id '$APP_ID' is not valid ($id_hint).")
+        fi
+        if [[ "${APP_ID,,}" == "$upstream" || "${APP_ID,,}" == "$upstream".* ]]; then
+          errors+=("The app id '$APP_ID' belongs to the upstream wger app. Set your own id.")
+        fi
+
+        if [[ -z "$APP_NAME" || "$APP_NAME" =~ [[:cntrl:]] || ${#APP_NAME} -gt 30 ]]; then
+          errors+=("APP_NAME must be 1 to 30 characters without control characters.")
+        fi
+
+        SERVER_URL="${SERVER_URL%/}"
+        if ! [[ "$SERVER_URL" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[^[:space:]]*)?$ ]]; then
+          errors+=("The server url '$SERVER_URL' must look like https://wger.example.com")
+        fi
+
+        if ! [[ "$OFFSET" =~ ^[0-9]{1,9}$ ]]; then
+          errors+=("BUILD_NUMBER_OFFSET must be a non negative integer, got '$OFFSET'.")
+        fi
+        if ! [[ "$RUN_NUMBER" =~ ^[0-9]+$ ]]; then
+          errors+=("The run number '$RUN_NUMBER' is not numeric.")
+        fi
+
+        if [[ ${#errors[@]} -gt 0 ]]; then
+          for e in "${errors[@]}"; do echo "::error title=Invalid publishing configuration::$e"; done
+          exit 1
+        fi
+
+        # Minutes since 2024-01-01 UTC: shared by the QA and production workflows,
+        # so their builds never reuse a number in the same Play / App Store app
+        # (each workflow has its own run_number). The run number keeps two builds
+        # started in the same minute apart.
+        minutes=$(( ( $(date -u +%s) - 1704067200 ) / 60 ))
+        build_number=$((minutes * 10 + RUN_NUMBER % 10 + OFFSET))
+        # Google Play rejects version codes above 2100000000
+        if (( build_number > 2100000000 )); then
+          echo "::error title=Invalid publishing configuration::Build number $build_number is above 2100000000"
+          exit 1
+        fi
+
+        {
+          echo "app_id=$APP_ID"
+          echo "app_name=$APP_NAME"
+          echo "server_url=$SERVER_URL"
+          echo "build_number=$build_number"
+        } >> "$GITHUB_OUTPUT"
+        echo "Platform:      $PLATFORM"
+        echo "App id:        $APP_ID"
+        echo "App name:      $APP_NAME"
+        echo "Server:        $SERVER_URL"
+        echo "Build number:  $build_number (minutes since 2024 x10 + run $RUN_NUMBER mod 10 + offset $OFFSET)"

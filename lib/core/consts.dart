@@ -44,8 +44,19 @@ const MIN_SERVER_VERSION = '2.7';
 /// and we don't want to fill the whole screen
 const double ICON_SIZE_SMALL = 20;
 
+/// The upstream wger server, what the app logs in to unless told otherwise
+const UPSTREAM_SERVER_PROD = 'https://wger.de';
+
+/// Compile time override of the default server, for custom builds:
+/// `--dart-define=WGER_DEFAULT_SERVER=https://wger.example.com`
+///
+/// Unset or empty (e.g. an unset CI variable) keeps the upstream server.
+const String _defaultServerOverride = String.fromEnvironment('WGER_DEFAULT_SERVER');
+
 /// Default wger server during login
-const DEFAULT_SERVER_PROD = 'https://wger.de';
+const DEFAULT_SERVER_PROD = _defaultServerOverride == ''
+    ? UPSTREAM_SERVER_PROD
+    : _defaultServerOverride;
 
 // Default wger test server during development
 const DEFAULT_SERVER_TEST = 'https://dev.wger.de';

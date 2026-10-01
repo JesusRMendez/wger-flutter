@@ -1,2 +1,4 @@
 json_key_file("fastlane/metadata/android/envfiles/playstore.json")
-package_name("de.wger.flutter")
+# Custom builds publish under their own application id (APP_ID_ANDROID, see
+# docs/ci-publishing.md); the upstream id stays the default
+package_name(ENV["APP_ID_ANDROID"].to_s.strip.empty? ? "de.wger.flutter" : ENV["APP_ID_ANDROID"].strip)

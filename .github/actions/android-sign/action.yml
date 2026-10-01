@@ -1,0 +1,58 @@
+name: 'Android signing'
+description: >
+  Restores the upload keystore from a base64 secret and writes the key.properties
+  that android/app/build.gradle reads (fastlane/metadata/envfiles/key.properties,
+  git ignored), so `flutter build appbundle --release` signs the bundle.
+
+inputs:
+  keystore-base64:
+    description: 'Base64 of the .jks / .keystore file'
+    required: true
+  keystore-password:
+    description: 'Password of the keystore'
+    required: true
+  key-alias:
+    description: 'Alias of the signing key'
+    required: true
+  key-password:
+    description: 'Password of the signing key'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Write keystore and key.properties
+      shell: bash
+      env:
+        KEYSTORE_BASE64: ${{ inputs.keystore-base64 }}
+        STORE_PASSWORD: ${{ inputs.keystore-password }}
+        KEY_ALIAS: ${{ inputs.key-alias }}
+        KEY_PASSWORD: ${{ inputs.key-password }}
+      run: |
+        set -euo pipefail
+        umask 077
+
+        keystore="$RUNNER_TEMP/upload-keystore.jks"
+        if ! printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore" 2>/dev/null || [[ ! -s "$keystore" ]]; then
+          echo "::error title=Invalid ANDROID_KEYSTORE_BASE64::The secret is not valid base64. Create it with: base64 -w0 upload-keystore.jks"
+          exit 1
+        fi
+
+        # Catches a wrong store password or alias before a ten minute build does.
+        # The password is passed through the environment, not the command line.
+        export STORE_PASSWORD
+        if ! keytool -list -keystore "$keystore" -storepass:env STORE_PASSWORD -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+          echo "::error title=Keystore check failed::Could not open the keystore with ANDROID_KEYSTORE_PASSWORD and find the alias ANDROID_KEY_ALIAS in it."
+          exit 1
+        fi
+
+        # key.properties is a java properties file: backslashes need escaping
+        esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g'; }
+        props="$GITHUB_WORKSPACE/fastlane/metadata/envfiles/key.properties"
+        {
+          printf 'storePassword=%s\n' "$(esc "$STORE_PASSWORD")"
+          printf 'keyPassword=%s\n' "$(esc "$KEY_PASSWORD")"
+          printf 'keyAlias=%s\n' "$(esc "$KEY_ALIAS")"
+          printf 'storeFile=%s\n' "$(esc "$keystore")"
+        } > "$props"
+        echo "Wrote $props (storeFile=$keystore)"

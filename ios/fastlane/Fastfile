@@ -26,6 +26,93 @@ platform :ios do
 
   ###############################################################################
 
+  ###############################################################################
+  # The lanes below are used by the publish-qa / publish-production workflows
+  # (docs/ci-publishing.md) to publish a customized build. They never touch the
+  # store listing: the metadata and screenshots in this folder describe upstream
+  # wger.
+  #
+  # Configuration comes from the environment:
+  #   APP_ID_IOS, APP_NAME            identity of the custom app
+  #   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64   App Store Connect API key
+  #   IPA_PATH                        the .ipa to upload
+  ###############################################################################
+
+  desc "Point the committed project at the custom identity and manual signing. Changes the working copy only, CI never commits it."
+  lane :customize do |options|
+    app_id = options[:app_id].to_s.strip
+    app_name = options[:app_name].to_s.strip
+    UI.user_error!("app_id is required") if app_id.empty?
+    UI.user_error!("app_name is required") if app_name.empty?
+
+    update_app_identifier(
+      xcodeproj: "Runner.xcodeproj",
+      plist_path: "Runner/Info.plist",
+      app_identifier: app_id
+    )
+    update_info_plist(
+      xcodeproj: "Runner.xcodeproj",
+      plist_path: "Runner/Info.plist",
+      display_name: app_name
+    )
+    update_code_signing_settings(
+      path: "Runner.xcodeproj",
+      targets: ["Runner"],
+      use_automatic_signing: false,
+      team_id: options[:team_id],
+      code_sign_identity: options[:code_sign_identity],
+      profile_name: options[:profile_name],
+      bundle_identifier: app_id
+    )
+  end
+
+  def custom_asc_api_key
+    %w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8_BASE64].each do |name|
+      UI.user_error!("#{name} is not set") if ENV[name].to_s.strip.empty?
+    end
+    app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"].strip,
+      issuer_id: ENV["ASC_ISSUER_ID"].strip,
+      key_content: ENV["ASC_KEY_P8_BASE64"].strip,
+      is_key_content_base64: true,
+      duration: 1200,
+      in_house: false
+    )
+  end
+
+  def custom_ipa
+    path = ENV["IPA_PATH"].to_s.strip
+    UI.user_error!("IPA_PATH is not set") if path.empty?
+    UI.user_error!("No ipa at #{path}") unless File.exist?(path)
+    path
+  end
+
+  desc "Upload the custom build to TestFlight (QA) without waiting for Apple to process it"
+  lane :qa do
+    upload_to_testflight(
+      api_key: custom_asc_api_key,
+      ipa: custom_ipa,
+      skip_waiting_for_build_processing: true,
+      skip_submission: true
+    )
+  end
+
+  desc "Upload the custom build to App Store Connect (production). Pass submit_for_review:true to also submit it."
+  lane :production_custom do |options|
+    submit = options[:submit_for_review].to_s.strip.downcase == "true"
+    upload_to_app_store(
+      api_key: custom_asc_api_key,
+      ipa: custom_ipa,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true, # no interactive confirmation of the HTML preview on CI
+      submit_for_review: submit,
+      automatic_release: false,
+      precheck_include_in_app_purchases: false,
+      run_precheck_before_submit: false
+    )
+  end
+
   desc "Test if all environment variables are present and check if API key is working properly."
   lane :test_env do
     UI.message "🔍 Testing environment variables..."
