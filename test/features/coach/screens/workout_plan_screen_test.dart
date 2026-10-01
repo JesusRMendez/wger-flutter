@@ -68,6 +68,25 @@ void main() {
     _FakeRoutines.fetched.clear();
   });
 
+  testWidgets('sends the days chosen as chips and the minutes of the slider', (tester) async {
+    final repo = FakeCoachRepository();
+    await pumpCoach(tester, const WorkoutPlanScreen(), repo, overrides: overrides);
+
+    expect(find.text('60 min'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('wp-days-5')));
+    await tester.pumpAndSettle();
+    // Left of the slider's end is the shortest session
+    await tester.drag(find.byKey(const ValueKey('wp-minutes')), const Offset(-2000, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('20 min'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('wp-generate')));
+    await tester.pumpAndSettle();
+
+    expect(repo.lastWorkoutRequest!.daysPerWeek, 5);
+    expect(repo.lastWorkoutRequest!.minutesPerSession, 20);
+  });
+
   testWidgets('generates a proposal and shows days, volume, rest, zone and rationale', (
     tester,
   ) async {

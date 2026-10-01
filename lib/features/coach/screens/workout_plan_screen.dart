@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/snackbar.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/coach/models/workout_proposal.dart';
 import 'package:wger/features/coach/providers/coach_providers.dart';
 import 'package:wger/features/coach/providers/coach_repository.dart';
@@ -45,6 +46,8 @@ class WorkoutPlanScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutPlanScreenState extends ConsumerState<WorkoutPlanScreen> {
+  static const _minuteChoices = [20, 30, 45, 60, 75, 90, 120];
+
   int _days = 3;
   int _minutes = 60;
   int? _locationId;
@@ -135,23 +138,50 @@ class _WorkoutPlanScreenState extends ConsumerState<WorkoutPlanScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            DropdownButtonFormField<int>(
-              key: const ValueKey('wp-days'),
-              initialValue: _days,
-              decoration: InputDecoration(labelText: i18n.coachDaysPerWeek),
-              items: [for (var d = 1; d <= 7; d++) DropdownMenuItem(value: d, child: Text('$d'))],
-              onChanged: (v) => setState(() => _days = v ?? _days),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<int>(
-              key: const ValueKey('wp-minutes'),
-              initialValue: _minutes,
-              decoration: InputDecoration(labelText: i18n.coachMinutesPerSession),
-              items: [
-                for (final m in [20, 30, 45, 60, 75, 90, 120])
-                  DropdownMenuItem(value: m, child: Text('$m')),
-              ],
-              onChanged: (v) => setState(() => _minutes = v ?? _minutes),
+            AtlasCard(
+              key: const ValueKey('wp-schedule'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionEyebrow(
+                    i18n.coachMinutesPerSession,
+                    trailing: MonoText(
+                      '$_minutes min',
+                      key: const ValueKey('wp-minutes-value'),
+                      size: 18,
+                    ),
+                  ),
+                  Slider(
+                    key: const ValueKey('wp-minutes'),
+                    value: _minuteChoices.indexOf(_minutes).toDouble(),
+                    min: 0,
+                    max: _minuteChoices.length - 1.0,
+                    divisions: _minuteChoices.length - 1,
+                    label: '$_minutes',
+                    onChanged: (v) => setState(() => _minutes = _minuteChoices[v.round()]),
+                  ),
+                  const SizedBox(height: 4),
+                  SectionEyebrow(i18n.coachDaysPerWeek),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    key: const ValueKey('wp-days'),
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (var d = 1; d <= 7; d++)
+                        PillChip(
+                          '$d',
+                          key: ValueKey('wp-days-$d'),
+                          mono: true,
+                          height: 44,
+                          fontSize: 15,
+                          selected: _days == d,
+                          onTap: () => setState(() => _days = d),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             if (locations.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -168,7 +198,7 @@ class _WorkoutPlanScreenState extends ConsumerState<WorkoutPlanScreen> {
                   _locationId = v;
                   final minutes = locations.where((l) => l.id == v).firstOrNull?.availableMinutes;
                   if (minutes != null) {
-                    _minutes = [20, 30, 45, 60, 75, 90, 120].reduce(
+                    _minutes = _minuteChoices.reduce(
                       (a, b) => (a - minutes).abs() <= (b - minutes).abs() ? a : b,
                     );
                   }
