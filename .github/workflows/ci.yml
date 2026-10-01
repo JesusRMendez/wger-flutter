@@ -15,13 +15,22 @@ on:
       - '.github/actions/flutter-common/action.yml'
       - '.github/workflows/ci.yml'
   workflow_call:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to test, default: the ref of the caller'
+        required: false
+        type: string
+        default: ''
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# github.workflow is the name of the calling workflow when this one is reused,
+# so a run called from publish-qa does not cancel (or get cancelled by) the
+# push triggered run for the same ref
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -36,6 +45,8 @@ jobs:
       TZ: Europe/Berlin
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Common flutter setup
         uses: ./.github/actions/flutter-common
