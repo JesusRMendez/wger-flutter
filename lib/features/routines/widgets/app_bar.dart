@@ -48,7 +48,9 @@ class RoutineListAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final isOnline = ref.watch(networkStatusProvider);
 
     return AppBar(
-      title: Text(i18n.routines),
+      toolbarHeight: preferredSize.height,
+      titleSpacing: 16,
+      title: Text(i18n.routines, style: Theme.of(context).textTheme.headlineLarge),
       actions: [
         PopupMenuButton(
           itemBuilder: (context) {
@@ -88,12 +90,13 @@ class RoutineListAppBar extends ConsumerWidget implements PreferredSizeWidget {
             }
           },
         ),
+        const SizedBox(width: 8),
       ],
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(68);
 }
 
 class RoutineDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {

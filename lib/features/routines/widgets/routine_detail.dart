@@ -21,6 +21,7 @@ import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/screens/routine_edit_screen.dart';
 import 'package:wger/features/routines/widgets/day.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class RoutineDetail extends StatelessWidget {
   final Routine _routine;
@@ -37,8 +38,11 @@ class RoutineDetail extends StatelessWidget {
         const SizedBox(height: 10),
         if (_routine.description.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.all(15),
-            child: Text(_routine.description),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Text(
+              _routine.description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.atlas.ink2),
+            ),
           ),
         if (!viewMode && _routine.days.isEmpty)
           Center(

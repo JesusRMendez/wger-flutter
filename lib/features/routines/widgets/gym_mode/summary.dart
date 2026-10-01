@@ -23,6 +23,7 @@ import 'package:logging/logging.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/date.dart';
 import 'package:wger/core/network/network_provider.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/error.dart';
 import 'package:wger/core/widgets/progress_indicator.dart';
 import 'package:wger/features/account/providers/user_profile_notifier.dart';
@@ -33,6 +34,7 @@ import 'package:wger/features/routines/widgets/gym_mode/navigation.dart';
 import 'package:wger/features/trophies/models/user_trophy.dart';
 import 'package:wger/features/trophies/providers/trophy_notifier.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 import '../logs/exercises_expansion_card.dart';
 import '../logs/muscle_groups.dart';
@@ -156,6 +158,24 @@ class WorkoutSessionStats extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            children: [
+              IconBadge(
+                Icons.check,
+                size: 48,
+                circle: true,
+                color: context.atlas.ok,
+                background: context.atlas.okSoft,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(i18n.workoutCompleted, style: theme.textTheme.headlineMedium),
+              ),
+            ],
+          ),
+        ),
         Row(
           children: [
             Expanded(
@@ -191,12 +211,20 @@ class WorkoutSessionStats extends ConsumerWidget {
         MuscleGroupsCard(_session.logs),
         const SizedBox(height: 10),
         ExercisesCard(_session, _userPrTrophies),
-        FilledButton(
-          onPressed: () {
-            ref.read(gymStateProvider.notifier).clear();
-            Navigator.of(context).pop();
-          },
-          child: Text(i18n.endWorkout),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 56,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              textStyle: theme.textTheme.titleMedium,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+            onPressed: () {
+              ref.read(gymStateProvider.notifier).clear();
+              Navigator.of(context).pop();
+            },
+            child: Text(i18n.endWorkout),
+          ),
         ),
       ],
     );
@@ -212,19 +240,16 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
+    return AtlasCard(
       color: color,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(value, style: theme.textTheme.headlineMedium),
-          ],
-        ),
+      padding: EdgeInsets.zero,
+      child: StatTile(
+        label: title,
+        value: value,
+        valueSize: 26,
+        // The surrounding card carries the (optional) color
+        padding: const EdgeInsets.all(14),
+        footer: const SizedBox.shrink(),
       ),
     );
   }

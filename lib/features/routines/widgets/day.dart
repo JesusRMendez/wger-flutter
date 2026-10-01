@@ -18,6 +18,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/date.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/core.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
 import 'package:wger/features/exercises/widgets/exercises.dart';
@@ -27,6 +28,7 @@ import 'package:wger/features/routines/models/slot_data.dart';
 import 'package:wger/features/routines/screens/guided_mode.dart';
 import 'package:wger/features/routines/screens/gym_mode.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class SetConfigDataWidget extends StatelessWidget {
   final Exercise exercise;
@@ -40,7 +42,15 @@ class SetConfigDataWidget extends StatelessWidget {
 
     return ListTile(
       leading: InkWell(
-        child: SizedBox(width: 45, child: ExerciseImageWidget(image: exercise.getMainImage)),
+        borderRadius: BorderRadius.circular(12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: ExerciseImageWidget(image: exercise.getMainImage),
+          ),
+        ),
         onTap: () {
           showDialog(
             context: context,
@@ -61,8 +71,14 @@ class SetConfigDataWidget extends StatelessWidget {
           );
         },
       ),
-      title: Text(exercise.getTranslation(languageCode).name),
-      subtitle: textRepetitionsWidget,
+      title: Text(
+        exercise.getTranslation(languageCode).name,
+        style: Theme.of(context).textTheme.titleSmall,
+      ),
+      subtitle: DefaultTextStyle.merge(
+        style: TextStyle(color: context.atlas.ink2),
+        child: textRepetitionsWidget,
+      ),
     );
   }
 }
@@ -77,7 +93,11 @@ class RoutineDayWidget extends StatelessWidget {
   Widget getSlotDataRow(SlotData slotData, BuildContext context) {
     return Column(
       children: [
-        if (slotData.comment.isNotEmpty) MutedText(slotData.comment),
+        if (slotData.comment.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: MutedText(slotData.comment),
+          ),
 
         // If there's a single exercise with different sets, group them all into
         // the one exercise and don't show separate rows for each one.
@@ -103,7 +123,7 @@ class RoutineDayWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
       child: Card(
         margin: EdgeInsets.zero,
         child: Column(
@@ -128,37 +148,44 @@ class DayHeader extends StatelessWidget {
       _viewMode = viewMode,
       _routineId = routineId;
 
+  Widget _todayChip(BuildContext context) => PillChip(
+    AppLocalizations.of(context).today,
+    tone: ChipTone.brand,
+    height: 24,
+    fontSize: 11,
+  );
+
   @override
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
 
     if (_dayData.day == null || _dayData.day!.isRest) {
       return ListTile(
-        tileColor: Theme.of(context).focusColor,
+        tileColor: context.atlas.surface2,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         title: Text(
           i18n.restDay,
-          style: Theme.of(context).textTheme.headlineSmall,
+          style: Theme.of(context).textTheme.titleMedium,
           overflow: TextOverflow.ellipsis,
         ),
         leading: const Icon(Icons.hotel),
-        trailing: _dayData.date.isSameDayAs(DateTime.now()) ? const Icon(Icons.today) : null,
+        trailing: _dayData.date.isSameDayAs(DateTime.now()) ? _todayChip(context) : null,
         minLeadingWidth: 8,
       );
     }
 
     return ListTile(
-      tileColor: Theme.of(context).focusColor,
+      tileColor: context.atlas.surface2,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       title: Text(
         _dayData.day!.nameWithType,
-        style: Theme.of(context).textTheme.headlineSmall,
+        style: Theme.of(context).textTheme.titleMedium,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(_dayData.day!.description),
       leading: _viewMode ? null : const Icon(Icons.play_arrow),
       trailing: _viewMode
-          ? (_dayData.date.isSameDayAs(DateTime.now()) ? const Icon(Icons.today) : null)
+          ? (_dayData.date.isSameDayAs(DateTime.now()) ? _todayChip(context) : null)
           : Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -171,7 +198,7 @@ class DayHeader extends StatelessWidget {
                     arguments: GymModeArguments(_routineId, _dayData.day!.id!, _dayData.iteration),
                   ),
                 ),
-                if (_dayData.date.isSameDayAs(DateTime.now())) const Icon(Icons.today),
+                if (_dayData.date.isSameDayAs(DateTime.now())) _todayChip(context),
               ],
             ),
       minLeadingWidth: 8,

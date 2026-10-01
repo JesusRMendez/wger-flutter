@@ -21,11 +21,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/network/network_provider.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/confirm_delete_dialog.dart';
 import 'package:wger/core/widgets/text_prompt.dart';
+import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/screens/routine_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class RoutinesList extends ConsumerStatefulWidget {
   const RoutinesList();
@@ -52,10 +55,25 @@ class _RoutinesListState extends ConsumerState<RoutinesList> {
         if (routines.isEmpty) {
           return const TextPrompt();
         }
+        final active = state.currentRoutine;
+
         return ListView.builder(
-          padding: const EdgeInsets.all(10.0),
-          itemCount: routines.length,
-          itemBuilder: (context, index) {
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          itemCount: routines.length + (active == null ? 0 : 1),
+          itemBuilder: (context, i) {
+            if (active != null && i == 0) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _ActiveRoutineCard(
+                  active,
+                  onOpen: () => Navigator.of(context).pushNamed(
+                    RoutineScreen.routeName,
+                    arguments: active.id,
+                  ),
+                ),
+              );
+            }
+            final index = active == null ? i : i - 1;
             final currentRoutine = routines[index];
             final routineId = currentRoutine.id!;
 
@@ -64,8 +82,11 @@ class _RoutinesListState extends ConsumerState<RoutinesList> {
             final canOpen = isOnline || currentRoutine.isHydrated;
 
             return Card(
+              margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 enabled: canOpen,
+                contentPadding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+                leading: const IconBadge(Icons.fitness_center, size: 44),
                 onTap: canOpen
                     ? () async {
                         if (isOnline) {
@@ -98,7 +119,6 @@ class _RoutinesListState extends ConsumerState<RoutinesList> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (!canOpen) const Icon(Icons.cloud_off),
-                    const VerticalDivider(),
                     if (_loadingRoutine == currentRoutine.id)
                       const IconButton(
                         icon: CircularProgressIndicator(),
@@ -107,6 +127,7 @@ class _RoutinesListState extends ConsumerState<RoutinesList> {
                     else
                       IconButton(
                         icon: const Icon(Icons.delete),
+                        color: context.atlas.ink3,
                         tooltip: AppLocalizations.of(context).delete,
                         onPressed: () => showConfirmDeleteDialog(
                           context,
@@ -121,6 +142,69 @@ class _RoutinesListState extends ConsumerState<RoutinesList> {
           },
         );
       },
+    );
+  }
+}
+
+/// The running routine: name, dates and how far into its weeks we are
+class _ActiveRoutineCard extends StatelessWidget {
+  const _ActiveRoutineCard(this.routine, {required this.onOpen});
+
+  final Routine routine;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+    final dateFormat = localizedDate(context);
+
+    final totalDays = routine.end.difference(routine.start).inDays.clamp(1, 100000);
+    final elapsed = DateTime.now().difference(routine.start).inDays.clamp(0, totalDays);
+    final weeks = (totalDays / 7).ceil().clamp(1, 16);
+    final currentWeek = (elapsed / 7).floor().clamp(0, weeks - 1);
+
+    return AtlasCard(
+      hero: true,
+      radius: AtlasRadius.dialog,
+      padding: const EdgeInsets.all(18),
+      onTap: onOpen,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionEyebrow(i18n.labelWorkoutPlan, color: atlas.onHero.withValues(alpha: 0.6)),
+          const SizedBox(height: 8),
+          Text(
+            routine.name,
+            style: theme.textTheme.headlineMedium?.copyWith(color: atlas.onHero),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${dateFormat.format(routine.start)} - ${dateFormat.format(routine.end)}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: atlas.onHero.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              for (var w = 0; w < weeks; w++) ...[
+                if (w > 0) const SizedBox(width: 4),
+                Expanded(
+                  child: Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AtlasRadius.pill),
+                      color: atlas.onHero.withValues(alpha: w <= currentWeek ? 0.85 : 0.18),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

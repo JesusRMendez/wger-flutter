@@ -193,10 +193,17 @@ void main() {
       await tester.tap(pastLogTile.first);
       await tester.pumpAndSettle();
 
-      final editableFields = find.byType(EditableText);
-      expect(editableFields, findsWidgets);
-      final repText = tester.widget<EditableText>(editableFields.at(0)).controller.text;
-      final weightText = tester.widget<EditableText>(editableFields.at(1)).controller.text;
+      String textOf(String key) => tester
+          .widget<EditableText>(
+            find.descendant(
+              of: find.byKey(ValueKey(key)),
+              matching: find.byType(EditableText),
+            ),
+          )
+          .controller
+          .text;
+      final repText = textOf('logs-reps-widget');
+      final weightText = textOf('logs-weight-widget');
       // `contains` would also pass on the prefilled weight of 100
       expect(repText, '10');
       expect(weightText, '10');
@@ -232,9 +239,20 @@ void main() {
 
       // Overwrite the pre-filled values so the assertion proves the user's
       // edits flow through, not just the set-config defaults.
-      final fields = find.byType(TextFormField);
-      await tester.enterText(fields.at(0), '12'); // reps
-      await tester.enterText(fields.at(1), '34'); // weight
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('logs-reps-widget')),
+          matching: find.byType(TextFormField),
+        ),
+        '12',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('logs-weight-widget')),
+          matching: find.byType(TextFormField),
+        ),
+        '34',
+      );
       await tester.pump();
 
       await tester.tap(find.byKey(const ValueKey('save-log-button')));

@@ -18,6 +18,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
 import 'package:wger/features/exercises/widgets/images.dart';
 import 'package:wger/features/routines/models/day.dart';
@@ -27,6 +28,7 @@ import 'package:wger/features/routines/widgets/gym_mode/navigation.dart';
 import 'package:wger/features/routines/widgets/gym_mode/planning_card.dart';
 import 'package:wger/features/routines/widgets/music_bpm_card.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class GymModeOptions extends ConsumerStatefulWidget {
   const GymModeOptions({super.key});
@@ -234,6 +236,7 @@ class _GymModeOptionsState extends ConsumerState<GymModeOptions> {
 
         ListTile(
           key: const ValueKey('gym-mode-options-tile'),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 22),
           title: Text(i18n.settingsTitle),
           leading: const Icon(Icons.settings),
           onTap: () => setState(() => _showOptions = !_showOptions),
@@ -251,6 +254,8 @@ class StartPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dayDataDisplay = ref.watch(gymStateProvider).dayDataDisplay;
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
 
     return Column(
       children: [
@@ -262,59 +267,99 @@ class StartPage extends ConsumerWidget {
 
         Expanded(
           child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
             children: [
+              SectionEyebrow(i18n.todaysWorkout),
+              const SizedBox(height: 4),
+              Text(
+                dayDataDisplay.day!.nameWithType,
+                style: theme.textTheme.headlineLarge,
+              ),
+              if (dayDataDisplay.day!.description.isNotEmpty)
+                Text(
+                  dayDataDisplay.day!.description,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: context.atlas.ink2),
+                ),
+              const SizedBox(height: 12),
               if (dayDataDisplay.day!.isSpecialType)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(15),
-                    child: Text(
-                      '${dayDataDisplay.day!.type.name.toUpperCase()}\n${dayDataDisplay.day!.type.i18Label(AppLocalizations.of(context))}',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: PillChip(
+                    '${dayDataDisplay.day!.type.name.toUpperCase()} · ${dayDataDisplay.day!.type.i18Label(i18n)}',
+                    tone: ChipTone.brand,
                   ),
                 ),
-              ...dayDataDisplay.slots
-                  .expand((slot) => slot.setConfigs)
-                  .fold<Map<Exercise, List<String>>>({}, (acc, entry) {
-                    acc.putIfAbsent(entry.exercise, () => []).add(entry.textReprWithType);
-                    return acc;
-                  })
-                  .entries
-                  .map((entry) {
-                    final exercise = entry.key;
-                    return Column(
-                      children: [
-                        ListTile(
-                          leading: SizedBox(
-                            width: 45,
-                            child: ExerciseImageWidget(image: exercise.getMainImage),
+              AtlasCard(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  children: [
+                    for (final (i, entry)
+                        in dayDataDisplay.slots
+                            .expand((slot) => slot.setConfigs)
+                            .fold<Map<Exercise, List<String>>>({}, (acc, entry) {
+                              acc.putIfAbsent(entry.exercise, () => []).add(entry.textReprWithType);
+                              return acc;
+                            })
+                            .entries
+                            .indexed) ...[
+                      if (i > 0) Divider(indent: 16, endIndent: 16, color: context.atlas.line),
+                      ListTile(
+                        leading: SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: ExerciseImageWidget(image: entry.key.getMainImage),
                           ),
-                          title: Text(
-                            exercise
-                                .getTranslation(Localizations.localeOf(context).languageCode)
-                                .name,
-                          ),
-                          subtitle: Text(entry.value.toList().join('\n')),
                         ),
-                      ],
-                    );
-                  }),
+                        title: Text(
+                          entry.key
+                              .getTranslation(Localizations.localeOf(context).languageCode)
+                              .name,
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        subtitle: Text(
+                          entry.value.toList().join('\n'),
+                          style: TextStyle(color: context.atlas.ink2),
+                        ),
+                        trailing: MonoText(
+                          '${i + 1}',
+                          size: 13,
+                          color: context.atlas.ink3,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               const GymPlanningCard(),
               const MusicBpmCard(),
             ],
           ),
         ),
         const GymModeOptions(),
-        FilledButton(
-          child: Text(AppLocalizations.of(context).start),
-          onPressed: () {
-            ref.read(gymStateProvider.notifier).startWorkout();
-            _controller.nextPage(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.bounceIn,
-            );
-          },
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: FilledButton.icon(
+              icon: const Icon(Icons.play_arrow),
+              label: Text(i18n.start),
+              style: FilledButton.styleFrom(
+                textStyle: theme.textTheme.titleMedium,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              ),
+              onPressed: () {
+                ref.read(gymStateProvider.notifier).startWorkout();
+                _controller.nextPage(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.bounceIn,
+                );
+              },
+            ),
+          ),
         ),
         NavigationFooter(_controller, showPrevious: false, showElapsedTime: false),
       ],

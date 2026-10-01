@@ -152,6 +152,9 @@ const BAR_WEIGHT = 20;
 /// ID of the equipment entry for barbell
 const ID_EQUIPMENT_BARBELL = 1;
 
+/// ID of the equipment entry for dumbbell
+const ID_EQUIPMENT_DUMBBELL = 3;
+
 /// kcal per gram of protein (approx)
 const ENERGY_PROTEIN = 4;
 

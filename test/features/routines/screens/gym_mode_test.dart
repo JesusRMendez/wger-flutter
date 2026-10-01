@@ -203,8 +203,9 @@ void main() {
         expect(find.text('Bench press'), findsOneWidget);
         expect(find.byType(LogPage), findsOneWidget);
         expect(find.byType(Form), findsOneWidget);
-        expect(find.text('10 × 10 kg (1.5 RiR)'), findsOneWidget);
-        expect(find.text('12 × 10 kg (2 RiR)'), findsOneWidget);
+        // The earlier logs are one-tap chips: date, reps × weight
+        expect(find.textContaining('10×10'), findsOneWidget);
+        expect(find.textContaining('12×10'), findsOneWidget);
 
         // TODO: commented out for now
         // expect(find.text('Make sure to warm up'), findsOneWidget, reason: 'Set comment');
@@ -460,8 +461,8 @@ void main() {
 
       expect(find.byType(WorkoutSummary), findsOneWidget);
       expect(find.byType(StreamErrorIndicator), findsNothing);
-      expect(find.text('Duration'), findsOneWidget);
-      expect(find.text('Volume'), findsOneWidget);
+      expect(find.text('DURATION'), findsOneWidget);
+      expect(find.text('VOLUME'), findsOneWidget);
     });
   });
 
@@ -502,7 +503,7 @@ void main() {
 
       expect(find.byType(WorkoutSummary), findsOneWidget);
       expect(find.byType(StreamErrorIndicator), findsOneWidget);
-      expect(find.text('Duration'), findsNothing);
+      expect(find.text('DURATION'), findsNothing);
     });
   });
 

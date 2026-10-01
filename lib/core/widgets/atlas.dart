@@ -710,3 +710,38 @@ class CardHeader extends StatelessWidget {
     );
   }
 }
+
+/// Round plus / minus button of a numeric stepper.
+class StepButton extends StatelessWidget {
+  const StepButton({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    this.tooltip,
+    this.size = 44,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String? tooltip;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final atlas = context.atlas;
+    return IconButton(
+      icon: Icon(icon),
+      iconSize: size * 0.45,
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: atlas.surface2,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        side: BorderSide(color: atlas.line),
+        fixedSize: Size.square(size),
+        minimumSize: Size.square(size),
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+}
