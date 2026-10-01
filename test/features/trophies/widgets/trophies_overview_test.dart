@@ -60,4 +60,47 @@ void main() {
       expect(find.text('Maintain a 30-day workout streak'), findsOneWidget);
     });
   });
+
+  testWidgets('counts what is earned and what is left', (WidgetTester tester) async {
+    final progression = getUserTrophyProgression();
+    await mockNetworkImagesFor(() async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            trophyStateProvider.overrideWithValue(
+              TrophyState(
+                trophyProgression: progression,
+                userTrophies: getUserTrophies(),
+                trophies: getTestTrophies(),
+              ),
+            ),
+          ],
+          child: const MaterialApp(
+            locale: Locale('en'),
+            localizationsDelegates: appLocalizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: TrophiesOverview()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    });
+
+    final earned = progression.where((t) => t.isEarned).length;
+    expect(find.text('earned'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('trophy-stat-earned')),
+        matching: find.text('$earned'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('trophy-stat-to-earn')),
+        matching: find.text('${progression.length - earned}'),
+      ),
+      findsOneWidget,
+    );
+  });
 }

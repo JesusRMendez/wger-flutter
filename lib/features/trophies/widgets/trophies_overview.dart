@@ -19,9 +19,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/material.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/trophies/models/user_trophy_progression.dart';
 import 'package:wger/features/trophies/providers/trophy_notifier.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class TrophiesOverview extends ConsumerWidget {
   const TrophiesOverview({super.key});
@@ -58,17 +60,66 @@ class TrophiesOverview extends ConsumerWidget {
       );
     }
 
-    return RepaintBoundary(
-      child: GridView.builder(
-        padding: const EdgeInsets.all(12),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
+    final earned = trophyState.trophyProgression.where((t) => t.isEarned).length;
+    final total = trophyState.trophyProgression.length;
+
+    Widget stat(String key, int value, String label) {
+      return Expanded(
+        child: AtlasCard(
+          key: ValueKey(key),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MonoText('$value', size: 24),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.atlas.ink3),
+                maxLines: 2,
+              ),
+            ],
+          ),
         ),
-        key: const ValueKey('trophy-grid'),
-        itemCount: trophyState.trophyProgression.length,
-        itemBuilder: (context, index) {
-          return _TrophyCardImage(userProgression: trophyState.trophyProgression[index]);
-        },
+      );
+    }
+
+    return RepaintBoundary(
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  stat('trophy-stat-earned', earned, i18n.trophiesEarned),
+                  const SizedBox(width: 8),
+                  stat('trophy-stat-to-earn', total - earned, i18n.trophiesToEarn),
+                  const SizedBox(width: 8),
+                  stat(
+                    'trophy-stat-prs',
+                    trophyState.prTrophies.length,
+                    i18n.trophiesPersonalRecords,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+            sliver: SliverGrid.builder(
+              key: const ValueKey('trophy-grid'),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+              ),
+              itemCount: total,
+              itemBuilder: (context, index) {
+                return _TrophyCardImage(userProgression: trophyState.trophyProgression[index]);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -83,19 +134,15 @@ class _TrophyCardImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final atlas = context.atlas;
 
     final double progress = (userProgression.progress.toDouble() / 100.0).clamp(0.0, 1.0);
 
     return Opacity(
       opacity: userProgression.isEarned ? 1.0 : 0.5,
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
-            width: userProgression.isEarned ? 1.2 : 0,
-          ),
-        ),
+      child: AtlasCard(
+        padding: EdgeInsets.zero,
+        borderColor: userProgression.isEarned ? atlas.accent.withValues(alpha: 0.5) : null,
         child: Stack(
           children: [
             Padding(
@@ -143,15 +190,7 @@ class _TrophyCardImage extends StatelessWidget {
                       message: 'Progress: ${userProgression.progressDisplay}',
                       child: SizedBox(
                         height: 6,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 6,
-                            valueColor: AlwaysStoppedAnimation(colorScheme.primary),
-                            backgroundColor: colorScheme.onSurface.withAlpha((0.06 * 255).round()),
-                          ),
-                        ),
+                        child: AtlasBar(value: progress, color: atlas.accent),
                       ),
                     ),
                 ],
@@ -164,11 +203,8 @@ class _TrophyCardImage extends StatelessWidget {
                 child: Container(
                   width: 28,
                   height: 28,
-                  decoration: const BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, size: 16, color: Colors.white),
+                  decoration: BoxDecoration(color: atlas.ok, shape: BoxShape.circle),
+                  child: Icon(Icons.check, size: 16, color: atlas.onHero),
                 ),
               ),
           ],
