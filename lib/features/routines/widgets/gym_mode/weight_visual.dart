@@ -75,7 +75,7 @@ const _steelLight = Color(0xFF5D6A8A);
 double _plateHeight(num plate, bool metric) {
   final max = metric ? 25 : 55;
   final ratio = (plate / max).clamp(0.05, 1.0);
-  return 34 + 66 * ratio;
+  return 28 + 56 * ratio;
 }
 
 class _Barbell extends ConsumerWidget {
@@ -103,10 +103,12 @@ class _Barbell extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
+            // Natural size, only shrunk when the plates do not fit: scaling a
+            // bar with two plates up to the card width draws them oversized
             child: FittedBox(
-              fit: BoxFit.contain,
+              fit: BoxFit.scaleDown,
               child: SizedBox(
-                height: 110,
+                height: 96,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -242,7 +244,7 @@ class _Dumbbell extends StatelessWidget {
     );
 
     return FittedBox(
-      fit: BoxFit.contain,
+      fit: BoxFit.scaleDown,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
