@@ -18,6 +18,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/confirm_delete_dialog.dart';
 import 'package:wger/features/coach/models/coach_goal.dart';
 import 'package:wger/features/coach/models/indicators.dart';
@@ -30,6 +31,7 @@ import 'package:wger/features/measurements/screens/weight_screen.dart';
 import 'package:wger/features/nutrition/screens/nutritional_plans_screen.dart';
 import 'package:wger/features/routines/screens/routine_list_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 const indicatorWindows = [7, 28, 90];
 
@@ -105,10 +107,6 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
         title: Text(i18n.coachGoalsAndIndicators),
         bottom: TabBar(
           controller: _tabs,
-          // The app bar uses the primary colour, keep the labels readable on it
-          labelColor: theme.colorScheme.onPrimary,
-          unselectedLabelColor: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
-          indicatorColor: theme.colorScheme.onPrimary,
           tabs: [for (final p in goalPeriods) Tab(text: i18n.periodLabel(p))],
         ),
       ),
@@ -219,54 +217,75 @@ class _GoalCard extends StatelessWidget {
     final theme = Theme.of(context);
     final pct = (goal.progressPct ?? 0).round();
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final atlas = context.atlas;
+    final tone = switch (goal.status) {
+      'achieved' || 'done' || 'completed' => ChipTone.ok,
+      'active' => ChipTone.brand,
+      _ => ChipTone.neutral,
+    };
+
+    return AtlasCard(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
+      child: Row(
+        children: [
+          ProgressRing(
+            size: 64,
+            strokeWidth: 7,
+            value: goal.progressFraction,
+            color: tone == ChipTone.ok ? atlas.ok : theme.colorScheme.primary,
+            child: MonoText(i18n.coachGoalPercent(pct), size: 13),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: Text(goal.title, style: theme.textTheme.titleMedium)),
-                Chip(label: Text(i18n.statusLabel(goal.status))),
-                IconButton(
-                  tooltip: i18n.edit,
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: onEdit,
+                Text(goal.title, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    PillChip(i18n.statusLabel(goal.status), tone: tone, height: 22, fontSize: 11),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        i18n.kindLabel(goal.kind),
+                        style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  tooltip: i18n.delete,
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: onDelete,
-                ),
+                if (goal.targetValue != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      i18n.coachGoalValues(
+                        goal.currentValue == null ? '-' : _num(goal.currentValue!),
+                        _num(goal.targetValue!),
+                        goal.unit,
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink2),
+                    ),
+                  ),
               ],
             ),
-            Text(i18n.kindLabel(goal.kind), style: theme.textTheme.bodySmall),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Row(
-                children: [
-                  Expanded(child: LinearProgressIndicator(value: goal.progressFraction)),
-                  const SizedBox(width: 8),
-                  Text(i18n.coachGoalPercent(pct)),
-                ],
+          ),
+          Column(
+            children: [
+              IconButton(
+                tooltip: i18n.edit,
+                icon: const Icon(Icons.edit_outlined, size: 20),
+                onPressed: onEdit,
               ),
-            ),
-            if (goal.targetValue != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  i18n.coachGoalValues(
-                    goal.currentValue == null ? '-' : _num(goal.currentValue!),
-                    _num(goal.targetValue!),
-                    goal.unit,
-                  ),
-                  style: theme.textTheme.bodySmall,
-                ),
+              IconButton(
+                tooltip: i18n.delete,
+                icon: const Icon(Icons.delete_outline, size: 20),
+                onPressed: onDelete,
               ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -290,19 +309,32 @@ class _IndicatorTile extends StatelessWidget {
     };
     final unit = indicator.unit.isEmpty ? '' : ' ${indicator.unit}';
 
-    return Card(
-      child: ListTile(
-        title: Text(i18n.indicatorLabel(indicator.key, fallback: indicator.label)),
-        subtitle: indicator.target == null
-            ? null
-            : Text(i18n.coachIndicatorTarget('${_num(indicator.target!)}$unit')),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${_num(indicator.value)}$unit', style: Theme.of(context).textTheme.titleMedium),
-            if (trend != null) ...[const SizedBox(width: 8), trend],
-          ],
-        ),
+    final atlas = context.atlas;
+
+    return AtlasCard(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  i18n.indicatorLabel(indicator.key, fallback: indicator.label),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                if (indicator.target != null)
+                  Text(
+                    i18n.coachIndicatorTarget('${_num(indicator.target!)}$unit'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                  ),
+              ],
+            ),
+          ),
+          MonoText('${_num(indicator.value)}$unit', size: 17),
+          if (trend != null) ...[const SizedBox(width: 8), trend],
+        ],
       ),
     );
   }
@@ -337,36 +369,37 @@ class _DataQualityCard extends StatelessWidget {
       _ => null,
     };
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(child: Text(i18n.coachDataQuality, style: theme.textTheme.titleMedium)),
-                Text(i18n.coachDataQualityScore(quality.score)),
-              ],
+    return AtlasCard(
+      margin: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(i18n.coachDataQuality, style: theme.textTheme.titleMedium)),
+              MonoText(i18n.coachDataQualityScore(quality.score), size: 13),
+            ],
+          ),
+          const SizedBox(height: 10),
+          AtlasBar(value: (quality.score / 100).clamp(0.0, 1.0), color: context.atlas.ok),
+          const SizedBox(height: 6),
+          Text(
+            i18n.coachDataQualityHelp,
+            style: theme.textTheme.bodySmall?.copyWith(color: context.atlas.ink3),
+          ),
+          for (final m in quality.missing)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(m.title),
+              subtitle: Text(m.detail),
+              trailing: actionLabel(m.action) == null
+                  ? null
+                  : TextButton(
+                      onPressed: () => _open(context, m.action),
+                      child: Text(actionLabel(m.action)!),
+                    ),
             ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(value: (quality.score / 100).clamp(0.0, 1.0)),
-            const SizedBox(height: 4),
-            Text(i18n.coachDataQualityHelp, style: theme.textTheme.bodySmall),
-            for (final m in quality.missing)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(m.title),
-                subtitle: Text(m.detail),
-                trailing: actionLabel(m.action) == null
-                    ? null
-                    : TextButton(
-                        onPressed: () => _open(context, m.action),
-                        child: Text(actionLabel(m.action)!),
-                      ),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -383,10 +416,11 @@ class _PlanPhaseSection extends StatelessWidget {
     final theme = Theme.of(context);
     final current = data.phase?.key;
 
+    final atlas = context.atlas;
     Color color(String severity) => switch (severity) {
-      'warning' => theme.colorScheme.errorContainer,
-      'success' => theme.colorScheme.primaryContainer,
-      _ => theme.colorScheme.surfaceContainerHighest,
+      'warning' => atlas.warnSoft,
+      'success' => atlas.okSoft,
+      _ => atlas.brandSoft,
     };
 
     IconData icon(String severity) => switch (severity) {
@@ -409,10 +443,8 @@ class _PlanPhaseSection extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                   decoration: BoxDecoration(
-                    color: p == current
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
+                    color: p == current ? theme.colorScheme.primary : atlas.surface3,
+                    borderRadius: BorderRadius.circular(AtlasRadius.pill),
                   ),
                   child: Text(
                     i18n.phaseLabel(p),
@@ -430,8 +462,11 @@ class _PlanPhaseSection extends StatelessWidget {
         const SizedBox(height: 8),
         if (data.recommendations.isEmpty) Text(i18n.coachNoRecommendations),
         for (final r in data.recommendations)
-          Card(
+          AtlasCard(
+            margin: const EdgeInsets.only(top: 8),
             color: color(r.severity),
+            borderColor: Colors.transparent,
+            padding: EdgeInsets.zero,
             child: ListTile(
               leading: Icon(icon(r.severity)),
               title: Text(r.title),

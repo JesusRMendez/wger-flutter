@@ -18,6 +18,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/coach/models/chat_message.dart';
 import 'package:wger/features/coach/models/coach_access.dart';
 import 'package:wger/features/coach/providers/coach_providers.dart';
@@ -29,6 +30,7 @@ import 'package:wger/features/coach/screens/workout_plan_screen.dart';
 import 'package:wger/features/coach/widgets/coach_error_view.dart';
 import 'package:wger/features/coach/widgets/mode_badge.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class CoachScreen extends ConsumerStatefulWidget {
   const CoachScreen({super.key});
@@ -90,27 +92,42 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                 padding: const EdgeInsets.all(12),
                 children: [
                   const Align(alignment: Alignment.centerLeft, child: CoachModeBadge()),
-                  if (mode == CoachMode.none) _Unavailable(i18n: i18n),
+                  const SizedBox(height: 10),
+                  if (mode == CoachMode.none) ...[
+                    _Unavailable(i18n: i18n),
+                    const SizedBox(height: 10),
+                  ],
                   const CoachUsageCard(),
-                  Wrap(
-                    spacing: 8,
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ActionChip(
-                        avatar: const Icon(Icons.fitness_center, size: 18),
-                        label: Text(i18n.coachWorkoutPlan),
-                        onPressed: () => nav.pushNamed(WorkoutPlanScreen.routeName),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.fitness_center,
+                          label: i18n.coachWorkoutPlan,
+                          color: context.atlas.ok,
+                          onTap: () => nav.pushNamed(WorkoutPlanScreen.routeName),
+                        ),
                       ),
-                      ActionChip(
-                        avatar: const Icon(Icons.restaurant, size: 18),
-                        label: Text(i18n.coachMealPlan),
-                        onPressed: () => nav.pushNamed(MealPlanScreen.routeName),
-                      ),
-                      ActionChip(
-                        avatar: const Icon(Icons.flag_outlined, size: 18),
-                        label: Text(i18n.coachGoalsAndIndicators),
-                        onPressed: () => nav.pushNamed(GoalsScreen.routeName),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.restaurant,
+                          label: i18n.coachMealPlan,
+                          color: context.atlas.carbs,
+                          onTap: () => nav.pushNamed(MealPlanScreen.routeName),
+                        ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  _ActionTile(
+                    icon: Icons.flag_outlined,
+                    label: i18n.coachGoalsAndIndicators,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => nav.pushNamed(GoalsScreen.routeName),
+                    wide: true,
                   ),
                   const SizedBox(height: 12),
                   if (chat.messages.isEmpty)
@@ -150,14 +167,28 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                         onSubmitted: (_) => _send(),
                         decoration: InputDecoration(
                           hintText: i18n.coachChatHint,
-                          border: const OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AtlasRadius.pill),
+                            borderSide: BorderSide(color: context.atlas.line),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AtlasRadius.pill),
+                            borderSide: BorderSide(color: context.atlas.line),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AtlasRadius.pill),
+                            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          ),
                         ),
                       ),
                     ),
-                    IconButton(
+                    const SizedBox(width: 8),
+                    IconButton.filled(
                       key: const ValueKey('coach-chat-send'),
                       tooltip: i18n.coachSend,
-                      icon: const Icon(Icons.send),
+                      style: IconButton.styleFrom(fixedSize: const Size(48, 48)),
+                      icon: const Icon(Icons.arrow_upward),
                       onPressed: mode == CoachMode.none || chat.sending ? null : _send,
                     ),
                   ],
@@ -178,21 +209,61 @@ class _Unavailable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(i18n.coachUnavailable),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pushNamed(MyAiScreen.routeName),
-              child: Text(i18n.coachSetUpMyAi),
-            ),
-          ],
-        ),
+    return AtlasCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(i18n.coachUnavailable),
+          const SizedBox(height: 8),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pushNamed(MyAiScreen.routeName),
+            child: Text(i18n.coachSetUpMyAi),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool wide;
+
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.wide = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final badge = IconBadge(
+      icon,
+      size: 40,
+      color: color,
+      background: color.withValues(alpha: 0.14),
+    );
+    final text = Text(label, style: Theme.of(context).textTheme.titleSmall);
+
+    return AtlasCard(
+      onTap: onTap,
+      child: wide
+          ? Row(
+              children: [
+                badge,
+                const SizedBox(width: 12),
+                Expanded(child: text),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [badge, const SizedBox(height: 10), text],
+            ),
     );
   }
 }
@@ -204,18 +275,29 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    final user = message.isUser;
     return Align(
-      alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.85),
         decoration: BoxDecoration(
-          color: message.isUser ? scheme.primaryContainer : scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
+          color: user ? atlas.hero : atlas.card,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(user ? 18 : 4),
+            bottomRight: Radius.circular(user ? 4 : 18),
+          ),
+          border: user ? null : Border.all(color: atlas.line),
         ),
-        child: SelectableText(message.content),
+        child: SelectableText(
+          message.content,
+          style: theme.textTheme.bodyMedium?.copyWith(color: user ? atlas.onHero : null),
+        ),
       ),
     );
   }
