@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod;
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/widgets/atlas.dart';
@@ -186,7 +187,7 @@ class NutritionalPlanDetailWidget extends riverpod.ConsumerWidget {
     if (open.isEmpty) {
       return null;
     }
-    final now = TimeOfDay.now();
+    final now = TimeOfDay.fromDateTime(clock.now());
     final nowMin = now.hour * 60 + now.minute;
     return open.firstWhere(
       (m) => m.time!.hour * 60 + m.time!.minute >= nowMin,

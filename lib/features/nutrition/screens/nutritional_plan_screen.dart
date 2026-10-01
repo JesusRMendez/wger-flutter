@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -109,7 +110,7 @@ class NutritionalPlanScreen extends ConsumerWidget {
             child: AtlasHeader(
               eyebrow: DateFormat.MMMMEEEEd(
                 Localizations.localeOf(context).languageCode,
-              ).format(DateTime.now()),
+              ).format(clock.now()),
               title: nutritionalPlan.getLabel(context),
               subtitle: _dateRange(context, nutritionalPlan),
               actions: [
