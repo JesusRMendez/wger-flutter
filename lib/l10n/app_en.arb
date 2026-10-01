@@ -3139,5 +3139,33 @@
   "trophiesPersonalRecords": "personal records",
   "@trophiesPersonalRecords": {
     "description": "Label under the number of personal record trophies"
+  },
+  "dashboardWater": "Water",
+  "@dashboardWater": {
+    "description": "Title of the dashboard card that counts glasses of water, and of its entry in the dashboard settings"
+  },
+  "waterValue": "{value} / {goal} L",
+  "@waterValue": {
+    "description": "Water drunk today against the daily goal, in litres",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "waterAddGlass": "Add a glass of water",
+  "@waterAddGlass": {
+    "description": "Tooltip of the button that adds a glass of water"
+  },
+  "waterRemoveGlass": "Remove a glass of water",
+  "@waterRemoveGlass": {
+    "description": "Tooltip of the long press that takes a glass of water back"
+  },
+  "waterLocalOnly": "Kept on this device",
+  "@waterLocalOnly": {
+    "description": "Hint on the water card that the glasses are not synced"
   }
 }

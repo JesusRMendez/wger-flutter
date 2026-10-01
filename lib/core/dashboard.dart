@@ -30,6 +30,7 @@ import 'package:wger/core/widgets/dashboard/widgets/measurements.dart';
 import 'package:wger/core/widgets/dashboard/widgets/nutrition.dart';
 import 'package:wger/core/widgets/dashboard/widgets/routines.dart';
 import 'package:wger/core/widgets/dashboard/widgets/trophies.dart';
+import 'package:wger/core/widgets/dashboard/widgets/water.dart';
 import 'package:wger/core/widgets/dashboard/widgets/weight.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
@@ -44,6 +45,8 @@ class DashboardScreen extends ConsumerWidget {
         return const DashboardActivityWidget();
       case DashboardWidget.routines:
         return const DashboardRoutineWidget();
+      case DashboardWidget.water:
+        return const DashboardWaterWidget();
       case DashboardWidget.weight:
         return const DashboardWeightWidget();
       case DashboardWidget.measurements:

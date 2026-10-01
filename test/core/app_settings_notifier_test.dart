@@ -54,6 +54,7 @@ void main() {
           DashboardWidget.activity,
           DashboardWidget.routines,
           DashboardWidget.nutrition,
+          DashboardWidget.water,
           DashboardWidget.weight,
           DashboardWidget.measurements,
           DashboardWidget.calendar,

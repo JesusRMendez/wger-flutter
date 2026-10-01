@@ -40,6 +40,7 @@ enum DashboardWidget {
   activity('activity'),
   routines('routines'),
   nutrition('nutrition'),
+  water('water'),
   weight('weight'),
   measurements('measurements'),
   calendar('calendar'),

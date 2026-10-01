@@ -34,6 +34,8 @@ class SettingsDashboardVisibility extends ConsumerWidget {
           return i18n.dashboardActivity;
         case DashboardWidget.routines:
           return i18n.routines;
+        case DashboardWidget.water:
+          return i18n.dashboardWater;
         case DashboardWidget.weight:
           return i18n.weight;
         case DashboardWidget.measurements:
