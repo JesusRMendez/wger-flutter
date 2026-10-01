@@ -15,12 +15,6 @@ on:
       - '.github/actions/flutter-common/action.yml'
       - '.github/workflows/ci.yml'
   workflow_call:
-    inputs:
-      ref:
-        description: 'Branch, tag or SHA to test, default: the ref of the caller'
-        required: false
-        type: string
-        default: ''
   workflow_dispatch:
 
 permissions:
@@ -44,9 +38,9 @@ jobs:
     env:
       TZ: Europe/Berlin
     steps:
+      # Always the commit of the triggering event (for a reusable call: the
+      # caller's commit), never a ref passed in as input
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.ref }}
 
       - name: Common flutter setup
         uses: ./.github/actions/flutter-common

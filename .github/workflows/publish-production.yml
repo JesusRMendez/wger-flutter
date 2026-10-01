@@ -1,17 +1,12 @@
 name: Publish production
 # Customized build for the stores: Google Play production track and App Store
-# Connect. Manual only: run it from the Actions tab (workflow_dispatch) or push
-# a tag like v2.1.0. Secrets and variables live in the GitHub Environment
+# Connect. Manual only: run it from the Actions tab (workflow_dispatch, pick the
+# branch or tag in "Use workflow from") or push a tag like v2.1.0. Secrets and variables live in the GitHub Environment
 # "production", whose required reviewers have to approve before anything is
 # built with them. See docs/ci-publishing.md.
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: 'Branch, tag or commit to release'
-        required: true
-        default: 'master'
-        type: string
       publish_android:
         description: 'Publish to Google Play'
         required: true
@@ -53,10 +48,10 @@ jobs:
     outputs:
       sha: ${{ steps.pin.outputs.sha }}
     steps:
-      # A tag push builds the tag, a manual run the ref that was typed in
+      # The commit of the tag that was pushed, or of the branch/tag chosen in
+      # "Use workflow from" for a manual run. No free text ref is checked out:
+      # that would let an unreviewed ref run with the default branch's cache.
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.ref || github.ref }}
 
       # Android and iOS build exactly this commit, even if the branch moves
       # while the run waits for approval
@@ -84,8 +79,6 @@ jobs:
     name: CI
     needs: prepare
     uses: ./.github/workflows/ci.yml
-    with:
-      ref: ${{ needs.prepare.outputs.sha }}
 
   android:
     name: Android
