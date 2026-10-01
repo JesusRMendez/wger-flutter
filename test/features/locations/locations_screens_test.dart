@@ -67,7 +67,9 @@ void main() {
     expect(find.textContaining('no training locations'), findsOneWidget);
   });
 
-  testWidgets('lists the locations with their details and deletes one', (tester) async {
+  testWidgets('shows a tab per location, the equipment as toggles, and deletes one', (
+    tester,
+  ) async {
     tall(tester);
     final repo = FakeLocationsRepository(
       locations: const [
@@ -84,15 +86,60 @@ void main() {
     await tester.pumpWidget(render(repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Home'), findsOneWidget);
+    // The default location is shown first, with its equipment switched on
+    expect(find.byKey(const ValueKey('location-tab-1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('location-tab-2')), findsOneWidget);
     expect(find.text('2 pieces of equipment · 45 min · Default location'), findsOneWidget);
-    expect(find.text('No equipment'), findsOneWidget);
+    expect(find.text('2 of 3'), findsOneWidget);
+    expect(
+      tester.widget<SwitchListTile>(find.byKey(const ValueKey('equipment-switch-1'))).value,
+      isTrue,
+    );
+    expect(
+      tester.widget<SwitchListTile>(find.byKey(const ValueKey('equipment-switch-3'))).value,
+      isFalse,
+    );
 
-    await tester.tap(find.byIcon(Icons.delete_outline).last);
+    // The other tab
+    await tester.tap(find.byKey(const ValueKey('location-tab-2')));
+    await tester.pumpAndSettle();
+    expect(find.text('No equipment'), findsOneWidget);
+    expect(find.text('0 of 3'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('delete-button')));
     await tester.pumpAndSettle();
     expect(repo.deletedLocations, [2]);
+  });
+
+  testWidgets('switching equipment saves the location and prunes its zones', (tester) async {
+    tall(tester);
+    final repo = FakeLocationsRepository(
+      locations: const [
+        TrainingLocation(id: 1, name: 'Gym', equipmentIds: [1, 3]),
+      ],
+      zones: const {
+        1: [
+          LocationZone(id: 7, locationId: 1, name: 'Racks', order: 0, equipmentIds: [3]),
+        ],
+      },
+    );
+    await tester.pumpWidget(render(repo));
+    await tester.pumpAndSettle();
+
+    // Switching something on
+    await tester.tap(find.byKey(const ValueKey('equipment-switch-10')));
+    await tester.pumpAndSettle();
+    expect(repo.savedLocations.last.equipmentIds, [1, 3, 10]);
+    expect(find.text('3 of 3'), findsOneWidget);
+
+    // Switching the barbell off removes it from the zone as well
+    await tester.tap(find.byKey(const ValueKey('equipment-switch-3')));
+    await tester.pumpAndSettle();
+    expect(repo.savedLocations.last.equipmentIds, [1, 10]);
+    expect(repo.savedZones.single.equipmentIds, isEmpty);
+    expect(find.text('2 of 3'), findsOneWidget);
   });
 
   testWidgets('creates a location with equipment, then adds a zone', (tester) async {
@@ -183,7 +230,7 @@ void main() {
     );
     await tester.pumpWidget(render(repo));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Gym'));
+    await tester.tap(find.byKey(const ValueKey('location-edit-button')));
     await tester.pumpAndSettle();
 
     expect(find.text('Racks'), findsOneWidget);

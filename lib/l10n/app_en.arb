@@ -3492,5 +3492,25 @@
         "type": "String"
       }
     }
+  },
+  "locationsSubtitle": "Used to suggest weights and exercises",
+  "@locationsSubtitle": {
+    "description": "Subtitle of the equipment screen"
+  },
+  "locationsCountOf": "{selected} of {total}",
+  "@locationsCountOf": {
+    "description": "How many pieces of equipment are available of all that exist",
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "locationsNoCatalog": "The equipment list is not available yet.",
+  "@locationsNoCatalog": {
+    "description": "Shown on the equipment screen while the equipment catalogue is empty"
   }
 }
