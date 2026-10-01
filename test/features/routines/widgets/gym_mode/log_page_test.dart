@@ -196,6 +196,28 @@ void main() {
       expect(find.byKey(const ValueKey('gym-settings-button')), findsOneWidget);
     });
 
+    testWidgets('the card switches from the load to how the exercise is done', (tester) async {
+      // Tall enough for the card, a short window drops the visual and the tabs
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      seedLogPage(testdata.getTestRoutine());
+      await pumpLogPage(tester);
+
+      // The fixture exercise has a description, so there is a steps tab
+      expect(find.byKey(const ValueKey('gym-tab-weight')), findsOneWidget);
+      expect(find.byKey(const ValueKey('visual-barbell')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('gym-tab-steps')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('visual-barbell')), findsNothing);
+      expect(find.textContaining('add clever text'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('gym-tab-weight')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('visual-barbell')), findsOneWidget);
+    });
+
     testWidgets('Use applies the planned weight and repetitions', (tester) async {
       seedLogPage(testdata.getTestRoutine());
       await pumpLogPage(tester);

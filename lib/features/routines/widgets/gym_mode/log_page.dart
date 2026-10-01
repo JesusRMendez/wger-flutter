@@ -16,14 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/consts.dart';
+import 'package:wger/core/platform.dart';
 import 'package:wger/core/snackbar.dart';
 import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/error.dart';
+import 'package:wger/features/exercises/widgets/detail/images_section.dart';
+import 'package:wger/features/exercises/widgets/detail/videos_section.dart';
 import 'package:wger/features/routines/logic/gym_progress.dart';
 import 'package:wger/features/routines/models/log.dart';
 import 'package:wger/features/routines/models/set_config_data.dart';
@@ -312,8 +316,14 @@ class LogFormWidget extends ConsumerStatefulWidget {
   _LogFormWidgetState createState() => _LogFormWidgetState();
 }
 
+enum _MediaTab { weight, photos, video, steps }
+
 class _LogFormWidgetState extends ConsumerState<LogFormWidget> {
   final _form = GlobalKey<FormState>();
+
+  /// What the card above the weight shows: the load, or how the exercise looks
+  /// and is done
+  _MediaTab _tab = _MediaTab.weight;
 
   /// Weights offered as quick chips around the planned weight
   List<num> _quickWeights() {
@@ -408,15 +418,62 @@ class _LogFormWidgetState extends ConsumerState<LogFormWidget> {
       builder: (context, constraints) {
         final compact = constraints.maxHeight < 470;
 
+        final translation = exercise.getTranslation(Localizations.localeOf(context).languageCode);
+        final tabs = [
+          _MediaTab.weight,
+          if (exercise.images.isNotEmpty) _MediaTab.photos,
+          if (exercise.videos.isNotEmpty && !isDesktop) _MediaTab.video,
+          if (translation.description.trim().isNotEmpty) _MediaTab.steps,
+        ];
+        final tab = tabs.contains(_tab) ? _tab : _MediaTab.weight;
+
         final weightCard = AtlasCard(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
           child: Column(
             children: [
+              if (!compact && tabs.length > 1)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final t in tabs)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: PillChip(
+                              switch (t) {
+                                _MediaTab.weight => i18n.gymTabWeight,
+                                _MediaTab.photos => i18n.gymTabPhotos,
+                                _MediaTab.video => i18n.gymTabVideo,
+                                _MediaTab.steps => i18n.gymTabSteps,
+                              },
+                              key: ValueKey('gym-tab-${t.name}'),
+                              selected: tab == t,
+                              height: 30,
+                              onTap: () => setState(() => _tab = t),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
               if (!compact)
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: WeightVisual(exercise: exercise, weight: log.weight),
+                    child: switch (tab) {
+                      _MediaTab.weight => WeightVisual(exercise: exercise, weight: log.weight),
+                      _MediaTab.photos => SingleChildScrollView(
+                        child: ImagesSection(exercise: exercise),
+                      ),
+                      _MediaTab.video => SingleChildScrollView(
+                        child: VideosSection(exercise: exercise),
+                      ),
+                      _MediaTab.steps => SingleChildScrollView(
+                        child: Html(data: translation.description),
+                      ),
+                    },
                   ),
                 ),
               WeightInputWidget(

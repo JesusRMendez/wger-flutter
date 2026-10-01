@@ -3167,5 +3167,21 @@
   "waterLocalOnly": "Kept on this device",
   "@waterLocalOnly": {
     "description": "Hint on the water card that the glasses are not synced"
+  },
+  "gymTabWeight": "Weight",
+  "@gymTabWeight": {
+    "description": "Tab on the set screen that shows the load"
+  },
+  "gymTabPhotos": "Photos",
+  "@gymTabPhotos": {
+    "description": "Tab on the set screen that shows the photos of the exercise"
+  },
+  "gymTabVideo": "Video",
+  "@gymTabVideo": {
+    "description": "Tab on the set screen that shows the video of the exercise"
+  },
+  "gymTabSteps": "Steps",
+  "@gymTabSteps": {
+    "description": "Tab on the set screen that shows how the exercise is done"
   }
 }
