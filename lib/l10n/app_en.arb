@@ -3183,5 +3183,17 @@
   "gymTabSteps": "Steps",
   "@gymTabSteps": {
     "description": "Tab on the set screen that shows how the exercise is done"
+  },
+  "routineDaySummary": "{sets} sets · ≈ {minutes} min",
+  "@routineDaySummary": {
+    "description": "Summary line of a training day in the routine: number of sets and estimated duration",
+    "placeholders": {
+      "sets": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
   }
 }

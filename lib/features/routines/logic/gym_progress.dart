@@ -138,3 +138,15 @@ DayStats dayStats(Iterable<SetConfigData> configs) {
 /// A volume for a tile: tonnes from one tonne up, else kilograms
 String formatVolume(double kg) =>
     kg >= 1000 ? '${(kg / 1000).toStringAsFixed(1)} t' : '${kg.round()} kg';
+
+/// A rough duration of the planned sets [configs], in minutes: the set itself
+/// and its rest ([assumedRestSeconds] where the plan gives none)
+int estimatedMinutesFor(Iterable<SetConfigData> configs) {
+  var seconds = 0;
+  for (final c in configs) {
+    seconds +=
+        (c.nrOfSets ?? 1).toInt() *
+        (assumedSetSeconds + (c.restTime?.toInt() ?? assumedRestSeconds));
+  }
+  return (seconds / 60).ceil();
+}

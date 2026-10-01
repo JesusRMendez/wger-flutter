@@ -122,6 +122,19 @@ void main() {
       expect(stats.volumeKg, isNull);
     });
 
+    test('the duration adds the set and the rest of every planned set', () {
+      // 4 x (45 + 120) + 2 x (45 + 60) = 870 s
+      expect(
+        estimatedMinutesFor([
+          cfg(sets: 4, rest: 120),
+          cfg(sets: 2, rest: 60),
+        ]),
+        15,
+      );
+      // No planned rest counts as 90 s: 45 + 90 = 135 s
+      expect(estimatedMinutesFor([cfg()]), 3);
+    });
+
     test('volume is shown in tonnes from one tonne', () {
       expect(formatVolume(6920), '6.9 t');
       expect(formatVolume(850.4), '850 kg');

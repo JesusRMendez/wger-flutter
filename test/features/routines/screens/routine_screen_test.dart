@@ -23,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/network/network_provider.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/screens/routine_screen.dart';
@@ -110,8 +111,9 @@ void main() {
       expect(find.text('second day'), findsOneWidget);
       expect(find.text('legs'), findsOneWidget);
 
-      expect(find.byType(Card), findsWidgets);
-      // expect(find.byType(Card), findsNWidgets(4));
+      // One card per day, and the days are numbered and summed up
+      expect(find.byType(AtlasCard), findsWidgets);
+      expect(find.textContaining(' sets · ≈ '), findsWidgets);
     },
     tags: ['golden'],
   );

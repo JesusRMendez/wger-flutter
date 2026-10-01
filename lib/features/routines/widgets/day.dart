@@ -23,6 +23,7 @@ import 'package:wger/core/widgets/core.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
 import 'package:wger/features/exercises/widgets/exercises.dart';
 import 'package:wger/features/exercises/widgets/images.dart';
+import 'package:wger/features/routines/logic/gym_progress.dart';
 import 'package:wger/features/routines/models/day_data.dart';
 import 'package:wger/features/routines/models/slot_data.dart';
 import 'package:wger/features/routines/screens/guided_mode.dart';
@@ -30,24 +31,44 @@ import 'package:wger/features/routines/screens/gym_mode.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/theme/atlas.dart';
 
+/// One exercise of a slot: its number in the day, the name (opens the exercise)
+/// and what is planned, with a small picture on the right.
 class SetConfigDataWidget extends StatelessWidget {
   final Exercise exercise;
   final Widget textRepetitionsWidget;
 
-  const SetConfigDataWidget({required this.exercise, required this.textRepetitionsWidget});
+  /// 1-based position of the slot in the day, null for no badge
+  final int? number;
+
+  const SetConfigDataWidget({
+    required this.exercise,
+    required this.textRepetitionsWidget,
+    this.number,
+  });
 
   @override
   Widget build(BuildContext context) {
     final languageCode = Localizations.localeOf(context).languageCode;
+    final atlas = context.atlas;
 
     return ListTile(
-      leading: InkWell(
-        borderRadius: BorderRadius.circular(12),
+      contentPadding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      leading: number == null
+          ? null
+          : Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: atlas.surface3, shape: BoxShape.circle),
+              child: MonoText('$number', size: 14),
+            ),
+      trailing: InkWell(
+        borderRadius: BorderRadius.circular(10),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           child: SizedBox(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             child: ExerciseImageWidget(image: exercise.getMainImage),
           ),
         ),
@@ -76,7 +97,7 @@ class SetConfigDataWidget extends StatelessWidget {
         style: Theme.of(context).textTheme.titleSmall,
       ),
       subtitle: DefaultTextStyle.merge(
-        style: TextStyle(color: context.atlas.ink2),
+        style: TextStyle(color: atlas.ink2),
         child: textRepetitionsWidget,
       ),
     );
@@ -90,47 +111,72 @@ class RoutineDayWidget extends StatelessWidget {
 
   const RoutineDayWidget(this._dayData, this._routineId, this._viewMode);
 
-  Widget getSlotDataRow(SlotData slotData, BuildContext context) {
-    return Column(
-      children: [
-        if (slotData.comment.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: MutedText(slotData.comment),
-          ),
+  Widget getSlotDataRow(SlotData slotData, int number, BuildContext context) {
+    final atlas = context.atlas;
 
-        // If there's a single exercise with different sets, group them all into
-        // the one exercise and don't show separate rows for each one.
-        ...slotData.setConfigs
-            .fold<Map<Exercise, List<String>>>({}, (acc, entry) {
-              acc.putIfAbsent(entry.exercise, () => []).add(entry.textReprWithType);
-              return acc;
-            })
-            .entries
-            .map((entry) {
-              return SetConfigDataWidget(
-                exercise: entry.key,
-                textRepetitionsWidget: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: entry.value.map((text) => Text(text)).toList(),
-                ),
-              );
-            }),
-      ],
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      decoration: BoxDecoration(
+        color: atlas.surface2,
+        borderRadius: BorderRadius.circular(AtlasRadius.card),
+        border: Border.all(color: atlas.line),
+      ),
+      child: Column(
+        children: [
+          if (slotData.comment.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: MutedText(slotData.comment),
+            ),
+
+          // If there's a single exercise with different sets, group them all into
+          // the one exercise and don't show separate rows for each one.
+          ...slotData.setConfigs
+              .fold<Map<Exercise, List<String>>>({}, (acc, entry) {
+                acc.putIfAbsent(entry.exercise, () => []).add(entry.textReprWithType);
+                return acc;
+              })
+              .entries
+              .map((entry) {
+                return SetConfigDataWidget(
+                  exercise: entry.key,
+                  number: number,
+                  textRepetitionsWidget: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: entry.value.map((text) => Text(text)).toList(),
+                  ),
+                );
+              }),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final atlas = context.atlas;
+    final configs = _dayData.slots.expand((slot) => slot.setConfigs);
+    final stats = dayStats(configs);
+
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-      child: Card(
-        margin: EdgeInsets.zero,
+      child: AtlasCard(
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DayHeader(day: _dayData, routineId: _routineId, viewMode: _viewMode),
-            ..._dayData.slots.map((e) => getSlotDataRow(e, context)),
+            if (_dayData.slots.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                child: Text(
+                  i18n.routineDaySummary(stats.sets, estimatedMinutesFor(configs)),
+                  key: ValueKey('day-summary-${_dayData.day?.id}'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                ),
+              ),
+            ..._dayData.slots.indexed.map((e) => getSlotDataRow(e.$2, e.$1 + 1, context)),
           ],
         ),
       ),
