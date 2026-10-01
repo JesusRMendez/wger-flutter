@@ -66,10 +66,10 @@ void main() {
         ),
         nutritionProvider.overrideWith(() => _FixedNutrition(plan)),
       ],
-      child: MaterialApp(
+      child: const MaterialApp(
         localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const IngredientsScreen(),
+        home: IngredientsScreen(),
       ),
     );
   }
