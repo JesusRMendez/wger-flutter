@@ -23,6 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/workout_menu.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
@@ -100,5 +101,180 @@ void main() {
     await tester.tap(find.byKey(Key('add-icon-${notifier.state.pages[1].uuid}')));
     await tester.pumpAndSettle();
     expect(find.byType(ExerciseAddWidget), findsOne);
+  });
+
+  group('Reordering the exercises', () {
+    /// Names of the exercises in the order of the workout
+    List<String> order() => notifier.state.pages
+        .where((p) => p.type == PageType.set)
+        .map((p) => p.exercises.single.getTranslation('en').name)
+        .toList();
+
+    testWidgets('the not yet done exercises have buttons to move them', (tester) async {
+      await tester.pumpWidget(renderWidget());
+
+      final first = notifier.state.pages[1].uuid;
+      final second = notifier.state.pages[2].uuid;
+
+      // The first one can only go down, the last one only up
+      expect(tester.widget<IconButton>(find.byKey(Key('move-up-$first'))).onPressed, isNull);
+      expect(tester.widget<IconButton>(find.byKey(Key('move-down-$first'))).onPressed, isNotNull);
+      expect(tester.widget<IconButton>(find.byKey(Key('move-up-$second'))).onPressed, isNotNull);
+      expect(tester.widget<IconButton>(find.byKey(Key('move-down-$second'))).onPressed, isNull);
+    });
+
+    testWidgets('moves an exercise and warns that the order may matter', (tester) async {
+      await tester.pumpWidget(renderWidget());
+      expect(order(), ['Bench press', 'Side raises']);
+      expect(find.byKey(const Key('order-changed-warning')), findsNothing);
+
+      await tester.tap(find.byKey(Key('move-down-${notifier.state.pages[1].uuid}')));
+      await tester.pumpAndSettle();
+
+      expect(order(), ['Side raises', 'Bench press']);
+      expect(find.byKey(const Key('order-changed-warning')), findsOneWidget);
+      expect(find.textContaining('planned order may matter'), findsOneWidget);
+
+      // The list shows the new order
+      final raisesY = tester.getTopLeft(find.text('Side raises')).dy;
+      final benchY = tester.getTopLeft(find.text('Bench press')).dy;
+      expect(raisesY, lessThan(benchY));
+
+      await tester.tap(find.byKey(Key('move-up-${notifier.state.pages[2].uuid}')));
+      await tester.pumpAndSettle();
+      expect(order(), ['Bench press', 'Side raises']);
+    });
+
+    testWidgets('finished exercises have no buttons and stay in place', (tester) async {
+      final done = notifier.state.pages[1];
+      for (final slot in done.slotPages.where((s) => s.type == SlotPageType.log)) {
+        notifier.markSlotPageAsDone(slot.uuid, isDone: true);
+      }
+      await tester.pumpWidget(renderWidget());
+
+      expect(find.byKey(Key('move-up-${done.uuid}')), findsNothing);
+      expect(find.byKey(Key('move-down-${done.uuid}')), findsNothing);
+
+      // The last exercise cannot be moved above the finished one
+      final last = notifier.state.pages[2].uuid;
+      expect(find.byKey(Key('move-up-$last')), findsOneWidget);
+      expect(tester.widget<IconButton>(find.byKey(Key('move-up-$last'))).onPressed, isNull);
+      expect(order().first, 'Bench press');
+    });
+
+    testWidgets('the page view stays on the page the user is looking at', (tester) async {
+      // Looking at the second set of the bench press (pages 1-3 bench, 4-6 raises)
+      final controller = PageController(initialPage: 2);
+      addTearDown(controller.dispose);
+      notifier.state = notifier.state.copyWith(currentPage: 2);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: appLocalizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  SizedBox(
+                    height: 50,
+                    child: PageView(
+                      controller: controller,
+                      children: [for (var i = 0; i < 9; i++) Text('page $i')],
+                    ),
+                  ),
+                  Expanded(child: ProgressionTab(controller)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      final benchSlot = notifier.state.getSlotEntryPageByIndex(2)!;
+
+      await tester.tap(find.byKey(Key('move-down-${notifier.state.pages[1].uuid}')));
+      await tester.pumpAndSettle();
+
+      final newIndex = notifier.state.getSlotPageByUUID(benchSlot.uuid)!.pageIndex;
+      expect(newIndex, 5);
+      expect(notifier.state.currentPage, newIndex);
+      expect(controller.page, newIndex);
+    });
+  });
+
+  group('Jumping to an exercise', () {
+    final controller = PageController();
+
+    Future<void> openMenu(WidgetTester tester) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: appLocalizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  Builder(
+                    builder: (context) => TextButton(
+                      onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (_) => WorkoutMenuDialog(controller),
+                      ),
+                      child: const Text('open menu'),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 50,
+                    child: PageView(
+                      controller: controller,
+                      children: [for (var i = 0; i < 9; i++) Text('page $i')],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open menu'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('warns when it skips exercises that are not done', (tester) async {
+      await openMenu(tester);
+
+      await tester.tap(find.text('Side raises'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WorkoutMenuDialog), findsNothing, reason: 'the menu closes');
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining('skipping ahead'), findsOneWidget);
+      expect(controller.page, notifier.state.pages[2].pageIndex);
+    });
+
+    testWidgets('does not warn when going to the next exercise in order', (tester) async {
+      await openMenu(tester);
+
+      await tester.tap(find.text('Bench press'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('does not warn after the earlier exercises are done', (tester) async {
+      for (final slot in notifier.state.pages[1].slotPages) {
+        notifier.markSlotPageAsDone(slot.uuid, isDone: true);
+      }
+      await openMenu(tester);
+
+      await tester.tap(find.text('Side raises'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsNothing);
+    });
   });
 }

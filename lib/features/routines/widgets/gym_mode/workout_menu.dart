@@ -25,6 +25,28 @@ import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
+/// Animates to the given set page and closes the menu. If this skips exercises
+/// that are not done yet, a short, non-blocking warning is shown.
+void _jumpToPage(BuildContext context, PageController controller, PageEntry page) {
+  final skipsAhead = ProviderScope.containerOf(
+    context,
+  ).read(gymStateProvider).wouldSkipAhead(page.uuid);
+  final messenger = ScaffoldMessenger.of(context);
+  final message = AppLocalizations.of(context).gymModeSkippingAheadWarning;
+
+  controller.animateToPage(
+    page.pageIndex,
+    duration: DEFAULT_ANIMATION_DURATION,
+    curve: DEFAULT_ANIMATION_CURVE,
+  );
+  Navigator.of(context).pop();
+
+  if (skipsAhead) {
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
 class WorkoutMenu extends StatelessWidget {
   final PageController _controller;
   final int initialIndex;
@@ -87,14 +109,7 @@ class NavigationTab extends ConsumerWidget {
                 ),
               ),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                _controller.animateToPage(
-                  page.pageIndex,
-                  duration: DEFAULT_ANIMATION_DURATION,
-                  curve: DEFAULT_ANIMATION_CURVE,
-                );
-                Navigator.of(context).pop();
-              },
+              onTap: () => _jumpToPage(context, _controller, page),
             );
           }),
         ],
@@ -116,13 +131,33 @@ class ProgressionTab extends ConsumerStatefulWidget {
 class _ProgressionTabState extends ConsumerState<ProgressionTab> {
   String? showSwapWidgetToPage;
   String? showAddExerciseWidgetToPage;
+
+  /// Whether the user changed the order of the exercises in this menu
+  bool _orderChanged = false;
+
   _ProgressionTabState();
+
+  /// Moves the exercise one position and keeps the page view on what the
+  /// user is looking at, as the page indices change
+  void _movePage(PageEntry page, {required bool up}) {
+    final notifier = ref.read(gymStateProvider.notifier);
+    if (!notifier.moveSlotBy(page.uuid, up: up)) {
+      return;
+    }
+
+    final currentPage = ref.read(gymStateProvider).currentPage;
+    if (widget._controller.hasClients && widget._controller.page?.round() != currentPage) {
+      widget._controller.jumpToPage(currentPage);
+    }
+    setState(() => _orderChanged = true);
+  }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(gymStateProvider);
     final theme = Theme.of(context);
     final languageCode = Localizations.localeOf(context).languageCode;
+    final i18n = AppLocalizations.of(context);
 
     return SingleChildScrollView(
       child: Padding(
@@ -255,15 +290,26 @@ class _ProgressionTabState extends ConsumerState<ProgressionTab> {
                         ),
                       ),
                       Expanded(child: Container()),
+                      if (page.isMovable) ...[
+                        IconButton(
+                          key: ValueKey('move-up-${page.uuid}'),
+                          tooltip: i18n.gymModeMoveUp,
+                          onPressed: state.canMovePage(page.uuid, up: true)
+                              ? () => _movePage(page, up: true)
+                              : null,
+                          icon: const Icon(Icons.arrow_upward),
+                        ),
+                        IconButton(
+                          key: ValueKey('move-down-${page.uuid}'),
+                          tooltip: i18n.gymModeMoveDown,
+                          onPressed: state.canMovePage(page.uuid, up: false)
+                              ? () => _movePage(page, up: false)
+                              : null,
+                          icon: const Icon(Icons.arrow_downward),
+                        ),
+                      ],
                       IconButton(
-                        onPressed: () {
-                          widget._controller.animateToPage(
-                            page.pageIndex,
-                            duration: DEFAULT_ANIMATION_DURATION,
-                            curve: DEFAULT_ANIMATION_CURVE,
-                          );
-                          Navigator.of(context).pop();
-                        },
+                        onPressed: () => _jumpToPage(context, widget._controller, page),
                         icon: const Icon(Icons.chevron_right),
                       ),
                     ],
@@ -290,6 +336,16 @@ class _ProgressionTabState extends ConsumerState<ProgressionTab> {
                 ],
               );
             }),
+            if (_orderChanged)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  i18n.gymModeOrderChangedWarning,
+                  key: const ValueKey('order-changed-warning'),
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
