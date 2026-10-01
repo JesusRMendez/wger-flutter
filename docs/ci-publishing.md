@@ -29,7 +29,7 @@ concurrency group.
 | iOS signing | certificate and profile secrets | same lane, `update_code_signing_settings` switches the Runner target to manual signing with your team, identity and profile. |
 | Default server | `QA_SERVER_URL` / `PROD_SERVER_URL` | `--dart-define=WGER_DEFAULT_SERVER=<url>`, read in `lib/core/consts.dart`. Unset or empty keeps `https://wger.de`. |
 | Version name | `pubspec.yaml` | unchanged, e.g. `2.1.0` |
-| Build number / version code | `github.run_number` + `BUILD_NUMBER_OFFSET` | `flutter build ... --build-number` |
+| Build number / version code | minutes since 2024 × 10 + run number mod 10 + `BUILD_NUMBER_OFFSET` | `flutter build ... --build-number` |
 
 The publish workflows refuse to run with the upstream ids, so a missing variable
 can never publish under the wger identity. Local and upstream builds are not
@@ -54,17 +54,18 @@ on the repository or on the environment (an environment value wins).
 | `APP_NAME` | both | `Example Fit` | At most 30 characters. |
 | `QA_SERVER_URL` | qa | `https://qa.wger.example.com` | `https://`, trailing slash is removed. |
 | `PROD_SERVER_URL` | production | `https://wger.example.com` | Same. |
-| `BUILD_NUMBER_OFFSET` | optional | `0` | Added to the run number, see below. |
+| `BUILD_NUMBER_OFFSET` | optional | `0` | Added to the build number, see below. |
 | `PLAY_RELEASE_STATUS` | optional, qa | `draft` | Release status of the internal track upload, default `completed`. Production uses the run input. |
 
 ### Build numbers
 
-The build number is `github.run_number + BUILD_NUMBER_OFFSET`. `run_number`
-counts per workflow, so `publish-qa` and `publish-production` count
-independently, while Google Play and App Store Connect want unique and rising
-numbers for the app as a whole. Define `BUILD_NUMBER_OFFSET` on the
-**environments**, e.g. `0` on `qa` and `100000` on `production`, so production
-builds always sit above the QA ones. Google Play only accepts version codes up to
+The build number is `minutes since 2024-01-01 UTC × 10 + run_number mod 10 +
+BUILD_NUMBER_OFFSET`. It comes from the clock, so `publish-qa` and
+`publish-production` share one rising sequence (Google Play and App Store Connect
+want unique and rising numbers for the app as a whole, across all tracks), and the
+run number keeps two builds started in the same minute apart.
+`BUILD_NUMBER_OFFSET` is only needed when the app already has higher numbers in
+the stores. Google Play only accepts version codes up to
 2100000000, the workflow checks it. If you move an existing app to this
 pipeline, set the offset above the highest number already uploaded.
 

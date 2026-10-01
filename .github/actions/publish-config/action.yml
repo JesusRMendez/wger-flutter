@@ -36,7 +36,7 @@ outputs:
     description: 'Server url without trailing slash'
     value: ${{ steps.config.outputs.server_url }}
   build-number:
-    description: 'Monotonic build number: run number plus offset'
+    description: 'Monotonic build number shared by all workflows: minutes since 2024-01-01 x10 + run number mod 10 + offset'
     value: ${{ steps.config.outputs.build_number }}
 
 runs:
@@ -104,7 +104,12 @@ runs:
           exit 1
         fi
 
-        build_number=$((RUN_NUMBER + OFFSET))
+        # Minutes since 2024-01-01 UTC: shared by the QA and production workflows,
+        # so their builds never reuse a number in the same Play / App Store app
+        # (each workflow has its own run_number). The run number keeps two builds
+        # started in the same minute apart.
+        minutes=$(( ( $(date -u +%s) - 1704067200 ) / 60 ))
+        build_number=$((minutes * 10 + RUN_NUMBER % 10 + OFFSET))
         # Google Play rejects version codes above 2100000000
         if (( build_number > 2100000000 )); then
           echo "::error title=Invalid publishing configuration::Build number $build_number is above 2100000000"
@@ -121,4 +126,4 @@ runs:
         echo "App id:        $APP_ID"
         echo "App name:      $APP_NAME"
         echo "Server:        $SERVER_URL"
-        echo "Build number:  $build_number (run $RUN_NUMBER + offset $OFFSET)"
+        echo "Build number:  $build_number (minutes since 2024 x10 + run $RUN_NUMBER mod 10 + offset $OFFSET)"
