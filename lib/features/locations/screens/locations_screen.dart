@@ -20,11 +20,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/confirm_delete_dialog.dart';
 import 'package:wger/features/locations/models/training_location.dart';
 import 'package:wger/features/locations/providers/locations_repository.dart';
 import 'package:wger/features/locations/screens/location_edit_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 /// Lists the training locations of the user
 class LocationsScreen extends ConsumerWidget {
@@ -65,33 +67,45 @@ class LocationsScreen extends ConsumerWidget {
             }
 
             return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
               children: [
                 for (final location in items)
-                  ListTile(
-                    key: ValueKey('location-${location.id}'),
-                    leading: Icon(location.isDefault ? Icons.star : Icons.place_outlined),
-                    title: Text(location.name),
-                    subtitle: Text(
-                      [
-                        i18n.locationsEquipmentCount(location.equipmentIds.length),
-                        if (location.availableMinutes != null)
-                          i18n.locationsMinutesValue(location.availableMinutes!),
-                        if (location.isDefault) i18n.locationsDefault,
-                      ].join(' · '),
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: i18n.delete,
-                      onPressed: () => showConfirmDeleteDialog(
-                        context,
-                        itemName: location.name,
-                        onConfirm: () async {
-                          await ref.read(locationsRepositoryProvider).deleteLocation(location.id!);
-                          ref.invalidate(trainingLocationsProvider);
-                        },
+                  AtlasCard(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
+                      key: ValueKey('location-${location.id}'),
+                      contentPadding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
+                      leading: IconBadge(
+                        location.isDefault ? Icons.star : Icons.place_outlined,
+                        color: location.isDefault ? context.atlas.warn : null,
+                        background: location.isDefault ? context.atlas.warnSoft : null,
                       ),
+                      title: Text(location.name),
+                      subtitle: Text(
+                        [
+                          i18n.locationsEquipmentCount(location.equipmentIds.length),
+                          if (location.availableMinutes != null)
+                            i18n.locationsMinutesValue(location.availableMinutes!),
+                          if (location.isDefault) i18n.locationsDefault,
+                        ].join(' · '),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: i18n.delete,
+                        onPressed: () => showConfirmDeleteDialog(
+                          context,
+                          itemName: location.name,
+                          onConfirm: () async {
+                            await ref
+                                .read(locationsRepositoryProvider)
+                                .deleteLocation(location.id!);
+                            ref.invalidate(trainingLocationsProvider);
+                          },
+                        ),
+                      ),
+                      onTap: () => _open(context, ref, location),
                     ),
-                    onTap: () => _open(context, ref, location),
                   ),
               ],
             );
