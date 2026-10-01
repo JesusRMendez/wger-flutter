@@ -142,9 +142,56 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                       child: Center(child: CircularProgressIndicator()),
                     ),
                   if (chat.error != null) CoachErrorView(chat.error!),
+                  if (chat.messages.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline, size: 14, color: context.atlas.ink3),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              i18n.coachDisclaimer,
+                              key: const ValueKey('coach-disclaimer'),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(color: context.atlas.ink3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
+            if (mode != CoachMode.none)
+              SizedBox(
+                height: 44,
+                child: ListView(
+                  key: const ValueKey('coach-suggestions'),
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: [
+                    for (final text in [
+                      i18n.coachSuggestShortWeek,
+                      i18n.coachSuggestProtein,
+                      i18n.coachSuggestDeload,
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: PillChip(
+                          text,
+                          height: 36,
+                          fontSize: 13,
+                          onTap: chat.sending
+                              ? null
+                              : () => ref.read(coachChatProvider.notifier).send(text),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
