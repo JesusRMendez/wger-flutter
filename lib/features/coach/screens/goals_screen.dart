@@ -105,6 +105,10 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
         title: Text(i18n.coachGoalsAndIndicators),
         bottom: TabBar(
           controller: _tabs,
+          // The app bar uses the primary colour, keep the labels readable on it
+          labelColor: theme.colorScheme.onPrimary,
+          unselectedLabelColor: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
+          indicatorColor: theme.colorScheme.onPrimary,
           tabs: [for (final p in goalPeriods) Tab(text: i18n.periodLabel(p))],
         ),
       ),

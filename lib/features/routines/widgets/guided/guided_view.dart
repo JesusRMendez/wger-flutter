@@ -116,9 +116,11 @@ class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
       case GuidedPhase.countdown:
         return MusicPhase.warmUp;
       case GuidedPhase.rest:
-      case GuidedPhase.askReps:
       case GuidedPhase.done:
         return MusicPhase.rest;
+      // Asking for the reps comes right after the work, the music shouldn't
+      // switch to the rest tempo for that short moment
+      case GuidedPhase.askReps:
       case GuidedPhase.work:
         return _engine.currentStep?.kind == GuidedKind.timed
             ? MusicPhase.hiit
