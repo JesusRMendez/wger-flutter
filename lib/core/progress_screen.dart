@@ -19,6 +19,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
 import 'package:wger/core/widgets/atlas.dart';
+import 'package:wger/core/widgets/dashboard/widgets/weight.dart';
 import 'package:wger/features/coach/screens/goals_screen.dart';
 import 'package:wger/features/gallery/screens/gallery_screen.dart';
 import 'package:wger/features/measurements/screens/measurement_categories_screen.dart';
@@ -81,6 +82,9 @@ class ProgressScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
+            // The weight at a glance, the way the dashboard shows it
+            const DashboardWeightWidget(),
+            const SizedBox(height: 12),
             row(
               const ValueKey('progress-weight'),
               Icons.monitor_weight_outlined,

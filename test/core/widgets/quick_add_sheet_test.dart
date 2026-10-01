@@ -106,11 +106,17 @@ void main() {
 
   testWidgets('the progress tab links the screens it gathers', (tester) async {
     await tester.pumpWidget(host(const ProgressScreen()));
-    await tester.pumpAndSettle();
+    // The weight card spins until its data arrives, so no pumpAndSettle
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Progress'), findsOneWidget);
     for (final key in ['weight', 'measurements', 'gallery', 'trophies', 'goals']) {
-      expect(find.byKey(ValueKey('progress-$key')), findsOneWidget, reason: key);
+      expect(
+        find.byKey(ValueKey('progress-$key'), skipOffstage: false),
+        findsOneWidget,
+        reason: key,
+      );
     }
   });
 }
