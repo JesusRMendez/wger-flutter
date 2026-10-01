@@ -62,6 +62,21 @@ class GymStateNotifier extends _$GymStateNotifier {
       state = state.copyWith(alertOnCountdownEnd: alertOnCountdownEnd);
     }
 
+    final alertAt20s = await prefs.getBool(PREFS_ALERT_AT_20S);
+    if (alertAt20s != null && alertAt20s != state.alertAt20s) {
+      state = state.copyWith(alertAt20s: alertAt20s);
+    }
+
+    final alertLast5s = await prefs.getBool(PREFS_ALERT_LAST_5S);
+    if (alertLast5s != null && alertLast5s != state.alertLast5s) {
+      state = state.copyWith(alertLast5s: alertLast5s);
+    }
+
+    final autoAdvanceAfterRest = await prefs.getBool(PREFS_AUTO_ADVANCE_AFTER_REST);
+    if (autoAdvanceAfterRest != null && autoAdvanceAfterRest != state.autoAdvanceAfterRest) {
+      state = state.copyWith(autoAdvanceAfterRest: autoAdvanceAfterRest);
+    }
+
     final useCountdownBetweenSets = await prefs.getBool(PREFS_USE_COUNTDOWN_BETWEEN_SETS);
     if (useCountdownBetweenSets != null &&
         useCountdownBetweenSets != state.useCountdownBetweenSets) {
@@ -96,6 +111,9 @@ class GymStateNotifier extends _$GymStateNotifier {
       'showExercise=$showExercise '
       'showTimer=$showTimer '
       'alertOnCountdownEnd=$alertOnCountdownEnd '
+      'alertAt20s=$alertAt20s '
+      'alertLast5s=$alertLast5s '
+      'autoAdvanceAfterRest=$autoAdvanceAfterRest '
       'useCountdownBetweenSets=$useCountdownBetweenSets '
       'defaultCountdownDurationSeconds=$defaultCountdownDurationSeconds'
       'logScopeWeeks=$logScopeWeeks '
@@ -109,6 +127,9 @@ class GymStateNotifier extends _$GymStateNotifier {
     await prefs.setBool(PREFS_SHOW_EXERCISES, state.showExercisePages);
     await prefs.setBool(PREFS_SHOW_TIMER, state.showTimerPages);
     await prefs.setBool(PREFS_ALERT_COUNTDOWN, state.alertOnCountdownEnd);
+    await prefs.setBool(PREFS_ALERT_AT_20S, state.alertAt20s);
+    await prefs.setBool(PREFS_ALERT_LAST_5S, state.alertLast5s);
+    await prefs.setBool(PREFS_AUTO_ADVANCE_AFTER_REST, state.autoAdvanceAfterRest);
     await prefs.setBool(PREFS_USE_COUNTDOWN_BETWEEN_SETS, state.useCountdownBetweenSets);
     await prefs.setInt(
       PREFS_COUNTDOWN_DURATION,
@@ -127,6 +148,9 @@ class GymStateNotifier extends _$GymStateNotifier {
       'showExercise=${state.showExercisePages} '
       'showTimer=${state.showTimerPages} '
       'alertOnCountdownEnd=${state.alertOnCountdownEnd} '
+      'alertAt20s=${state.alertAt20s} '
+      'alertLast5s=${state.alertLast5s} '
+      'autoAdvanceAfterRest=${state.autoAdvanceAfterRest} '
       'useCountdownBetweenSets=${state.useCountdownBetweenSets} '
       'defaultCountdownDuration=${state.countdownDuration.inSeconds}'
       'logScopeWeeks=${state.logScopeWeeks} '
@@ -339,6 +363,21 @@ class GymStateNotifier extends _$GymStateNotifier {
     _savePrefs();
   }
 
+  void setAlertAt20s(bool value) {
+    state = state.copyWith(alertAt20s: value);
+    _savePrefs();
+  }
+
+  void setAlertLast5s(bool value) {
+    state = state.copyWith(alertLast5s: value);
+    _savePrefs();
+  }
+
+  void setAutoAdvanceAfterRest(bool value) {
+    state = state.copyWith(autoAdvanceAfterRest: value);
+    _savePrefs();
+  }
+
   void setUseCountdownBetweenSets(bool value) {
     state = state.copyWith(useCountdownBetweenSets: value);
     _savePrefs();
@@ -479,6 +518,78 @@ class GymStateNotifier extends _$GymStateNotifier {
     );
 
     recalculateIndices();
+  }
+
+  /// Moves the set page with [pageUuid] to the position [newIndex] (an index in
+  /// [GymModeState.pages]) among the exercises that are still to be done.
+  ///
+  /// Pages that are finished or already started never move: only the pages
+  /// that are not yet touched take part and they are permuted among
+  /// themselves, so every other page keeps exactly its position. If [newIndex]
+  /// is not the position of a movable page, the closest one is used.
+  /// Timer pages travel with the exercise they belong to, so the rest after a
+  /// set is still the rest of the set that was just performed.
+  ///
+  /// If the page currently shown is a set page, [GymModeState.currentPage]
+  /// follows it to its new index. Returns whether the order changed.
+  bool moveSlot(String pageUuid, int newIndex) {
+    final pages = state.pages;
+    final oldIndex = pages.indexWhere((p) => p.uuid == pageUuid);
+    if (oldIndex == -1) {
+      _logger.warning('No page found for UUID $pageUuid');
+      return false;
+    }
+    if (!pages[oldIndex].isMovable) {
+      _logger.fine('Page $pageUuid is not movable (done, started or not a set)');
+      return false;
+    }
+
+    final movable = state.movablePageIndices;
+    final oldRank = movable.indexOf(oldIndex);
+    var newRank = 0;
+    for (var rank = 0; rank < movable.length; rank++) {
+      if ((movable[rank] - newIndex).abs() < (movable[newRank] - newIndex).abs()) {
+        newRank = rank;
+      }
+    }
+    if (newRank == oldRank) {
+      return false;
+    }
+
+    final reordered = movable.map((i) => pages[i]).toList();
+    reordered.insert(newRank, reordered.removeAt(oldRank));
+
+    final updatedPages = [...pages];
+    for (var rank = 0; rank < movable.length; rank++) {
+      updatedPages[movable[rank]] = reordered[rank];
+    }
+
+    // Remember what is currently shown so that it can be found again
+    final currentSlotUuid = state.getSlotEntryPageByIndex()?.uuid;
+
+    state = state.copyWith(pages: updatedPages);
+    recalculateIndices();
+
+    if (currentSlotUuid != null) {
+      final moved = state.getSlotPageByUUID(currentSlotUuid);
+      if (moved != null) {
+        state = state.copyWith(currentPage: moved.pageIndex);
+      }
+    }
+
+    _logger.fine('Moved page $pageUuid from index $oldIndex to $newIndex');
+    return true;
+  }
+
+  /// Moves the set page one position up (earlier) or down (later) among the
+  /// movable ones. Returns whether the order changed.
+  bool moveSlotBy(String pageUuid, {required bool up}) {
+    if (!state.canMovePage(pageUuid, up: up)) {
+      return false;
+    }
+    final movable = state.movablePageIndices;
+    final rank = movable.indexOf(state.pages.indexWhere((p) => p.uuid == pageUuid));
+    return moveSlot(pageUuid, movable[up ? rank - 1 : rank + 1]);
   }
 
   /// Resets the workout start time to now, e.g. when the user taps "start"

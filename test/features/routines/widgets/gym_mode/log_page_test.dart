@@ -29,11 +29,15 @@ import 'package:wger/core/widgets/error.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
 import 'package:wger/features/routines/models/day_data.dart';
 import 'package:wger/features/routines/models/log.dart';
+import 'package:wger/features/routines/models/repetition_unit.dart';
 import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/models/set_config_data.dart';
 import 'package:wger/features/routines/models/slot_data.dart';
+import 'package:wger/features/routines/models/weight_unit.dart';
+import 'package:wger/features/routines/providers/gym_log_notifier.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
+import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/providers/workout_logs_repository.dart';
 import 'package:wger/features/routines/widgets/gym_mode/log_page.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
@@ -249,6 +253,112 @@ void main() {
       // The lazy session needs the day, otherwise days that need logs to
       // advance can't see it (issue wger#2460)
       expect(captured[1], gymState.dayId);
+    });
+
+    group('keeps the units of the set', () {
+      // (weight unit, repetition unit, weight, repetitions, header text)
+      final cases = <(WeightUnit, RepetitionUnit, num?, num?, String)>[
+        (testdata.testWeightUnitLb, testdata.testRepUnitReps, 135, 8, '8 × 135 lb'),
+        (testdata.testWeightUnitBodyWeight, testdata.testRepUnitReps, null, 10, '10 × Body Weight'),
+        (testdata.testWeightUnitPlates, testdata.testRepUnitReps, 2, 5, '5 × 2 Plates'),
+        (testdata.testWeightUnitKg, testdata.testRepUnitSeconds, null, 30, '30 Seconds'),
+        (testdata.testWeightUnitLb, testdata.testRepUnitMinutes, 20, 2, '2 Minutes × 20 lb'),
+        (
+          testdata.testWeightUnitKg,
+          testdata.testRepUnitUntilFailure,
+          40,
+          null,
+          'Until Failure × 40 kg',
+        ),
+      ];
+
+      for (final (weightUnit, repUnit, weight, reps, header) in cases) {
+        testWidgets('${weightUnit.name} / ${repUnit.name}', (tester) async {
+          container = ProviderContainer.test(
+            overrides: [
+              workoutLogRepositoryProvider.overrideWithValue(mockWorkoutLogRepo),
+              routineWeightUnitProvider.overrideWith(
+                (ref) => Stream.value(testdata.testWeightUnitsExtended),
+              ),
+              routineRepetitionUnitProvider.overrideWith(
+                (ref) => Stream.value(testdata.testRepUnitsExtended),
+              ),
+            ],
+          );
+          // The logs of the first exercise are in kg and repetitions
+          final routine = testdata.getTestRoutineWithSlots([
+            testdata.getTestSlot(
+              testExercises[0],
+              repetitions: reps,
+              repetitionsUnit: repUnit,
+              weight: weight,
+              weightUnit: weightUnit,
+              textRepr: header,
+            ),
+          ]);
+          seedLogPage(routine);
+          await pumpLogPage(tester);
+
+          // The draft that is going to be saved carries the planned units
+          final log = container.read(gymLogProvider)!;
+          expect(log.weightUnitObj, weightUnit);
+          expect(log.weightUnitId, weightUnit.id);
+          expect(log.repetitionsUnitObj, repUnit);
+          expect(log.repetitionsUnitId, repUnit.id);
+
+          // The header shows the set as planned
+          expect(find.text(header), findsOneWidget);
+
+          // The form labels the fields with the units, not with kg / repetitions
+          final weightLabel = find.descendant(
+            of: find.byKey(const ValueKey('logs-weight-widget')),
+            matching: find.text(weightUnit.name),
+          );
+          final repsLabel = find.descendant(
+            of: find.byKey(const ValueKey('logs-reps-widget')),
+            matching: find.text(repUnit.name),
+          );
+          expect(weightLabel, findsOneWidget);
+          expect(repsLabel, findsOneWidget);
+        });
+      }
+
+      testWidgets('changing the units in the form only changes the draft', (tester) async {
+        container = ProviderContainer.test(
+          overrides: [
+            workoutLogRepositoryProvider.overrideWithValue(mockWorkoutLogRepo),
+            routineWeightUnitProvider.overrideWith(
+              (ref) => Stream.value(testdata.testWeightUnitsExtended),
+            ),
+            routineRepetitionUnitProvider.overrideWith(
+              (ref) => Stream.value(testdata.testRepUnitsExtended),
+            ),
+          ],
+        );
+        seedLogPage(
+          testdata.getTestRoutineWithSlots([
+            testdata.getTestSlot(testExercises[0], textRepr: '10 × 50 kg'),
+          ]),
+        );
+        await pumpLogPage(tester);
+
+        final weightWidget = find.byKey(const ValueKey('logs-weight-widget'));
+        await tester.tap(
+          find.descendant(of: weightWidget, matching: find.byType(PopupMenuButton<int>)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('lb').last);
+        await tester.pumpAndSettle();
+
+        expect(container.read(gymLogProvider)!.weightUnitObj, testdata.testWeightUnitLb);
+        expect(
+          find.descendant(of: weightWidget, matching: find.text('lb')),
+          findsOneWidget,
+        );
+        // The plan of the set did not change
+        final planned = container.read(gymStateProvider).getSlotEntryPageByIndex()!.setConfigData!;
+        expect(planned.weightUnit, testdata.testWeightUnitKg);
+      });
     });
 
     testWidgets('reps quick buttons increment and decrement the value', (tester) async {

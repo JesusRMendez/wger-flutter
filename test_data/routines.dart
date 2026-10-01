@@ -40,6 +40,79 @@ const RepetitionUnit testRepetitionUnit1 = RepetitionUnit(id: 1, name: 'Repetiti
 const RepetitionUnit testRepetitionUnit2 = RepetitionUnit(id: 2, name: 'Hours');
 const testRepetitionUnits = [testRepetitionUnit1, testRepetitionUnit2];
 
+// Further units, as they exist on the server, for the tests that make sure
+// nothing is assumed to be kg or repetitions
+const testWeightUnitKg = WeightUnit(id: 1, name: 'kg');
+const testWeightUnitLb = WeightUnit(id: 2, name: 'lb');
+const testWeightUnitBodyWeight = WeightUnit(id: 3, name: 'Body Weight');
+const testWeightUnitPlates = WeightUnit(id: 4, name: 'Plates');
+const testWeightUnitsExtended = [
+  testWeightUnitKg,
+  testWeightUnitLb,
+  testWeightUnitBodyWeight,
+  testWeightUnitPlates,
+];
+
+const testRepUnitReps = RepetitionUnit(id: 1, name: 'Repetitions');
+const testRepUnitUntilFailure = RepetitionUnit(id: 2, name: 'Until Failure');
+const testRepUnitSeconds = RepetitionUnit(id: 3, name: 'Seconds');
+const testRepUnitMinutes = RepetitionUnit(id: 4, name: 'Minutes');
+const testRepUnitsExtended = [
+  testRepUnitReps,
+  testRepUnitUntilFailure,
+  testRepUnitSeconds,
+  testRepUnitMinutes,
+];
+
+/// A routine for gym mode whose only day (id 1) has the given [slots]
+Routine getTestRoutineWithSlots(List<SlotData> slots) {
+  final routine = getTestRoutine();
+  routine.dayDataGym = [
+    DayData(
+      iteration: 1,
+      date: DateTime(2024, 11, 01),
+      label: '',
+      day: routine.dayDataGym.first.day,
+      slots: slots,
+    ),
+  ];
+  return routine;
+}
+
+/// A slot with [sets] identical sets of one exercise
+SlotData getTestSlot(
+  Exercise exercise, {
+  int sets = 2,
+  num? repetitions = 10,
+  num? weight = 50,
+  RepetitionUnit? repetitionsUnit = testRepUnitReps,
+  WeightUnit? weightUnit = testWeightUnitKg,
+  num? restTime,
+  String textRepr = '',
+}) {
+  return SlotData(
+    isSuperset: false,
+    exerciseIds: [exercise.id],
+    setConfigs: List.generate(
+      sets,
+      (_) => SetConfigData(
+        exerciseId: exercise.id,
+        exercise: exercise,
+        slotEntryId: 1,
+        nrOfSets: 1,
+        repetitions: repetitions,
+        repetitionsUnit: repetitionsUnit,
+        repetitionsUnitId: repetitionsUnit?.id,
+        weight: weight,
+        weightUnit: weightUnit,
+        weightUnitId: weightUnit?.id,
+        restTime: restTime,
+        textRepr: textRepr,
+      ),
+    ),
+  );
+}
+
 Routine getTestRoutine({List<Exercise>? exercises}) {
   final testExercises = exercises ?? getTestExercises();
 

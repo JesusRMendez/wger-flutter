@@ -625,4 +625,261 @@ void main() {
       expect(state.copyWith(clearLogScopeWeeks: true).logScopeWeeks, isNull);
     });
   });
+
+  group('GymStateNotifier rest alert and auto-advance prefs', () {
+    test('default to on', () {
+      final state = GymModeState();
+      expect(state.alertAt20s, isTrue);
+      expect(state.alertLast5s, isTrue);
+      expect(state.autoAdvanceAfterRest, isTrue);
+    });
+
+    test('are saved and loaded again', () async {
+      notifier.setAlertAt20s(false);
+      notifier.setAlertLast5s(false);
+      notifier.setAutoAdvanceAfterRest(false);
+      await pumpEventQueue();
+
+      final prefs = PreferenceHelper.asyncPref;
+      expect(await prefs.getBool(PREFS_ALERT_AT_20S), false);
+      expect(await prefs.getBool(PREFS_ALERT_LAST_5S), false);
+      expect(await prefs.getBool(PREFS_AUTO_ADVANCE_AFTER_REST), false);
+
+      final other = ProviderContainer.test();
+      final otherNotifier = other.read(gymStateProvider.notifier);
+      otherNotifier.state = GymModeState(dayId: 1, iteration: 1, routine: getTestRoutine());
+      expect(otherNotifier.state.alertAt20s, isTrue);
+
+      await otherNotifier.loadPrefs();
+
+      expect(otherNotifier.state.alertAt20s, isFalse);
+      expect(otherNotifier.state.alertLast5s, isFalse);
+      expect(otherNotifier.state.autoAdvanceAfterRest, isFalse);
+    });
+
+    test('are kept by copyWith', () {
+      final state = notifier.state.copyWith(alertAt20s: false);
+      expect(state.copyWith(showTimerPages: false).alertAt20s, isFalse);
+      expect(state.alertLast5s, isTrue);
+    });
+  });
+
+  group('GymModeState navigation helpers', () {
+    test('nextLogSlotPageAfter finds the set that follows a timer', () {
+      final slotPages = notifier.state.pages[1].slotPages;
+      final timer = slotPages.firstWhere((s) => s.type == SlotPageType.timer);
+
+      final next = notifier.state.nextLogSlotPageAfter(timer.pageIndex)!;
+
+      expect(next.type, SlotPageType.log);
+      expect(next.pageIndex, greaterThan(timer.pageIndex));
+      expect(next.setIndex, 1, reason: 'second set of the same exercise');
+    });
+
+    test('nextLogSlotPageAfter skips the overview page of the next exercise', () {
+      final firstPage = notifier.state.pages[1];
+      final lastTimer = firstPage.slotPages.last;
+      expect(lastTimer.type, SlotPageType.timer);
+
+      final next = notifier.state.nextLogSlotPageAfter(lastTimer.pageIndex)!;
+
+      expect(next.type, SlotPageType.log);
+      expect(next.setConfigData!.exercise.id, isNot(firstPage.exercises.first.id));
+      expect(next.pageIndex, lastTimer.pageIndex + 2, reason: 'overview page in between');
+    });
+
+    test('nextLogSlotPageAfter is null after the last set', () {
+      final lastSlot = notifier.state.pages.reversed
+          .firstWhere((p) => p.type == PageType.set)
+          .slotPages
+          .last;
+
+      expect(notifier.state.nextLogSlotPageAfter(lastSlot.pageIndex), isNull);
+    });
+  });
+
+  group('GymStateNotifier.moveSlot', () {
+    final bench = getTestExercises()[0];
+    final squats = getTestExercises()[4];
+    final raises = getTestExercises()[5];
+
+    List<int> exerciseOrder() => notifier.state.pages
+        .where((p) => p.type == PageType.set)
+        .map((p) => p.exercises.single.id)
+        .toList();
+
+    void markDone(PageEntry page) {
+      for (final slot in page.slotPages.where((s) => s.type == SlotPageType.log)) {
+        notifier.markSlotPageAsDone(slot.uuid, isDone: true);
+      }
+    }
+
+    setUp(() {
+      notifier.state = notifier.state.copyWith(
+        showExercisePages: true,
+        showTimerPages: true,
+        routine: getTestRoutineWithSlots([
+          getTestSlot(bench, restTime: 120),
+          getTestSlot(squats, restTime: 60),
+          getTestSlot(raises, restTime: 45),
+        ]),
+      );
+      notifier.calculatePages();
+    });
+
+    test('moves a page up and recalculates the indices', () {
+      final raisesPage = notifier.state.pages[3];
+
+      final moved = notifier.moveSlot(raisesPage.uuid, 1);
+
+      expect(moved, isTrue);
+      expect(exerciseOrder(), [raises.id, bench.id, squats.id]);
+      expect(notifier.state.pages[1].uuid, raisesPage.uuid);
+
+      // 1 overview + 2 * (log + timer) = 5 pages per exercise
+      expect(notifier.state.pages.map((p) => p.pageIndex), [0, 1, 6, 11, 16, 17]);
+      var expectedIndex = 1;
+      for (final page in notifier.state.pages.where((p) => p.type == PageType.set)) {
+        for (final slot in page.slotPages) {
+          expect(slot.pageIndex, expectedIndex++);
+        }
+      }
+    });
+
+    test('moves a page down', () {
+      final moved = notifier.moveSlot(notifier.state.pages[1].uuid, 3);
+
+      expect(moved, isTrue);
+      expect(exerciseOrder(), [squats.id, raises.id, bench.id]);
+    });
+
+    test('never moves a finished page, the others are permuted around it', () {
+      final benchPage = notifier.state.pages[1];
+      markDone(benchPage);
+      final raisesPage = notifier.state.pages[3];
+
+      // Index 1 is the finished page, so the first free position is used
+      final moved = notifier.moveSlot(raisesPage.uuid, 1);
+
+      expect(moved, isTrue);
+      expect(exerciseOrder(), [bench.id, raises.id, squats.id]);
+      expect(notifier.state.pages[1].uuid, benchPage.uuid);
+      expect(notifier.state.pages[1].allLogsDone, isTrue);
+      expect(notifier.state.pages[1].pageIndex, 1);
+    });
+
+    test('a finished page in the middle keeps its position', () {
+      // The user did the second exercise first
+      final squatsPage = notifier.state.pages[2];
+      markDone(squatsPage);
+
+      final moved = notifier.moveSlot(notifier.state.pages[3].uuid, 1);
+
+      expect(moved, isTrue);
+      expect(exerciseOrder(), [raises.id, squats.id, bench.id]);
+      expect(notifier.state.pages[2].uuid, squatsPage.uuid);
+    });
+
+    test('refuses to move a finished or started page', () {
+      final benchPage = notifier.state.pages[1];
+      markDone(benchPage);
+      expect(notifier.moveSlot(benchPage.uuid, 3), isFalse);
+
+      final squatsPage = notifier.state.pages[2];
+      notifier.markSlotPageAsDone(
+        squatsPage.slotPages.firstWhere((s) => s.type == SlotPageType.log).uuid,
+        isDone: true,
+      );
+      expect(notifier.moveSlot(squatsPage.uuid, 3), isFalse, reason: 'already started');
+
+      expect(exerciseOrder(), [bench.id, squats.id, raises.id]);
+    });
+
+    test('refuses non set pages and unknown pages', () {
+      expect(notifier.moveSlot(notifier.state.pages.first.uuid, 2), isFalse);
+      expect(notifier.moveSlot(notifier.state.pages.last.uuid, 2), isFalse);
+      expect(notifier.moveSlot('unknown', 2), isFalse);
+      expect(exerciseOrder(), [bench.id, squats.id, raises.id]);
+    });
+
+    test('clamps an out of range target to the nearest movable position', () {
+      notifier.moveSlot(notifier.state.pages[1].uuid, 100);
+      expect(exerciseOrder(), [squats.id, raises.id, bench.id]);
+
+      notifier.moveSlot(notifier.state.pages[3].uuid, -5);
+      expect(exerciseOrder(), [bench.id, squats.id, raises.id]);
+    });
+
+    test('moving to the current position does nothing', () {
+      final before = notifier.state.pages;
+
+      expect(notifier.moveSlot(before[2].uuid, 2), isFalse);
+
+      expect(identical(notifier.state.pages, before), isTrue);
+    });
+
+    test('the current page follows the slot it showed', () {
+      // Shown: first log page of squats (overview, log -> index 6 + 1)
+      final squatsLog = notifier.state.pages[2].slotPages.firstWhere(
+        (s) => s.type == SlotPageType.log,
+      );
+      notifier.state = notifier.state.copyWith(currentPage: squatsLog.pageIndex);
+
+      notifier.moveSlot(notifier.state.pages[3].uuid, 1);
+
+      final slot = notifier.state.getSlotPageByUUID(squatsLog.uuid)!;
+      expect(slot.pageIndex, isNot(squatsLog.pageIndex));
+      expect(notifier.state.currentPage, slot.pageIndex);
+    });
+
+    test('moveSlotBy moves one position among the movable pages', () {
+      final squatsPage = notifier.state.pages[2];
+      expect(notifier.state.canMovePage(squatsPage.uuid, up: true), isTrue);
+      expect(notifier.state.canMovePage(notifier.state.pages[1].uuid, up: true), isFalse);
+      expect(notifier.state.canMovePage(notifier.state.pages[3].uuid, up: false), isFalse);
+
+      expect(notifier.moveSlotBy(squatsPage.uuid, up: true), isTrue);
+      expect(exerciseOrder(), [squats.id, bench.id, raises.id]);
+
+      expect(notifier.moveSlotBy(squatsPage.uuid, up: true), isFalse, reason: 'already first');
+    });
+
+    test('wouldSkipAhead is true for pages behind exercises that are not done', () {
+      final pages = notifier.state.pages;
+      expect(notifier.state.wouldSkipAhead(pages[1].uuid), isFalse);
+      expect(notifier.state.wouldSkipAhead(pages[3].uuid), isTrue);
+
+      markDone(pages[1]);
+      markDone(pages[2]);
+      expect(notifier.state.wouldSkipAhead(notifier.state.pages[3].uuid), isFalse);
+      expect(notifier.state.wouldSkipAhead(notifier.state.pages[1].uuid), isFalse);
+    });
+
+    test('the rest after a set is still the rest of the exercise that was just done', () {
+      // Move the exercise with the shortest rest to the front
+      notifier.moveSlot(notifier.state.pages[3].uuid, 1);
+
+      final rests = {bench.id: 120, squats.id: 60, raises.id: 45};
+      for (final page in notifier.state.pages.where((p) => p.type == PageType.set)) {
+        final slots = page.slotPages;
+        for (var i = 0; i < slots.length; i++) {
+          if (slots[i].type != SlotPageType.timer) {
+            continue;
+          }
+          final log = slots[i - 1];
+          expect(log.type, SlotPageType.log, reason: 'a timer directly follows its set');
+          expect(slots[i].pageIndex, log.pageIndex + 1);
+          expect(slots[i].setConfigData!.exercise.id, log.setConfigData!.exercise.id);
+          expect(slots[i].setConfigData!.restTime, rests[log.setConfigData!.exercise.id]);
+        }
+      }
+
+      // The first timer after the reorder belongs to side raises
+      final firstTimer = notifier.state.pages[1].slotPages.firstWhere(
+        (s) => s.type == SlotPageType.timer,
+      );
+      expect(firstTimer.setConfigData!.exercise.id, raises.id);
+      expect(firstTimer.setConfigData!.restTime, 45);
+    });
+  });
 }

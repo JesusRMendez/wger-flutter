@@ -29,6 +29,9 @@ const DEFAULT_DURATION = Duration(hours: 5);
 const PREFS_SHOW_EXERCISES = 'showExercisePrefs';
 const PREFS_SHOW_TIMER = 'showTimerPrefs';
 const PREFS_ALERT_COUNTDOWN = 'alertCountdownPrefs';
+const PREFS_ALERT_AT_20S = 'alertAt20sPrefs';
+const PREFS_ALERT_LAST_5S = 'alertLast5sPrefs';
+const PREFS_AUTO_ADVANCE_AFTER_REST = 'autoAdvanceAfterRestPrefs';
 const PREFS_USE_COUNTDOWN_BETWEEN_SETS = 'useCountdownBetweenSetsPrefs';
 const PREFS_COUNTDOWN_DURATION = 'countdownDurationSecondsPrefs';
 const PREFS_LOG_SCOPE_WEEKS = 'logScopeWeeksPrefs';
@@ -99,6 +102,14 @@ class PageEntry {
   // Whether all sub-pages (e.g. log pages) are marked as done.
   bool get allLogsDone =>
       slotPages.where((entry) => entry.type == SlotPageType.log).every((entry) => entry.logDone);
+
+  /// Whether at least one of the log pages is marked as done
+  bool get anyLogDone => slotPages.any((entry) => entry.type == SlotPageType.log && entry.logDone);
+
+  /// Whether this page can be moved to another position in the workout. Only
+  /// set pages that have not been started yet can, finished or in-progress
+  /// exercises stay where they are.
+  bool get isMovable => type == PageType.set && slotPages.isNotEmpty && !anyLogDone;
 
   @override
   String toString() => 'PageEntry(type: $type, pageIndex: $pageIndex)';
@@ -180,6 +191,15 @@ class GymModeState {
   final bool showExercisePages;
   final bool showTimerPages;
   final bool alertOnCountdownEnd;
+
+  /// Warn (sound and haptic feedback) when 20 seconds of the rest remain
+  final bool alertAt20s;
+
+  /// Tick (sound and haptic feedback) on each of the last 5 seconds of the rest
+  final bool alertLast5s;
+
+  /// Go to the next page when the rest countdown reaches zero
+  final bool autoAdvanceAfterRest;
   final bool useCountdownBetweenSets;
   final Duration countdownDuration;
   final int? logScopeWeeks;
@@ -199,6 +219,9 @@ class GymModeState {
     this.showExercisePages = true,
     this.showTimerPages = true,
     this.alertOnCountdownEnd = true,
+    this.alertAt20s = true,
+    this.alertLast5s = true,
+    this.autoAdvanceAfterRest = true,
     this.useCountdownBetweenSets = false,
     this.countdownDuration = const Duration(seconds: DEFAULT_COUNTDOWN_DURATION),
     this.logScopeWeeks,
@@ -242,6 +265,9 @@ class GymModeState {
     bool? showExercisePages,
     bool? showTimerPages,
     bool? alertOnCountdownEnd,
+    bool? alertAt20s,
+    bool? alertLast5s,
+    bool? autoAdvanceAfterRest,
     bool? useCountdownBetweenSets,
     int? countdownDuration,
     int? logScopeWeeks,
@@ -263,6 +289,9 @@ class GymModeState {
       showExercisePages: showExercisePages ?? this.showExercisePages,
       showTimerPages: showTimerPages ?? this.showTimerPages,
       alertOnCountdownEnd: alertOnCountdownEnd ?? this.alertOnCountdownEnd,
+      alertAt20s: alertAt20s ?? this.alertAt20s,
+      alertLast5s: alertLast5s ?? this.alertLast5s,
+      autoAdvanceAfterRest: autoAdvanceAfterRest ?? this.autoAdvanceAfterRest,
       useCountdownBetweenSets: useCountdownBetweenSets ?? this.useCountdownBetweenSets,
       countdownDuration: Duration(
         seconds: countdownDuration ?? this.countdownDuration.inSeconds,
@@ -324,6 +353,52 @@ class GymModeState {
       }
     }
     return null;
+  }
+
+  /// The first log page that comes after the given absolute page index, e.g.
+  /// to find the set that follows a rest timer. Skips exercise overview and
+  /// timer pages. Returns null if there is none (end of the workout).
+  SlotPageEntry? nextLogSlotPageAfter(int pageIndex) {
+    SlotPageEntry? next;
+    for (final slotPage in pages.expand((p) => p.slotPages)) {
+      if (slotPage.type == SlotPageType.log &&
+          slotPage.pageIndex > pageIndex &&
+          (next == null || slotPage.pageIndex < next.pageIndex)) {
+        next = slotPage;
+      }
+    }
+    return next;
+  }
+
+  /// Indices (in [pages]) of the pages that can still be reordered
+  List<int> get movablePageIndices => [
+    for (var i = 0; i < pages.length; i++)
+      if (pages[i].isMovable) i,
+  ];
+
+  /// Whether the page with the given UUID has a movable neighbour in the given
+  /// direction, i.e. whether it can be moved up (earlier) or down (later)
+  bool canMovePage(String uuid, {required bool up}) {
+    final movable = movablePageIndices;
+    final index = pages.indexWhere((p) => p.uuid == uuid);
+    final rank = movable.indexOf(index);
+    if (rank == -1) {
+      return false;
+    }
+    return up ? rank > 0 : rank < movable.length - 1;
+  }
+
+  /// Whether going to the set page with the given UUID skips at least one
+  /// exercise that comes before it in the workout and is not done yet
+  bool wouldSkipAhead(String uuid) {
+    final target = pages.indexWhere((p) => p.uuid == uuid);
+    if (target == -1 || pages[target].allLogsDone) {
+      return false;
+    }
+
+    return pages
+        .take(target)
+        .any((p) => p.type == PageType.set && p.slotPages.isNotEmpty && !p.allLogsDone);
   }
 
   double get ratioCompleted {
