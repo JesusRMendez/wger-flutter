@@ -15,8 +15,8 @@ Both run the tests (`ci.yml`) first. The shared build and upload steps live in t
 reusable workflows `publish-android.yml` and `publish-ios.yml`, and in the
 composite actions `.github/actions/publish-config`, `android-sign` and
 `ios-sign`. The upstream workflows (`make-release.yml`, `build-*.yml`) are
-untouched, except that `ci.yml` accepts an optional `ref` and has a per caller
-concurrency group.
+untouched, except that `ci.yml` can be called by other workflows and has a per
+caller concurrency group.
 
 ## How the customization is injected
 
@@ -196,8 +196,9 @@ newer push waits for the one that is uploading.
 
 ### Production
 
-* Actions > *Publish production* > Run workflow. Enter the branch, tag or commit,
-  choose the platforms, the Play release status (`draft` or `completed`) and
+* Actions > *Publish production* > Run workflow. Pick the branch or tag in
+  "Use workflow from" (its current commit is built, there is no free text ref
+  on purpose, see the CodeQL cache poisoning rule), choose the platforms, the Play release status (`draft` or `completed`) and
   whether to submit the iOS build for review.
 * Or push a tag: `git tag v2.1.0 && git push origin v2.1.0`. The tag has to match
   the version in `pubspec.yaml` (`2.1.0`), otherwise the run stops. Tag runs
