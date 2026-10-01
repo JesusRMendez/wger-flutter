@@ -125,12 +125,15 @@ class AtlasCard extends StatelessWidget {
     final bg = color ?? (hero ? atlas.hero : atlas.card);
     final border = hero ? Colors.transparent : (borderColor ?? atlas.line);
 
-    Widget content = DecoratedBox(
-      decoration: BoxDecoration(
-        color: dashed ? Colors.transparent : bg,
+    // A Material rather than a DecoratedBox, so list tiles inside paint their
+    // ink on the card's own surface
+    Widget content = Material(
+      color: dashed ? Colors.transparent : bg,
+      shape: RoundedRectangleBorder(
         borderRadius: r,
-        border: Border.all(color: border),
+        side: BorderSide(color: border),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
     );
 

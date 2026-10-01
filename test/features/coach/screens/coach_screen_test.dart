@@ -82,6 +82,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('AI is not available for your account'), findsOneWidget);
+    await tester.ensureVisible(find.text('Set up My AI'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Set up My AI'));
     await tester.pumpAndSettle();
     expect(pushed, [MyAiScreen.routeName]);

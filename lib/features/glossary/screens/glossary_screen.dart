@@ -18,6 +18,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/glossary/glossary_term.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
@@ -72,22 +73,29 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
             ),
             Expanded(
               child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 children: [
                   for (final term in terms)
-                    ExpansionTile(
-                      key: ValueKey('glossary-${term.name}'),
-                      initiallyExpanded: term == widget.initialTerm,
-                      title: Text(term.abbreviation(i18n)),
-                      subtitle: term.fullName(i18n) == term.abbreviation(i18n)
-                          ? null
-                          : Text(term.fullName(i18n)),
-                      expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      children: [
-                        _Block(i18n.glossaryWhat, term.what(i18n), theme),
-                        _Block(i18n.glossaryHow, term.how(i18n), theme),
-                        _Block(i18n.glossaryExample, term.example(i18n), theme),
-                      ],
+                    AtlasCard(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: EdgeInsets.zero,
+                      child: ExpansionTile(
+                        key: ValueKey('glossary-${term.name}'),
+                        shape: const Border(),
+                        collapsedShape: const Border(),
+                        initiallyExpanded: term == widget.initialTerm,
+                        title: Text(term.abbreviation(i18n), style: theme.textTheme.titleSmall),
+                        subtitle: term.fullName(i18n) == term.abbreviation(i18n)
+                            ? null
+                            : Text(term.fullName(i18n)),
+                        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        children: [
+                          _Block(i18n.glossaryWhat, term.what(i18n), theme),
+                          _Block(i18n.glossaryHow, term.how(i18n), theme),
+                          _Block(i18n.glossaryExample, term.example(i18n), theme),
+                        ],
+                      ),
                     ),
                 ],
               ),
