@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/nutrition/models/nutritional_goals.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class MacronutrientsTable extends StatelessWidget {
   const MacronutrientsTable({
@@ -24,8 +26,11 @@ class MacronutrientsTable extends StatelessWidget {
     Widget columnHeader(bool left, String title) => Padding(
       padding: const EdgeInsets.symmetric(vertical: tablePadding),
       child: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: context.atlas.ink3,
+          letterSpacing: 0.6,
+        ),
         textAlign: left ? TextAlign.left : TextAlign.right,
       ),
     );
@@ -42,10 +47,27 @@ class MacronutrientsTable extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: tablePadding, horizontal: indent * 12),
             child: Text(title),
           ),
-          Text(goal != null ? valFn(goal.toStringAsFixed(0)) : '', textAlign: TextAlign.right),
-          Text(pct != null ? pct.toStringAsFixed(1) : '', textAlign: TextAlign.right),
+          MonoText(
+            goal != null ? valFn(goal.toStringAsFixed(0)) : '',
+            size: 13.5,
+            weight: FontWeight.w500,
+            textAlign: TextAlign.right,
+          ),
+          MonoText(
+            pct != null ? pct.toStringAsFixed(1) : '',
+            size: 13.5,
+            weight: FontWeight.w500,
+            color: context.atlas.ink2,
+            textAlign: TextAlign.right,
+          ),
           if (showGperKg)
-            Text(perkg != null ? perkg.toStringAsFixed(1) : '', textAlign: TextAlign.right),
+            MonoText(
+              perkg != null ? perkg.toStringAsFixed(1) : '',
+              size: 13.5,
+              weight: FontWeight.w500,
+              color: context.atlas.ink2,
+              textAlign: TextAlign.right,
+            ),
         ],
       );
     }
@@ -53,12 +75,9 @@ class MacronutrientsTable extends StatelessWidget {
     return Table(
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       border: TableBorder(
-        horizontalInside: BorderSide(
-          width: 1,
-          color: Theme.of(context).colorScheme.outline,
-        ),
+        horizontalInside: BorderSide(width: 1, color: context.atlas.line),
       ),
-      columnWidths: const {0: FractionColumnWidth(0.4)},
+      columnWidths: {0: FractionColumnWidth(showGperKg ? 0.26 : 0.4)},
       children: [
         TableRow(
           children: [

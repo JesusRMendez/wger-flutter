@@ -151,14 +151,15 @@ void main() {
         );
       }
 
-      // Default view shows plan description, info button, and no ingredients
+      // Default view shows the plan, the meals with their items and the info buttons
       expect(find.text('Less fat, more protein'), findsOneWidget);
       expect(find.byIcon(Icons.info_outline), findsNWidgets(3)); // 2 meals, 1 "other logs"
       expect(find.byIcon(Icons.info), findsNothing);
-      expect(find.text('100 g Water'), findsNothing);
-      expect(find.text('75 g Burger soup'), findsNothing);
+      expect(find.text('Water'), findsOneWidget);
+      expect(find.text('Burger soup'), findsOneWidget);
+      expect(find.textContaining('100 g ·'), findsOneWidget);
 
-      // tap the first info button changes it and reveals ingredients for the first meal
+      // tap the first info button changes it and reveals the macros of the first meal
       var infoOutlineButtons = find.byIcon(Icons.info_outline);
       await tester.tap(infoOutlineButtons.first); // 2nd button shows up also, but is off-screen
       await tester.pumpAndSettle();
@@ -170,10 +171,6 @@ void main() {
         );
       }
 
-      // Ingredients show up now
-      expect(find.text('100 g Water'), findsOneWidget);
-      expect(find.text('75 g Burger soup'), findsOneWidget);
-
       // .. and the button icon has changed
       expect(find.byIcon(Icons.info_outline), findsNWidgets(2));
       expect(find.byIcon(Icons.info), findsOneWidget);
@@ -183,7 +180,6 @@ void main() {
       infoOutlineButtons = find.byIcon(Icons.info_outline);
 
       await tester.scrollUntilVisible(infoOutlineButtons.first, 30);
-      expect(find.text('300 g Broccoli cake'), findsNothing);
 
       await tester.tap(infoOutlineButtons.first);
       await tester.pumpAndSettle();
@@ -196,12 +192,10 @@ void main() {
       }
 
       expect(find.byIcon(Icons.info_outline), findsOneWidget);
-      expect(find.byIcon(Icons.info), findsNWidgets(2));
+      expect(find.byIcon(Icons.info, skipOffstage: false), findsNWidgets(2));
 
-      await tester.scrollUntilVisible(find.text('300 g Broccoli cake'), 30);
-      expect(find.text('300 g Broccoli cake'), findsOneWidget);
-
-      expect(find.byType(Card), findsNWidgets(3));
+      await tester.scrollUntilVisible(find.text('Broccoli cake'), 30);
+      expect(find.text('Broccoli cake'), findsOneWidget);
 
       // Restore the original window size.
       tester.view.resetPhysicalSize();

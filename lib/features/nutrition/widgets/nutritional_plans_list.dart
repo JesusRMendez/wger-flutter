@@ -31,8 +31,10 @@ import 'package:wger/features/measurements/models/measurement_category.dart';
 import 'package:wger/features/measurements/models/unit_conversion.dart';
 import 'package:wger/features/measurements/providers/body_weight_provider.dart';
 import 'package:wger/features/measurements/providers/measurement_notifier.dart';
+import 'package:wger/features/nutrition/models/nutritional_plan.dart';
 import 'package:wger/features/nutrition/providers/nutrition_notifier.dart';
 import 'package:wger/features/nutrition/screens/nutritional_plan_screen.dart';
+import 'package:wger/features/nutrition/widgets/goal_calculator_card.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/theme/atlas.dart';
 
@@ -127,10 +129,29 @@ class NutritionalPlansList extends riverpod.ConsumerWidget {
     );
   }
 
+  /// The plan that is running today: the latest started one that has not ended
+  NutritionalPlan? _activePlan(List<NutritionalPlan> plans) {
+    final now = DateTime.now();
+    final running =
+        plans
+            .where(
+              (p) =>
+                  !p.startDate.isAfter(now) &&
+                  (p.endDate == null ||
+                      !p.endDate!.isBefore(DateTime(now.year, now.month, now.day))),
+            )
+            .toList()
+          ..sort((a, b) => b.startDate.compareTo(a.startDate));
+    return running.isEmpty ? null : running.first;
+  }
+
   @override
   Widget build(BuildContext context, riverpod.WidgetRef ref) {
     final plansAsync = ref.watch(nutritionProvider);
     final notifier = ref.read(nutritionProvider.notifier);
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
 
     return AsyncValueWidget<NutritionState>(
       value: plansAsync,
@@ -140,59 +161,197 @@ class NutritionalPlansList extends riverpod.ConsumerWidget {
         if (plans.isEmpty) {
           return const TextPrompt();
         }
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-          itemCount: plans.length,
-          itemBuilder: (context, index) {
-            final currentPlan = plans[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                contentPadding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
-                leading: const IconBadge(Icons.restaurant, size: 44),
-                onTap: () {
-                  Navigator.of(context).pushNamed(
-                    NutritionalPlanScreen.routeName,
-                    arguments: currentPlan.id,
-                  );
-                },
-                title: Text(currentPlan.getLabel(context)),
-                subtitle: Column(
+        final active = _activePlan(plans);
+        final others = plans.where((p) => p != active).toList();
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+          children: [
+            if (active != null) ...[
+              _ActivePlanCard(plan: active),
+              const SizedBox(height: 12),
+            ],
+            const GoalCalculatorCard(),
+            const SizedBox(height: 12),
+            if (others.isNotEmpty)
+              AtlasCard(
+                padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      currentPlan.endDate != null
-                          ? 'from ${localizedDate(context).format(currentPlan.startDate)} to ${localizedDate(context).format(currentPlan.endDate!)}'
-                          : 'from ${localizedDate(context).format(currentPlan.startDate)} (open ended)',
-                    ),
-                    _buildWeightChangeInfo(
-                      context,
-                      ref,
-                      currentPlan.startDate,
-                      currentPlan.endDate,
-                    ),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      color: context.atlas.ink3,
-                      tooltip: AppLocalizations.of(context).delete,
-                      onPressed: () => showConfirmDeleteDialog(
-                        context,
-                        itemName: currentPlan.description,
-                        onConfirm: () => notifier.deletePlan(currentPlan.id!),
+                    Text(i18n.otherPlans, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    for (final (i, plan) in others.indexed) ...[
+                      if (i > 0) Divider(height: 1, color: atlas.line),
+                      _PlanRow(
+                        plan: plan,
+                        info: _buildWeightChangeInfo(context, ref, plan.startDate, plan.endDate),
+                        onDelete: () => showConfirmDeleteDialog(
+                          context,
+                          itemName: plan.description,
+                          onConfirm: () => notifier.deletePlan(plan.id!),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
-            );
-          },
+          ],
         );
       },
+    );
+  }
+}
+
+class _ActivePlanCard extends StatelessWidget {
+  const _ActivePlanCard({required this.plan});
+
+  final NutritionalPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+    final goals = plan.nutritionalGoals;
+    final pct = goals.energyPercentage();
+    final onHero = atlas.onHero;
+
+    Widget tile(String value, String label) => Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: onHero.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: MonoText(value, size: 26, color: onHero),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(color: onHero.withValues(alpha: 0.7)),
+              maxLines: 2,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    String p(double? v) => (v ?? 0).toStringAsFixed(0);
+
+    return AtlasCard(
+      hero: true,
+      padding: const EdgeInsets.all(20),
+      onTap: () => Navigator.of(context).pushNamed(
+        NutritionalPlanScreen.routeName,
+        arguments: plan.id,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SectionEyebrow(i18n.planActive, color: onHero.withValues(alpha: 0.65)),
+              MonoText(
+                i18n.planStartDate(localizedDate(context).format(plan.startDate)),
+                size: 13,
+                color: onHero,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            plan.getLabel(context),
+            style: theme.textTheme.headlineMedium?.copyWith(color: onHero),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            spacing: 10,
+            children: [
+              tile(
+                (goals.energy ?? plan.loggedNutritionalValues7DayAvg.energy).toStringAsFixed(0),
+                i18n.kcalGoalPerDay,
+              ),
+              tile(
+                plan.loggedNutritionalValues7DayAvg.energy.toStringAsFixed(0),
+                i18n.kcalAverage7Days,
+              ),
+            ],
+          ),
+          if (goals.isComplete()) ...[
+            const SizedBox(height: 16),
+            Text(
+              i18n.macroSplit(p(pct.protein), p(pct.carbohydrates), p(pct.fat)),
+              style: theme.textTheme.bodyMedium?.copyWith(color: onHero.withValues(alpha: 0.75)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanRow extends StatelessWidget {
+  const _PlanRow({required this.plan, required this.info, required this.onDelete});
+
+  final NutritionalPlan plan;
+  final Widget info;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    final now = DateTime.now();
+    final ended = plan.endDate != null && plan.endDate!.isBefore(now);
+    final upcoming = plan.startDate.isAfter(now);
+
+    final dates = plan.endDate != null
+        ? 'from ${localizedDate(context).format(plan.startDate)} to ${localizedDate(context).format(plan.endDate!)}'
+        : 'from ${localizedDate(context).format(plan.startDate)} (open ended)';
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => Navigator.of(context).pushNamed(
+        NutritionalPlanScreen.routeName,
+        arguments: plan.id,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            const IconBadge(Icons.restaurant, size: 44),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(plan.getLabel(context), style: theme.textTheme.titleSmall),
+                  Text(
+                    plan.meals.isEmpty && plan.hasAnyGoals ? i18n.planGoalsOnly : dates,
+                    style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                  ),
+                  info,
+                ],
+              ),
+            ),
+            if (ended || upcoming) PillChip(ended ? i18n.planArchived : i18n.planUpcoming),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              color: atlas.ink3,
+              tooltip: i18n.delete,
+              onPressed: onDelete,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

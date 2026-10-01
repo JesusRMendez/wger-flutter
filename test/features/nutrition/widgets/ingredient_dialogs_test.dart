@@ -226,13 +226,14 @@ void main() {
     testWidgets('renders the macronutrients header, dietary section and source', (tester) async {
       await tester.pumpWidget(detailHost(IngredientDetails(makeDetailIngredient())));
 
-      // "Macronutrients" appears as the section header and as a column
-      // header inside MacronutrientsTable, both occurrences are fine.
-      expect(find.text('Macronutrients'), findsAtLeast(1));
+      // The nutrition card is titled and the table has its column header
+      expect(find.text('Nutritional information'), findsOneWidget);
+      expect(find.text('MACRONUTRIENTS'), findsOneWidget);
       // DietaryInfoSection is rendered (its widget identity is stable).
       expect(find.byType(DietaryInfoSection), findsOneWidget);
       // Source line picks up the ingredient's sourceName.
-      expect(find.textContaining('Open Food Facts'), findsOneWidget);
+      // (shown in the header line and as the source link)
+      expect(find.textContaining('Open Food Facts'), findsAtLeast(1));
     });
 
     testWidgets('omits the image header when the ingredient has no image', (tester) async {
@@ -246,7 +247,7 @@ void main() {
         detailHost(IngredientDetails(makeDetailIngredient(sourceName: null))),
       );
 
-      expect(find.textContaining('unknown'), findsOneWidget);
+      expect(find.textContaining('unknown'), findsAtLeast(1));
     });
   });
 }

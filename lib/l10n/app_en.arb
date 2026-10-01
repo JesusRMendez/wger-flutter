@@ -465,6 +465,239 @@
   "@addIngredient": {},
   "logIngredient": "Log ingredient to nutrition diary",
   "@logIngredient": {},
+  "kcalLeft": "kcal left",
+  "@kcalLeft": {
+    "description": "Caption under the remaining calories in the energy ring"
+  },
+  "consumed": "Consumed",
+  "@consumed": {
+    "description": "Label of the energy eaten so far today"
+  },
+  "goalToday": "Goal today",
+  "@goalToday": {
+    "description": "Label of today's energy target"
+  },
+  "nextMealBanner": "Next: {meal} at {time} · {kcal} kcal planned",
+  "@nextMealBanner": {
+    "description": "Banner with the next meal of the plan",
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      },
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "allMealsLogged": "All of today's meals are logged",
+  "@allMealsLogged": {
+    "description": "Banner shown when every meal of the plan has been logged today"
+  },
+  "planDetails": "Plan details",
+  "@planDetails": {
+    "description": "Section label above the goals table of a nutritional plan"
+  },
+  "planActive": "Active plan",
+  "@planActive": {
+    "description": "Eyebrow of the card of the current nutritional plan"
+  },
+  "calcTitle": "Calculate goals",
+  "@calcTitle": {
+    "description": "Title of the card that estimates calorie and macro goals"
+  },
+  "newBadge": "NEW",
+  "@newBadge": {
+    "description": "Small badge on a new feature"
+  },
+  "goalLoseFat": "Lose fat",
+  "@goalLoseFat": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "goalMaintain": "Maintain",
+  "@goalMaintain": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "goalGainMuscle": "Gain muscle",
+  "@goalGainMuscle": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "calcBasedOn": "From your weight ({weight}) and a moderately active week:",
+  "@calcBasedOn": {
+    "description": "Line above the estimated calories",
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "calcNoWeight": "Log your weight to get an estimate of your goals.",
+  "@calcNoWeight": {
+    "description": "Shown by the calorie calculator without a weight entry"
+  },
+  "kcalPerDay": "kcal/day",
+  "@kcalPerDay": {
+    "description": "Unit of the daily energy goal"
+  },
+  "calcDeficit": "Deficit of {pct} % · about {kg} kg less per week.",
+  "@calcDeficit": {
+    "description": "Explanation of a calorie deficit",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "calcSurplus": "Surplus of {pct} % · about {kg} kg more per week.",
+  "@calcSurplus": {
+    "description": "Explanation of a calorie surplus",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "calcMaintenance": "Maintenance: your weight should stay about the same.",
+  "@calcMaintenance": {
+    "description": "Explanation of eating at maintenance"
+  },
+  "generateMealsAi": "Generate meals with AI",
+  "@generateMealsAi": {
+    "description": "Button that opens the coach meal plan generator"
+  },
+  "otherPlans": "Other plans",
+  "@otherPlans": {
+    "description": "Heading of the list of the not active nutritional plans"
+  },
+  "planArchived": "Archived",
+  "@planArchived": {
+    "description": "Status chip of a nutritional plan that ended"
+  },
+  "planUpcoming": "Upcoming",
+  "@planUpcoming": {
+    "description": "Status chip of a nutritional plan that did not start yet"
+  },
+  "planGoalsOnly": "Goals only · no meals",
+  "@planGoalsOnly": {
+    "description": "Subtitle of a plan that has goals but no meals"
+  },
+  "kcalGoalPerDay": "kcal goal per day",
+  "@kcalGoalPerDay": {
+    "description": "Label under the daily energy goal of a plan"
+  },
+  "kcalAverage7Days": "kcal 7-day average",
+  "@kcalAverage7Days": {
+    "description": "Label under the average energy logged in the last 7 days"
+  },
+  "macroSplit": "Protein {p} % · carbs {c} % · fat {f} %",
+  "@macroSplit": {
+    "description": "Share of each macro nutrient in the energy",
+    "placeholders": {
+      "p": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "f": {
+        "type": "String"
+      }
+    }
+  },
+  "proteinAbbr": "prot.",
+  "@proteinAbbr": {
+    "description": "Short label for protein under a figure"
+  },
+  "carbsAbbr": "carb.",
+  "@carbsAbbr": {
+    "description": "Short label for carbohydrates under a figure"
+  },
+  "fatAbbr": "fat",
+  "@fatAbbr": {
+    "description": "Short label for fat under a figure"
+  },
+  "nutritionalInformation": "Nutritional information",
+  "@nutritionalInformation": {
+    "description": "Heading of the nutrition table of an ingredient"
+  },
+  "perAmount": "per {amount}",
+  "@perAmount": {
+    "description": "Reference amount of a nutrition table, e.g. per 125 g",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "calorieSplit": "Calorie split: protein {p} % · carbohydrates {c} % · fat {f} %",
+  "@calorieSplit": {
+    "description": "Share of the energy by macro nutrient",
+    "placeholders": {
+      "p": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "f": {
+        "type": "String"
+      }
+    }
+  },
+  "ingredientSource": "{brand} · {source}",
+  "@ingredientSource": {
+    "description": "Brand and source line under an ingredient name",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "addToMeal": "Add to {meal}",
+  "@addToMeal": {
+    "description": "Button that adds an ingredient to a meal",
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "recents": "Recent",
+  "@recents": {
+    "description": "Filter chip for the ingredients added lately"
+  },
+  "allIngredients": "All",
+  "@allIngredients": {
+    "description": "Filter chip for all ingredients"
+  },
+  "ingredientCount": "{count} foods",
+  "@ingredientCount": {
+    "description": "Number of ingredients in the list",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "addToLog": "Add",
+  "@addToLog": {
+    "description": "Button that adds an ingredient to the diary"
+  },
+  "portion": "Portion",
+  "@portion": {
+    "description": "Heading of the portion stepper when logging a meal"
+  },
   "searchIngredient": "Search ingredient",
   "@searchIngredient": {
     "description": "Label (or Hint text) on ingredient search form"
