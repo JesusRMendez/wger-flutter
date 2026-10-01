@@ -3425,5 +3425,59 @@
         "type": "int"
       }
     }
+  },
+  "video": "Video",
+  "@video": {
+    "description": "Label of the video chip on an exercise"
+  },
+  "filterAll": "All",
+  "@filterAll": {
+    "description": "First chip of a filter row, selects everything"
+  },
+  "exercisesSearchHint": "Search among {count} exercises",
+  "@exercisesSearchHint": {
+    "description": "Hint of the search field of the exercise list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exercisesCount": "{count, plural, =1{1 exercise} other{{count} exercises}}",
+  "@exercisesCount": {
+    "description": "Number of exercises shown in the list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exerciseTabTechnique": "Technique",
+  "@exerciseTabTechnique": {
+    "description": "Tab of the exercise page with the description and muscles"
+  },
+  "exerciseTabHistory": "History",
+  "@exerciseTabHistory": {
+    "description": "Tab of the exercise page with your logged sets"
+  },
+  "exerciseTabAlternatives": "Alternatives",
+  "@exerciseTabAlternatives": {
+    "description": "Tab of the exercise page with variations of the exercise"
+  },
+  "exerciseHistoryEmpty": "You have not logged this exercise yet.",
+  "@exerciseHistoryEmpty": {
+    "description": "Empty state of the history tab of the exercise page"
+  },
+  "exerciseHistorySessions": "Sessions",
+  "@exerciseHistorySessions": {
+    "description": "Label of the number of sessions that include the exercise"
+  },
+  "exerciseHistoryBest": "Best 1RM est.",
+  "@exerciseHistoryBest": {
+    "description": "Label of the best estimated one rep max of the exercise"
+  },
+  "exerciseAlternativesEmpty": "No variations of this exercise.",
+  "@exerciseAlternativesEmpty": {
+    "description": "Empty state of the alternatives tab"
   }
 }
