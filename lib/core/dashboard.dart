@@ -22,6 +22,7 @@ import 'package:wger/core/app_settings_notifier.dart';
 import 'package:wger/core/material.dart';
 import 'package:wger/core/widgets/app_bar.dart';
 import 'package:wger/core/widgets/dashboard/calendar.dart';
+import 'package:wger/core/widgets/dashboard/widgets/coach.dart';
 import 'package:wger/core/widgets/dashboard/widgets/measurements.dart';
 import 'package:wger/core/widgets/dashboard/widgets/nutrition.dart';
 import 'package:wger/core/widgets/dashboard/widgets/routines.dart';
@@ -48,6 +49,8 @@ class DashboardScreen extends ConsumerWidget {
         return const DashboardNutritionWidget();
       case DashboardWidget.trophies:
         return const DashboardTrophiesWidget();
+      case DashboardWidget.coach:
+        return const DashboardCoachWidget();
     }
   }
 

@@ -25,6 +25,7 @@ import 'package:wger/features/account/widgets/settings/image_cache.dart';
 import 'package:wger/features/account/widgets/settings/language.dart';
 import 'package:wger/features/account/widgets/settings/theme.dart';
 import 'package:wger/features/account/widgets/settings/verbose_logging.dart';
+import 'package:wger/features/coach/screens/my_ai_screen.dart';
 import 'package:wger/features/routines/screens/settings_plates_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
@@ -68,6 +69,11 @@ class SettingsPage extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).pushNamed(ConfigurePlatesScreen.routeName);
               },
+              trailing: const Icon(Icons.chevron_right),
+            ),
+            ListTile(
+              title: Text(i18n.coachMyAi),
+              onTap: () => Navigator.of(context).pushNamed(MyAiScreen.routeName),
               trailing: const Icon(Icons.chevron_right),
             ),
             const SettingsVerboseLogging(),

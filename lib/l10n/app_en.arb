@@ -1978,5 +1978,512 @@
       "min": { "type": "int" },
       "max": { "type": "int" }
     }
+  },
+  "coach": "Coach",
+  "@coach": {
+    "description": "Title of the AI coach feature"
+  },
+  "coachModeServer": "Server AI",
+  "@coachModeServer": {
+    "description": "Badge: the coach uses the AI configured on the server"
+  },
+  "coachModeByo": "My AI",
+  "@coachModeByo": {
+    "description": "Badge: the coach uses the user's own AI provider and key"
+  },
+  "coachModeNone": "AI unavailable",
+  "@coachModeNone": {
+    "description": "Badge: no AI is available for the coach"
+  },
+  "coachUnavailable": "The coach needs an AI. Ask the server admin for access or add your own API key.",
+  "@coachUnavailable": {
+    "description": "Shown on the coach screen when no AI is available"
+  },
+  "coachSetUpMyAi": "Set up My AI",
+  "@coachSetUpMyAi": {
+    "description": "Button that opens the settings of the user's own AI provider"
+  },
+  "coachUsageTitle": "Usage this month",
+  "@coachUsageTitle": {
+    "description": "Title of the AI usage card"
+  },
+  "coachUsageUnlimited": "{used} tokens used",
+  "@coachUsageUnlimited": {
+    "description": "AI token usage without a limit",
+    "placeholders": {
+      "used": {"type": "String"}
+    }
+  },
+  "coachUsageWithLimit": "{used} of {limit} tokens used",
+  "@coachUsageWithLimit": {
+    "description": "AI token usage with a monthly limit",
+    "placeholders": {
+      "used": {"type": "String"},
+      "limit": {"type": "String"}
+    }
+  },
+  "coachChatHint": "Ask your coach…",
+  "@coachChatHint": {
+    "description": "Hint of the chat input"
+  },
+  "coachChatEmpty": "Ask about your training, nutrition or progress.",
+  "@coachChatEmpty": {
+    "description": "Placeholder of an empty chat"
+  },
+  "coachSend": "Send",
+  "@coachSend": {
+    "description": "Tooltip of the chat send button"
+  },
+  "coachClearChat": "Clear conversation",
+  "@coachClearChat": {
+    "description": "Tooltip of the button that clears the chat"
+  },
+  "coachErrorNotAvailable": "AI is not available for your account. Ask the server admin for access or add your own API key in My AI.",
+  "@coachErrorNotAvailable": {
+    "description": "Error when the server answers that the AI is not available"
+  },
+  "coachErrorQuota": "The monthly AI token limit has been reached. It resets next month.",
+  "@coachErrorQuota": {
+    "description": "Error when the monthly AI quota is exhausted"
+  },
+  "coachErrorGeneric": "The coach could not complete the request. Please try again.",
+  "@coachErrorGeneric": {
+    "description": "Generic coach error"
+  },
+  "coachRetry": "Try again",
+  "@coachRetry": {
+    "description": "Button to retry a failed coach request"
+  },
+  "coachWorkoutPlan": "Workout plan",
+  "@coachWorkoutPlan": {
+    "description": "Title of the workout plan generator"
+  },
+  "coachMealPlan": "Meal plan",
+  "@coachMealPlan": {
+    "description": "Title of the meal plan generator"
+  },
+  "coachGoalsAndIndicators": "Goals & indicators",
+  "@coachGoalsAndIndicators": {
+    "description": "Title of the goals and indicators screen"
+  },
+  "coachMemory": "Coach memory",
+  "@coachMemory": {
+    "description": "Title of the coach memory screen"
+  },
+  "coachMyAi": "My AI",
+  "@coachMyAi": {
+    "description": "Title of the settings for the user's own AI provider"
+  },
+  "coachDaysPerWeek": "Days per week",
+  "@coachDaysPerWeek": {
+    "description": "Workout plan generator field"
+  },
+  "coachMinutesPerSession": "Minutes per session",
+  "@coachMinutesPerSession": {
+    "description": "Workout plan generator field"
+  },
+  "coachLocation": "Training location",
+  "@coachLocation": {
+    "description": "Workout plan generator field"
+  },
+  "coachLocationNone": "Any location",
+  "@coachLocationNone": {
+    "description": "Option: no training location selected"
+  },
+  "coachGoal": "Goal",
+  "@coachGoal": {
+    "description": "Workout plan generator field: which goal the plan is for"
+  },
+  "coachGoalNone": "No specific goal",
+  "@coachGoalNone": {
+    "description": "Option: no goal selected"
+  },
+  "coachGenerate": "Generate plan",
+  "@coachGenerate": {
+    "description": "Button that asks the coach for a plan"
+  },
+  "coachGenerating": "The coach is working on it…",
+  "@coachGenerating": {
+    "description": "Progress text while the coach generates a plan"
+  },
+  "coachApply": "Apply plan",
+  "@coachApply": {
+    "description": "Button that creates the proposed plan"
+  },
+  "coachPlanWeeks": "{weeks} weeks",
+  "@coachPlanWeeks": {
+    "description": "Duration of a proposed plan",
+    "placeholders": {
+      "weeks": {"type": "int"}
+    }
+  },
+  "coachWhyOrder": "Why this order",
+  "@coachWhyOrder": {
+    "description": "Heading of the explanation of the exercise order"
+  },
+  "coachRestSeconds": "Rest {seconds} s",
+  "@coachRestSeconds": {
+    "description": "Rest time of an exercise in seconds",
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "coachZoneValue": "Zone: {zone}",
+  "@coachZoneValue": {
+    "description": "Gym zone of an exercise",
+    "placeholders": {
+      "zone": {"type": "String"}
+    }
+  },
+  "coachPlanApplied": "Plan created",
+  "@coachPlanApplied": {
+    "description": "Snackbar after a proposed plan was created"
+  },
+  "coachMealsPerDay": "Meals per day",
+  "@coachMealsPerDay": {
+    "description": "Meal plan generator field"
+  },
+  "coachKcalTarget": "Calorie target (kcal)",
+  "@coachKcalTarget": {
+    "description": "Meal plan generator field"
+  },
+  "coachPreferences": "Preferences and restrictions",
+  "@coachPreferences": {
+    "description": "Meal plan generator field"
+  },
+  "coachTotals": "Daily totals",
+  "@coachTotals": {
+    "description": "Heading of the totals of a proposed meal plan"
+  },
+  "coachSkippedItems": "Skipped items",
+  "@coachSkippedItems": {
+    "description": "Heading of the list of foods that were not added"
+  },
+  "coachSkippedItemsExplanation": "These foods have no match in the ingredient database and were not added:",
+  "@coachSkippedItemsExplanation": {
+    "description": "Explanation of the skipped items"
+  },
+  "coachOpenPlan": "Open plan",
+  "@coachOpenPlan": {
+    "description": "Button that opens the created plan"
+  },
+  "coachGoals": "Goals",
+  "@coachGoals": {
+    "description": "Heading of the goals list"
+  },
+  "coachNoGoals": "No goals for this period yet.",
+  "@coachNoGoals": {
+    "description": "Empty goals list"
+  },
+  "coachAddGoal": "Add goal",
+  "@coachAddGoal": {
+    "description": "Button to add a goal"
+  },
+  "coachEditGoal": "Edit goal",
+  "@coachEditGoal": {
+    "description": "Title of the edit goal form"
+  },
+  "coachGoalTitle": "Title",
+  "@coachGoalTitle": {
+    "description": "Goal form field"
+  },
+  "coachGoalKind": "Type",
+  "@coachGoalKind": {
+    "description": "Goal form field"
+  },
+  "coachGoalPeriod": "Period",
+  "@coachGoalPeriod": {
+    "description": "Goal form field"
+  },
+  "coachGoalIndicator": "Indicator",
+  "@coachGoalIndicator": {
+    "description": "Goal form field"
+  },
+  "coachGoalTarget": "Target value",
+  "@coachGoalTarget": {
+    "description": "Goal form field"
+  },
+  "coachGoalStatus": "Status",
+  "@coachGoalStatus": {
+    "description": "Goal form field"
+  },
+  "coachGoalValues": "Now {current} of {target} {unit}",
+  "@coachGoalValues": {
+    "description": "Current and target value of a goal",
+    "placeholders": {
+      "current": {"type": "String"},
+      "target": {"type": "String"},
+      "unit": {"type": "String"}
+    }
+  },
+  "coachGoalPercent": "{pct}%",
+  "@coachGoalPercent": {
+    "description": "Goal progress in percent",
+    "placeholders": {
+      "pct": {"type": "int"}
+    }
+  },
+  "coachPeriodWeekly": "Weekly",
+  "@coachPeriodWeekly": {
+    "description": "Goal period"
+  },
+  "coachPeriodMonthly": "Monthly",
+  "@coachPeriodMonthly": {
+    "description": "Goal period"
+  },
+  "coachPeriodQuarterly": "Quarterly",
+  "@coachPeriodQuarterly": {
+    "description": "Goal period"
+  },
+  "coachPeriodPlan": "Plan",
+  "@coachPeriodPlan": {
+    "description": "Goal period"
+  },
+  "coachKindStrength": "Strength",
+  "@coachKindStrength": {
+    "description": "Goal type"
+  },
+  "coachKindBodyWeight": "Body weight",
+  "@coachKindBodyWeight": {
+    "description": "Goal type"
+  },
+  "coachKindBodyFat": "Body fat",
+  "@coachKindBodyFat": {
+    "description": "Goal type"
+  },
+  "coachKindHabit": "Habit",
+  "@coachKindHabit": {
+    "description": "Goal type"
+  },
+  "coachKindNutrition": "Nutrition",
+  "@coachKindNutrition": {
+    "description": "Goal type"
+  },
+  "coachKindEndurance": "Endurance",
+  "@coachKindEndurance": {
+    "description": "Goal type"
+  },
+  "coachKindSteps": "Steps",
+  "@coachKindSteps": {
+    "description": "Goal type"
+  },
+  "coachStatusActive": "Active",
+  "@coachStatusActive": {
+    "description": "Goal status"
+  },
+  "coachStatusAchieved": "Achieved",
+  "@coachStatusAchieved": {
+    "description": "Goal status"
+  },
+  "coachStatusMissed": "Missed",
+  "@coachStatusMissed": {
+    "description": "Goal status"
+  },
+  "coachStatusPaused": "Paused",
+  "@coachStatusPaused": {
+    "description": "Goal status"
+  },
+  "coachIndicatorSessionsPerWeek": "Sessions per week",
+  "@coachIndicatorSessionsPerWeek": {
+    "description": "Name of an indicator"
+  },
+  "coachIndicatorWeeklyVolumeSets": "Weekly volume (sets)",
+  "@coachIndicatorWeeklyVolumeSets": {
+    "description": "Name of an indicator"
+  },
+  "coachIndicatorEst1rm": "Estimated 1RM",
+  "@coachIndicatorEst1rm": {
+    "description": "Name of an indicator"
+  },
+  "coachIndicatorBodyWeightAvg7": "Body weight (7-day average)",
+  "@coachIndicatorBodyWeightAvg7": {
+    "description": "Name of an indicator"
+  },
+  "coachIndicatorKcalAdherence": "Calorie adherence",
+  "@coachIndicatorKcalAdherence": {
+    "description": "Name of an indicator"
+  },
+  "coachIndicatorProteinAvg": "Protein average",
+  "@coachIndicatorProteinAvg": {
+    "description": "Name of an indicator"
+  },
+  "coachIndicators": "Indicators",
+  "@coachIndicators": {
+    "description": "Heading of the indicators section"
+  },
+  "coachWindowDays": "{days} days",
+  "@coachWindowDays": {
+    "description": "Indicator window selector",
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "coachNoIndicators": "Not enough data yet.",
+  "@coachNoIndicators": {
+    "description": "Empty indicators list"
+  },
+  "coachIndicatorTarget": "Target: {value}",
+  "@coachIndicatorTarget": {
+    "description": "Target of an indicator",
+    "placeholders": {
+      "value": {"type": "String"}
+    }
+  },
+  "coachDataQuality": "Data quality",
+  "@coachDataQuality": {
+    "description": "Heading of the data quality card"
+  },
+  "coachDataQualityScore": "{score} / 100",
+  "@coachDataQualityScore": {
+    "description": "Data quality score",
+    "placeholders": {
+      "score": {"type": "int"}
+    }
+  },
+  "coachDataQualityHelp": "The more you log, the better the coach can advise you.",
+  "@coachDataQualityHelp": {
+    "description": "Help text of the data quality card"
+  },
+  "coachActionLogWeight": "Log weight",
+  "@coachActionLogWeight": {
+    "description": "Action to improve data quality"
+  },
+  "coachActionLogNutrition": "Log meals",
+  "@coachActionLogNutrition": {
+    "description": "Action to improve data quality"
+  },
+  "coachActionLogRir": "Open workouts",
+  "@coachActionLogRir": {
+    "description": "Action to improve data quality"
+  },
+  "coachPlanPhase": "Plan phase",
+  "@coachPlanPhase": {
+    "description": "Heading of the plan phase timeline"
+  },
+  "coachPlanWeek": "Week {week}",
+  "@coachPlanWeek": {
+    "description": "Current week of the plan",
+    "placeholders": {
+      "week": {"type": "int"}
+    }
+  },
+  "coachPhaseAdaptation": "Adaptation",
+  "@coachPhaseAdaptation": {
+    "description": "Name of a plan phase"
+  },
+  "coachPhaseProgression": "Progression",
+  "@coachPhaseProgression": {
+    "description": "Name of a plan phase"
+  },
+  "coachPhaseDeload": "Deload",
+  "@coachPhaseDeload": {
+    "description": "Name of a plan phase"
+  },
+  "coachPhaseConsolidation": "Consolidation",
+  "@coachPhaseConsolidation": {
+    "description": "Name of a plan phase"
+  },
+  "coachRecommendations": "Recommendations",
+  "@coachRecommendations": {
+    "description": "Heading of the recommendations"
+  },
+  "coachNoRecommendations": "Nothing to recommend right now.",
+  "@coachNoRecommendations": {
+    "description": "Empty recommendations list"
+  },
+  "coachMemoryEmpty": "The coach has not stored anything about you yet.",
+  "@coachMemoryEmpty": {
+    "description": "Empty memory list"
+  },
+  "coachMemoryAdd": "Add memory",
+  "@coachMemoryAdd": {
+    "description": "Button to add a memory"
+  },
+  "coachMemoryEdit": "Edit memory",
+  "@coachMemoryEdit": {
+    "description": "Title of the edit memory form"
+  },
+  "coachMemoryText": "What should the coach remember?",
+  "@coachMemoryText": {
+    "description": "Memory form field"
+  },
+  "coachMemoryCategoryPreference": "Preference",
+  "@coachMemoryCategoryPreference": {
+    "description": "Memory category"
+  },
+  "coachMemoryCategoryBehavior": "Behavior",
+  "@coachMemoryCategoryBehavior": {
+    "description": "Memory category"
+  },
+  "coachMemoryCategoryConstraint": "Constraint",
+  "@coachMemoryCategoryConstraint": {
+    "description": "Memory category"
+  },
+  "coachMemoryCategoryInjury": "Injury",
+  "@coachMemoryCategoryInjury": {
+    "description": "Memory category"
+  },
+  "coachMemorySourceUser": "You",
+  "@coachMemorySourceUser": {
+    "description": "Who created a memory"
+  },
+  "coachMemorySourceAi": "Coach",
+  "@coachMemorySourceAi": {
+    "description": "Who created a memory"
+  },
+  "coachMemorySourceSystem": "System",
+  "@coachMemorySourceSystem": {
+    "description": "Who created a memory"
+  },
+  "coachMemoryDisabled": "Memory is turned off. Turn it on in My AI to let the coach remember things about you.",
+  "@coachMemoryDisabled": {
+    "description": "Shown when coach memory is disabled"
+  },
+  "coachMemoryEnable": "Let the coach remember things about me",
+  "@coachMemoryEnable": {
+    "description": "Switch to enable the coach memory"
+  },
+  "coachMyAiHelp": "Use your own OpenAI or Anthropic account. The key is stored on the server and is never shown again.",
+  "@coachMyAiHelp": {
+    "description": "Explanation on the My AI screen"
+  },
+  "coachMyAiProvider": "Provider",
+  "@coachMyAiProvider": {
+    "description": "My AI field"
+  },
+  "coachMyAiModel": "Model",
+  "@coachMyAiModel": {
+    "description": "My AI field"
+  },
+  "coachMyAiApiKey": "API key",
+  "@coachMyAiApiKey": {
+    "description": "My AI field"
+  },
+  "coachMyAiKeyHint": "Leave empty to keep the stored key",
+  "@coachMyAiKeyHint": {
+    "description": "Hint of the API key field when a key is stored"
+  },
+  "coachMyAiKeyStored": "Stored key: {masked}",
+  "@coachMyAiKeyStored": {
+    "description": "Masked stored API key",
+    "placeholders": {
+      "masked": {"type": "String"}
+    }
+  },
+  "coachMyAiClearKey": "Remove key",
+  "@coachMyAiClearKey": {
+    "description": "Button to remove the stored API key"
+  },
+  "coachMyAiProviderNone": "None",
+  "@coachMyAiProviderNone": {
+    "description": "Option: no own AI provider"
+  },
+  "coachSaved": "Saved",
+  "@coachSaved": {
+    "description": "Snackbar after saving"
+  },
+  "coachDashboardText": "Plan workouts and meals, track your goals and chat with your coach.",
+  "@coachDashboardText": {
+    "description": "Text of the coach card on the dashboard"
   }
 }
