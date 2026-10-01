@@ -24,6 +24,7 @@ import 'package:wger/core/consts.dart';
 import 'package:wger/core/snackbar.dart';
 import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/error.dart';
+import 'package:wger/features/routines/logic/gym_progress.dart';
 import 'package:wger/features/routines/models/log.dart';
 import 'package:wger/features/routines/models/set_config_data.dart';
 import 'package:wger/features/routines/models/slot_entry.dart';
@@ -39,6 +40,7 @@ import 'package:wger/features/routines/widgets/forms/weight.dart';
 import 'package:wger/features/routines/widgets/gym_mode/elapsed_time.dart';
 import 'package:wger/features/routines/widgets/gym_mode/navigation.dart';
 import 'package:wger/features/routines/widgets/gym_mode/weight_visual.dart';
+import 'package:wger/features/routines/widgets/gym_mode/zone_chip.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/theme/atlas.dart';
 
@@ -61,6 +63,7 @@ class LogPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final atlas = context.atlas;
+    final i18n = AppLocalizations.of(context);
     final gymState = ref.watch(gymStateProvider);
     final languageCode = Localizations.localeOf(context).languageCode;
 
@@ -91,6 +94,7 @@ class LogPage extends ConsumerWidget {
     );
 
     final logPages = page.slotPages.where((e) => e.type == SlotPageType.log).toList();
+    final position = setPositionOf(gymState, slotEntryPage.uuid);
     final decoration = slotEntryPage.logDone ? TextDecoration.lineThrough : TextDecoration.none;
 
     return Column(
@@ -98,9 +102,18 @@ class LogPage extends ConsumerWidget {
         NavigationHeader(
           setConfigData.exercise.getTranslation(languageCode).name,
           _controller,
-          center: gymState.showWorkoutDuration
-              ? const Center(child: ElapsedWorkoutTimer())
-              : const SizedBox.shrink(),
+          showSettings: true,
+          center: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (gymState.showWorkoutDuration) const ElapsedWorkoutTimer(),
+              Text(
+                i18n.gymMinutesLeft(estimatedMinutesLeft(gymState)),
+                key: const ValueKey('gym-minutes-left'),
+                style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+              ),
+            ],
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
@@ -109,11 +122,19 @@ class LogPage extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  SectionEyebrow('${AppLocalizations.of(context).sets} '),
-                  MonoText(
-                    '${slotEntryPage.setIndex + 1}/${logPages.length}',
-                    size: 11,
-                    color: atlas.ink3,
+                  Flexible(
+                    child: position == null
+                        ? SectionEyebrow(
+                            '${i18n.sets} ${slotEntryPage.setIndex + 1}/${logPages.length}',
+                          )
+                        : SectionEyebrow(
+                            i18n.gymSetHeader(
+                              position.exercise,
+                              position.exercises,
+                              position.set,
+                              position.sets,
+                            ),
+                          ),
                   ),
                   if (setConfigData.type != SlotEntryType.normal) ...[
                     const SizedBox(width: 8),
@@ -124,6 +145,8 @@ class LogPage extends ConsumerWidget {
                       fontSize: 10.5,
                     ),
                   ],
+                  const SizedBox(width: 8),
+                  ZoneChip(page),
                 ],
               ),
               const SizedBox(height: 4),
@@ -144,7 +167,7 @@ class LogPage extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
                 decoration: BoxDecoration(
                   color: atlas.brandSoft,
                   borderRadius: BorderRadius.circular(14),
@@ -156,7 +179,7 @@ class LogPage extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        setConfigData.textRepr,
+                        i18n.gymSuggested(setConfigData.textRepr),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w500,
                           decoration: decoration,
@@ -164,6 +187,26 @@ class LogPage extends ConsumerWidget {
                         maxLines: 2,
                       ),
                     ),
+                    if (setConfigData.weight != null || setConfigData.repetitions != null)
+                      PillChip(
+                        i18n.gymUseSuggestion,
+                        key: const ValueKey('use-suggestion'),
+                        tone: ChipTone.inverse,
+                        height: 32,
+                        fontSize: 13,
+                        onTap: () {
+                          final log = ref.read(gymLogProvider.notifier);
+                          final weight = setConfigData.weight;
+                          final reps = setConfigData.repetitions;
+                          if (weight != null) {
+                            log.setWeight(weight);
+                            ref.read(plateCalculatorProvider.notifier).setWeight(weight);
+                          }
+                          if (reps != null) {
+                            log.setRepetitions(reps);
+                          }
+                        },
+                      ),
                   ],
                 ),
               ),

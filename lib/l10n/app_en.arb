@@ -2836,5 +2836,182 @@
   "progressSubtitleGoals": "Weekly, monthly and plan goals",
   "@progressSubtitleGoals": {
     "description": "Subtitle of the goals row on the progress tab"
+  },
+  "gymSessionOrder": "Session order",
+  "@gymSessionOrder": {
+    "description": "Title of the sheet that lists the exercises of the running workout in order"
+  },
+  "gymWhyThisOrder": "Why this order",
+  "@gymWhyThisOrder": {
+    "description": "Heading of the box that explains the order of the exercises"
+  },
+  "gymOrderZoneRoute": "Grouped by zone: {route} · {changes, plural, =0{no zone changes} one{1 zone change} other{{changes} zone changes}}",
+  "@gymOrderZoneRoute": {
+    "description": "Explains that the exercises are ordered by training zone, with the route and the number of zone changes",
+    "placeholders": {
+      "route": {
+        "type": "String"
+      },
+      "changes": {
+        "type": "int"
+      }
+    }
+  },
+  "gymOrderNow": "Now",
+  "@gymOrderNow": {
+    "description": "Chip marking the exercise that is being done right now in the session order sheet"
+  },
+  "gymOrderGoNow": "Go now",
+  "@gymOrderGoNow": {
+    "description": "Button in the session order sheet that jumps to an exercise"
+  },
+  "gymOrderSetsDone": "{done}/{total} sets",
+  "@gymOrderSetsDone": {
+    "description": "Progress of an exercise in the session order sheet",
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "gymOrderRest": "rest {time}",
+  "@gymOrderRest": {
+    "description": "Rest time of an exercise in the session order sheet, e.g. 'rest 2:30'",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "gymEditExercises": "Swap or add exercises",
+  "@gymEditExercises": {
+    "description": "Button of the session order sheet that opens the editor to swap or add exercises"
+  },
+  "gymSetHeader": "Exercise {exercise}/{exercises} · Set {set}/{sets}",
+  "@gymSetHeader": {
+    "description": "Eyebrow above the exercise name on the set screen",
+    "placeholders": {
+      "exercise": {
+        "type": "int"
+      },
+      "exercises": {
+        "type": "int"
+      },
+      "set": {
+        "type": "int"
+      },
+      "sets": {
+        "type": "int"
+      }
+    }
+  },
+  "gymMinutesLeft": "≈ {minutes} min left",
+  "@gymMinutesLeft": {
+    "description": "Estimated time left of the workout, shown under the elapsed time",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gymSettingsSheetTitle": "Sound, alerts and countdown",
+  "@gymSettingsSheetTitle": {
+    "description": "Title of the settings sheet of the gym mode"
+  },
+  "gymSettingsDone": "Done",
+  "@gymSettingsDone": {
+    "description": "Button that closes the gym mode settings sheet"
+  },
+  "gymUseSuggestion": "Use",
+  "@gymUseSuggestion": {
+    "description": "Button that applies the planned weight and repetitions to the set form"
+  },
+  "gymSuggested": "Planned {value}",
+  "@gymSuggested": {
+    "description": "Planned load of the set, shown on the set screen",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "gymRestTitle": "Rest · {exercise}",
+  "@gymRestTitle": {
+    "description": "Eyebrow of the rest timer, with the name of the exercise just done",
+    "placeholders": {
+      "exercise": {
+        "type": "String"
+      }
+    }
+  },
+  "gymRestNext": "Up next",
+  "@gymRestNext": {
+    "description": "Label above the next set on the rest screen"
+  },
+  "gymRestLess": "−15 s",
+  "@gymRestLess": {
+    "description": "Button that shortens the rest by 15 seconds"
+  },
+  "gymRestMore": "+15 s",
+  "@gymRestMore": {
+    "description": "Button that extends the rest by 15 seconds"
+  },
+  "gymRestSkip": "Skip",
+  "@gymRestSkip": {
+    "description": "Button that ends the rest early"
+  },
+  "gymIntroEyebrow": "Next · {exercise} of {exercises}",
+  "@gymIntroEyebrow": {
+    "description": "Eyebrow of the exercise introduction page",
+    "placeholders": {
+      "exercise": {
+        "type": "int"
+      },
+      "exercises": {
+        "type": "int"
+      }
+    }
+  },
+  "gymIntroSets": "{sets} × {reps}",
+  "@gymIntroSets": {
+    "description": "Sets and repetitions chip on the exercise introduction page",
+    "placeholders": {
+      "sets": {
+        "type": "String"
+      },
+      "reps": {
+        "type": "String"
+      }
+    }
+  },
+  "gymIntroRest": "Rest {time}",
+  "@gymIntroRest": {
+    "description": "Rest chip on the exercise introduction page",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "gymIntroStart": "Start set {set}",
+  "@gymIntroStart": {
+    "description": "Button on the exercise introduction page that goes to the first set",
+    "placeholders": {
+      "set": {
+        "type": "int"
+      }
+    }
+  },
+  "gymIntroLast": "Last time {value}",
+  "@gymIntroLast": {
+    "description": "Last logged value of the exercise, on the exercise introduction page",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -22,7 +22,10 @@ import 'package:wger/core/consts.dart';
 import 'package:wger/features/glossary/widgets/glossary_widgets.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/elapsed_time.dart';
+import 'package:wger/features/routines/widgets/gym_mode/order_sheet.dart';
+import 'package:wger/features/routines/widgets/gym_mode/settings_sheet.dart';
 import 'package:wger/features/routines/widgets/gym_mode/workout_menu.dart';
+import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/theme/atlas.dart';
 
 class NavigationHeader extends StatelessWidget {
@@ -33,11 +36,16 @@ class NavigationHeader extends StatelessWidget {
   /// Replaces the title, e.g. with the elapsed time
   final Widget? center;
 
+  /// Adds the button that opens the settings sheet (alerts and what the pages
+  /// show). The pages used while training turn it on.
+  final bool showSettings;
+
   const NavigationHeader(
     this._title,
     this._controller, {
     this.showEndWorkoutButton = true,
     this.center,
+    this.showSettings = false,
     super.key,
   });
 
@@ -79,17 +87,23 @@ class NavigationHeader extends StatelessWidget {
                 ),
           ),
           const GlossaryHelpButton(),
+          if (showSettings) ...[
+            const SizedBox(width: 6),
+            IconButton(
+              key: const ValueKey('gym-settings-button'),
+              style: style,
+              icon: const Icon(Icons.tune, size: 20),
+              tooltip: AppLocalizations.of(context).settingsTitle,
+              onPressed: () => showGymSettingsSheet(context),
+            ),
+          ],
           const SizedBox(width: 6),
           IconButton(
+            key: const ValueKey('gym-order-button'),
             style: style,
-            icon: const Icon(Icons.menu, size: 20),
-            tooltip: MaterialLocalizations.of(context).showMenuTooltip,
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => WorkoutMenuDialog(_controller),
-              );
-            },
+            icon: const Icon(Icons.format_list_bulleted, size: 20),
+            tooltip: AppLocalizations.of(context).gymSessionOrder,
+            onPressed: () => showSessionOrderSheet(context, _controller),
           ),
         ],
       ),

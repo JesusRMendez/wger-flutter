@@ -39,6 +39,7 @@ import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/providers/workout_logs_repository.dart';
+import 'package:wger/features/routines/widgets/gym_mode/exercise_overview.dart';
 import 'package:wger/features/routines/widgets/gym_mode/log_page.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/l10n/localizations_delegates.dart';
@@ -180,6 +181,80 @@ void main() {
       await pumpLogPage(tester);
 
       expect(find.byType(LogPage), findsOneWidget);
+    });
+
+    testWidgets('the header says where the set is and how long is left', (tester) async {
+      seedLogPage(testdata.getTestRoutine());
+      await pumpLogPage(tester);
+
+      expect(find.textContaining('EXERCISE 1/'), findsOneWidget);
+      expect(find.textContaining(' · SET 1/'), findsOneWidget);
+      expect(find.byKey(const ValueKey('gym-minutes-left')), findsOneWidget);
+      expect(find.textContaining('min left'), findsOneWidget);
+      // The order sheet and the settings are one tap away
+      expect(find.byKey(const ValueKey('gym-order-button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('gym-settings-button')), findsOneWidget);
+    });
+
+    testWidgets('Use applies the planned weight and repetitions', (tester) async {
+      seedLogPage(testdata.getTestRoutine());
+      await pumpLogPage(tester);
+
+      final config = container.read(gymStateProvider).getSlotEntryPageByIndex()!.setConfigData!;
+      final log = container.read(gymLogProvider.notifier);
+      log.setWeight(1);
+      log.setRepetitions(1);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('use-suggestion')));
+      await tester.pumpAndSettle();
+
+      expect(container.read(gymLogProvider)!.weight, config.weight);
+      expect(container.read(gymLogProvider)!.repetitions, config.repetitions);
+    });
+
+    testWidgets('the exercise introduction shows the plan and starts the first set', (
+      tester,
+    ) async {
+      final routine = testdata.getTestRoutine();
+      final notifier = container.read(gymStateProvider.notifier);
+      notifier.initData(routine, routine.days.first.id!, 1);
+      notifier.setCurrentPage(1);
+      final slot = container.read(gymStateProvider).getSlotEntryPageByIndex(1)!;
+      expect(slot.type, SlotPageType.exerciseOverview);
+
+      final controller = PageController();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: appLocalizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: PageView(
+                controller: controller,
+                children: [
+                  const SizedBox(),
+                  ExerciseOverview(controller, slot.uuid),
+                  const Text('log'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      controller.jumpToPage(1);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('NEXT · 1 OF'), findsOneWidget);
+      expect(find.byKey(const ValueKey('intro-sets')), findsOneWidget);
+      expect(find.byKey(const ValueKey('intro-suggested')), findsOneWidget);
+      expect(find.text('Start set 1'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('intro-start')));
+      await tester.pumpAndSettle();
+      expect(controller.page, 2);
     });
 
     testWidgets('copy from past log updates form fields and shows a SnackBar', (tester) async {
@@ -325,7 +400,7 @@ void main() {
           expect(log.repetitionsUnitId, repUnit.id);
 
           // The header shows the set as planned
-          expect(find.text(header), findsOneWidget);
+          expect(find.text('Planned $header'), findsOneWidget);
 
           // The form labels the fields with the units, not with kg / repetitions
           final weightLabel = find.descendant(

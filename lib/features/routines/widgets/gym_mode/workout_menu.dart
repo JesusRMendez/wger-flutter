@@ -28,9 +28,9 @@ import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/zone_chip.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
-/// Animates to the given set page and closes the menu. If this skips exercises
+/// Animates to the given set page and closes the menu or sheet it is called from. If this skips exercises
 /// that are not done yet, a short, non-blocking warning is shown.
-void _jumpToPage(BuildContext context, PageController controller, PageEntry page) {
+void jumpToWorkoutPage(BuildContext context, PageController controller, PageEntry page) {
   final skipsAhead = ProviderScope.containerOf(
     context,
   ).read(gymStateProvider).wouldSkipAhead(page.uuid);
@@ -113,7 +113,7 @@ class NavigationTab extends ConsumerWidget {
               ),
               subtitle: ZoneChip(page),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => _jumpToPage(context, _controller, page),
+              onTap: () => jumpToWorkoutPage(context, _controller, page),
             );
           }),
         ],
@@ -319,7 +319,7 @@ class _ProgressionTabState extends ConsumerState<ProgressionTab> {
                         ),
                       ],
                       IconButton(
-                        onPressed: () => _jumpToPage(context, widget._controller, page),
+                        onPressed: () => jumpToWorkoutPage(context, widget._controller, page),
                         icon: const Icon(Icons.chevron_right),
                       ),
                     ],
