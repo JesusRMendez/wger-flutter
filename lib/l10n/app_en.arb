@@ -3269,5 +3269,41 @@
   "restShort": "Rest",
   "@restShort": {
     "description": "Short label of the rest time field"
+  },
+  "slotChipRest": "Rest {time}",
+  "@slotChipRest": {
+    "description": "Rest time chip on an exercise card of the routine",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "slotChipRir": "RIR {rir}",
+  "@slotChipRir": {
+    "description": "Reps in reserve chip on an exercise card",
+    "placeholders": {
+      "rir": {
+        "type": "String"
+      }
+    }
+  },
+  "routineStartDay": "Start {day}",
+  "@routineStartDay": {
+    "description": "Button that starts the selected training day",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "routineWeekChip": "W{week}",
+  "@routineWeekChip": {
+    "description": "Short label of a week chip in the routine",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
   }
 }

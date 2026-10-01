@@ -278,7 +278,9 @@ void main() {
       await tester.pumpAndSettle();
 
       await openSlot(tester, day.slots[0].id!);
-      final addSet = tester.widget<OutlinedButton>(find.byKey(ValueKey('add-set-${day.slots[0].id}')));
+      final addSet = tester.widget<OutlinedButton>(
+        find.byKey(ValueKey('add-set-${day.slots[0].id}')),
+      );
       expect(addSet.onPressed, isNull);
       verifyNever(mockRepo.addSlotServer(any));
     });

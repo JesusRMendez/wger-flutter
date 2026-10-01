@@ -291,7 +291,7 @@ class _DayFormWidgetState extends ConsumerState<DayFormWidget> {
                 ),
                 DropdownButtonFormField<DayType>(
                   key: const Key('field-day-type'),
-            isExpanded: true,
+                  isExpanded: true,
                   initialValue: widget.day.type,
                   decoration: const InputDecoration(labelText: 'Typ'),
                   items: DayType.values.map((type) {

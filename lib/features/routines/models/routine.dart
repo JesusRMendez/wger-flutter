@@ -208,9 +208,16 @@ class Routine {
 
   /// Filter out dayData entries with null days as well as duplicated days from
   /// the "fixed weekly schedule" toggle.
-  List<DayData> get dayDataCurrentIterationFiltered {
+  List<DayData> get dayDataCurrentIterationFiltered =>
+      dayDataFilteredFor(getIteration(date: DateTime.now()) ?? 1);
+
+  /// The iterations (weeks) the routine has day data for, in order
+  List<int> get iterations => (dayData.map((d) => d.iteration).toSet().toList()..sort());
+
+  /// Like [dayDataCurrentIterationFiltered], for any iteration
+  List<DayData> dayDataFilteredFor(int iteration) {
     final sorted = List<DayData>.from(
-      dayDataCurrentIteration.where((dd) => dd.day != null),
+      dayData.where((data) => data.iteration == iteration && data.day != null),
     )..sort((a, b) => a.day!.order.compareTo(b.day!.order));
 
     // Filter out entries where the day is the same as the previous one. This

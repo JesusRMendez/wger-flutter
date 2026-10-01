@@ -111,8 +111,24 @@ class RoutineDetailAppBar extends ConsumerWidget implements PreferredSizeWidget 
     final provider = ref.read(routinesRiverpodProvider.notifier);
     final isOnline = ref.watch(networkStatusProvider);
 
+    final iterations = routine.iterations;
+    final current = routine.getIteration();
+
     return AppBar(
-      title: Text(routine.name),
+      centerTitle: true,
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(routine.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (current != null && iterations.length > 1)
+            Text(
+              i18n.routinesWeekOf(current, iterations.length),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.atlas.ink3),
+            ),
+        ],
+      ),
       actions: [
         const GlossaryHelpButton(),
         PopupMenuButton(
