@@ -54,6 +54,8 @@ import 'package:wger/features/account/widgets/settings.dart';
 import 'package:wger/features/auth/screens/auth_screen.dart';
 import 'package:wger/features/auth/screens/auto_login_error_screen.dart';
 import 'package:wger/features/coach/screens/coach_screen.dart';
+import 'package:wger/features/coach/screens/data_quality_screen.dart';
+import 'package:wger/features/coach/screens/follow_up_screen.dart';
 import 'package:wger/features/coach/screens/goals_screen.dart';
 import 'package:wger/features/coach/screens/meal_plan_screen.dart';
 import 'package:wger/features/coach/screens/memory_screen.dart';
@@ -318,6 +320,8 @@ class MainApp extends ConsumerWidget {
                 WorkoutPlanScreen.routeName: (ctx) => const WorkoutPlanScreen(),
                 MealPlanScreen.routeName: (ctx) => const MealPlanScreen(),
                 GoalsScreen.routeName: (ctx) => const GoalsScreen(),
+                FollowUpScreen.routeName: (ctx) => const FollowUpScreen(),
+                DataQualityScreen.routeName: (ctx) => const DataQualityScreen(),
                 MemoryScreen.routeName: (ctx) => const MemoryScreen(),
                 MyAiScreen.routeName: (ctx) => const MyAiScreen(),
                 GuidedModeScreen.routeName: (ctx) => const GuidedModeScreen(),

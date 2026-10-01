@@ -21,9 +21,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/form_screen.dart';
 import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
-import 'package:wger/core/widgets/app_bar.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/core/widgets/progress_indicator.dart';
 import 'package:wger/features/account/providers/user_profile_notifier.dart';
+import 'package:wger/features/coach/providers/coach_providers.dart';
 import 'package:wger/features/measurements/models/unit_conversion.dart';
 import 'package:wger/features/measurements/providers/body_weight_provider.dart';
 import 'package:wger/features/measurements/providers/chart_range_setting.dart';
@@ -52,39 +53,76 @@ class WeightScreen extends ConsumerWidget {
     // The profile decides the display unit, so nothing can be drawn without it
     final profile = ref.watch(userProfileProvider).value;
 
+    // The weight the user is heading for, from the body weight goal of the coach
+    // (read leniently: the coach is optional and may not be reachable)
+    num? target;
+    if (profile != null) {
+      final goals = ref.watch(coachGoalsProvider.select((a) => a.hasValue ? a.value : null));
+      final goal = goals
+          ?.where((g) => g.kind == 'body_weight' && g.status == 'active' && g.targetValue != null)
+          .firstOrNull;
+      if (goal != null) {
+        final inKg = goal.unit.toLowerCase() != 'lb' && goal.unit.toLowerCase() != 'lbs';
+        target = profile.isMetric == inKg
+            ? goal.targetValue
+            : (inKg ? goal.targetValue! * 2.20462 : goal.targetValue! / 2.20462);
+      }
+    }
+
     return Scaffold(
-      appBar: EmptyAppBar(i18n.weight),
-      floatingActionButton: category == null
-          ? null
-          : FloatingActionButton(
-              child: const Icon(Icons.add),
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  FormScreen.routeName,
-                  arguments: FormScreenArguments(
-                    i18n.newEntry,
-                    WeightForm(category),
-                  ),
-                );
-              },
-            ),
-      body: WidescreenWrapper(
-        child: SingleChildScrollView(
-          child: category == null || profile == null
-              ? const BoxedProgressIndicator()
-              : EntriesList(
-                  category,
-                  // Shared with the whole measurements tab, see ChartRangeSetting
-                  range: ref.watch(chartRangeSettingProvider),
-                  onRangeChanged: (range) =>
-                      ref.read(chartRangeSettingProvider.notifier).set(range),
-                  title: i18n.weight,
-                  showHero: true,
-                  displayUnit: weightDisplayUnit(profile.isMetric),
-                  displayUnitLabel: weightUnit(profile.isMetric, context),
-                  editFormBuilder: (entry) => WeightForm(category, entry),
+      body: SafeArea(
+        child: WidescreenWrapper(
+          child: Column(
+            children: [
+              AtlasHeader(
+                title: i18n.weight,
+                centered: true,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                actions: const [SizedBox(width: 44)],
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: category == null || profile == null
+                      ? const BoxedProgressIndicator()
+                      : EntriesList(
+                          category,
+                          // Shared with the whole measurements tab, see ChartRangeSetting
+                          range: ref.watch(chartRangeSettingProvider),
+                          onRangeChanged: (range) =>
+                              ref.read(chartRangeSettingProvider.notifier).set(range),
+                          title: i18n.weight,
+                          showHero: true,
+                          displayUnit: weightDisplayUnit(profile.isMetric),
+                          displayUnitLabel: weightUnit(profile.isMetric, context),
+                          editFormBuilder: (entry) => WeightForm(category, entry),
+                          projectionTarget: target,
+                        ),
                 ),
+              ),
+              if (category != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: FilledButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: Text(i18n.registerWeight),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          FormScreen.routeName,
+                          arguments: FormScreenArguments(
+                            i18n.newEntry,
+                            WeightForm(category),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

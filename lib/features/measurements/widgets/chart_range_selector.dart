@@ -37,6 +37,10 @@ class ChartRangeSelector extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: SegmentedButton<ChartRange>(
           showSelectedIcon: false,
+          style: const ButtonStyle(
+            padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 6)),
+            visualDensity: VisualDensity.compact,
+          ),
           segments: [
             for (final range in ChartRange.values)
               ButtonSegment(value: range, label: Text(range.label(i18n))),

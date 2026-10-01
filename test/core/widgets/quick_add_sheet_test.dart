@@ -111,7 +111,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Progress'), findsOneWidget);
-    for (final key in ['weight', 'measurements', 'gallery', 'trophies', 'goals']) {
+    for (final key in ['weight', 'measurements', 'gallery', 'trophies', 'goals', 'follow-up']) {
       expect(
         find.byKey(ValueKey('progress-$key'), skipOffstage: false),
         findsOneWidget,

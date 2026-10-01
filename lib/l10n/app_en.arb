@@ -698,6 +698,262 @@
   "@portion": {
     "description": "Heading of the portion stepper when logging a meal"
   },
+  "coachGoalOnTrack": "On track",
+  "@coachGoalOnTrack": {
+    "description": "Status chip of a goal that progresses as planned"
+  },
+  "coachGoalWatch": "Watch",
+  "@coachGoalWatch": {
+    "description": "Status chip of a goal that falls behind"
+  },
+  "coachFinalGoal": "Final goal",
+  "@coachFinalGoal": {
+    "description": "Eyebrow of the card of the goal at the end of the plan"
+  },
+  "coachDataLow": "Low",
+  "@coachDataLow": {
+    "description": "Level of the data quality when it is low"
+  },
+  "coachDataMedium": "Medium",
+  "@coachDataMedium": {
+    "description": "Level of the data quality when it is medium"
+  },
+  "coachDataHigh": "High",
+  "@coachDataHigh": {
+    "description": "Level of the data quality when it is high"
+  },
+  "coachRecommendationAccuracy": "Accuracy of the recommendations",
+  "@coachRecommendationAccuracy": {
+    "description": "Caption above the level of the data quality"
+  },
+  "coachDataTitle": "Data for your coach",
+  "@coachDataTitle": {
+    "description": "Title of the data quality screen"
+  },
+  "coachDataSubtitle": "What the AI needs to adjust your plan",
+  "@coachDataSubtitle": {
+    "description": "Subtitle of the data quality screen"
+  },
+  "coachDataToDo": "To do",
+  "@coachDataToDo": {
+    "description": "Status chip of a data signal that is missing"
+  },
+  "coachDataSeeAll": "See all",
+  "@coachDataSeeAll": {
+    "description": "Link to the full data quality screen"
+  },
+  "coachDataAllGood": "Nothing is missing, your data is complete.",
+  "@coachDataAllGood": {
+    "description": "Shown when the coach has no missing data"
+  },
+  "coachYouAreHere": "You are here",
+  "@coachYouAreHere": {
+    "description": "Eyebrow of the card with the current plan phase"
+  },
+  "coachPhaseDone": "Done",
+  "@coachPhaseDone": {
+    "description": "Status chip of a plan phase that is over"
+  },
+  "coachPhaseNow": "Now",
+  "@coachPhaseNow": {
+    "description": "Status chip of the current plan phase"
+  },
+  "coachPhaseUpcoming": "Upcoming",
+  "@coachPhaseUpcoming": {
+    "description": "Status chip of a plan phase that did not start yet"
+  },
+  "coachPhaseWeeks": "Weeks {from}-{to}",
+  "@coachPhaseWeeks": {
+    "description": "Week range of a plan phase",
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "coachPhaseAdaptationHint": "Learn the movements and find your starting loads. Keep the effort moderate.",
+  "@coachPhaseAdaptationHint": {
+    "description": "Guidance of the adaptation phase"
+  },
+  "coachPhaseProgressionHint": "Add load or reps whenever you finish all sets with some reps in reserve.",
+  "@coachPhaseProgressionHint": {
+    "description": "Guidance of the progression phase"
+  },
+  "coachPhaseDeloadHint": "Lower the volume to recover. Keep the technique sharp.",
+  "@coachPhaseDeloadHint": {
+    "description": "Guidance of the deload phase"
+  },
+  "coachPhaseConsolidationHint": "Watch your strength and adherence and keep what you gained.",
+  "@coachPhaseConsolidationHint": {
+    "description": "Guidance of the consolidation phase"
+  },
+  "coachFollowUp": "Weekly follow-up",
+  "@coachFollowUp": {
+    "description": "Title of the weekly review screen"
+  },
+  "coachFollowUpSubtitle": "Review of the last {days} days",
+  "@coachFollowUpSubtitle": {
+    "description": "Subtitle of the weekly review screen",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "coachFollowUpOnPlan": "You are on plan",
+  "@coachFollowUpOnPlan": {
+    "description": "Verdict of the weekly review when nothing needs attention"
+  },
+  "coachFollowUpAttention": "A few things need attention",
+  "@coachFollowUpAttention": {
+    "description": "Verdict of the weekly review when there are warnings"
+  },
+  "coachFollowUpWeekPhase": "Week {week} · {phase}",
+  "@coachFollowUpWeekPhase": {
+    "description": "Eyebrow of the weekly review",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      },
+      "phase": {
+        "type": "String"
+      }
+    }
+  },
+  "coachFollowUpAdjustments": "Recommended adjustments",
+  "@coachFollowUpAdjustments": {
+    "description": "Heading of the recommendations of the weekly review"
+  },
+  "coachFollowUpPending": "{count} pending",
+  "@coachFollowUpPending": {
+    "description": "Number of recommendations",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coachFollowUpIndicators": "Indicators",
+  "@coachFollowUpIndicators": {
+    "description": "Heading of the indicators of the weekly review"
+  },
+  "coachFollowUpOpenRoutine": "Open routine",
+  "@coachFollowUpOpenRoutine": {
+    "description": "Button of a recommendation that opens the routine"
+  },
+  "coachFollowUpNone": "No plan data yet. Start a plan and come back after your first week.",
+  "@coachFollowUpNone": {
+    "description": "Weekly review without a plan"
+  },
+  "coachSubtitle": "Knows your routines, meals and progress",
+  "@coachSubtitle": {
+    "description": "Subtitle of the coach screen"
+  },
+  "coachWorkoutPlanHint": "Based on time, place and equipment",
+  "@coachWorkoutPlanHint": {
+    "description": "Subtitle of the workout plan tile of the coach"
+  },
+  "coachMealPlanHint": "Macros, tastes and budget",
+  "@coachMealPlanHint": {
+    "description": "Subtitle of the meal plan tile of the coach"
+  },
+  "coachDietVegetarian": "Vegetarian",
+  "@coachDietVegetarian": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietLactoseFree": "Lactose free",
+  "@coachDietLactoseFree": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietLowBudget": "Low budget",
+  "@coachDietLowBudget": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietQuick": "Quick to cook",
+  "@coachDietQuick": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachPlanTotal": "Plan total",
+  "@coachPlanTotal": {
+    "description": "Title of the totals card of a proposed meal plan"
+  },
+  "coachMealPlanTarget": "{kcal} / {target} kcal",
+  "@coachMealPlanTarget": {
+    "description": "Energy of the plan against the target",
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "coachEditEquipment": "Edit equipment",
+  "@coachEditEquipment": {
+    "description": "Link to the training locations from the workout plan form"
+  },
+  "coachPlanGoals": "Plan goals",
+  "@coachPlanGoals": {
+    "description": "Eyebrow of the card that lists the goals of the plan"
+  },
+  "progressSubtitleFollowUp": "Plan check, adjustments and data quality",
+  "@progressSubtitleFollowUp": {
+    "description": "Subtitle of the weekly follow-up row on the progress tab"
+  },
+  "measurementSourceManual": "Manual",
+  "@measurementSourceManual": {
+    "description": "Source label of an entry the user wrote"
+  },
+  "measurementSourceImported": "Imported",
+  "@measurementSourceImported": {
+    "description": "Source label of an entry that came from another app"
+  },
+  "measurementSourceCalculated": "Calculated",
+  "@measurementSourceCalculated": {
+    "description": "Source label of an entry computed from other data"
+  },
+  "weightProjection": "Projection",
+  "@weightProjection": {
+    "description": "Title of the card that projects when the weight goal is reached"
+  },
+  "weightProjectionReach": "At your current pace ({rate} {unit}/week) you will reach {target} {unit} around {date}.",
+  "@weightProjectionReach": {
+    "description": "Projection of the weight",
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "weightProjectionAway": "Right now your weight is moving away from {target} {unit}.",
+  "@weightProjectionAway": {
+    "description": "Projection of the weight when the trend goes the wrong way",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "registerWeight": "Log weight",
+  "@registerWeight": {
+    "description": "Button that opens the form of a new weight entry"
+  },
   "searchIngredient": "Search ingredient",
   "@searchIngredient": {
     "description": "Label (or Hint text) on ingredient search form"

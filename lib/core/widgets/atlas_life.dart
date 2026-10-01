@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/theme/atlas.dart';
@@ -286,4 +288,79 @@ class CheckCircle extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A line with a soft area under it, drawn over [values] (oldest first), as on
+/// the weight card of the progress tab.
+class AreaSparkline extends StatelessWidget {
+  const AreaSparkline({super.key, required this.values, this.color, this.height = 96});
+
+  final List<double> values;
+  final Color? color;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? Theme.of(context).colorScheme.primary;
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: CustomPaint(painter: _AreaPainter(values, c)),
+    );
+  }
+}
+
+class _AreaPainter extends CustomPainter {
+  _AreaPainter(this.values, this.color);
+
+  final List<double> values;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) {
+      return;
+    }
+    final low = values.reduce(math.min);
+    final high = values.reduce(math.max);
+    final span = high - low;
+    double y(double v) =>
+        span == 0 ? size.height / 2 : size.height * (0.08 + 0.84 * (high - v) / span);
+
+    final line = Path();
+    for (var i = 0; i < values.length; i++) {
+      final x = i / (values.length - 1) * size.width;
+      if (i == 0) {
+        line.moveTo(x, y(values[i]));
+      } else {
+        line.lineTo(x, y(values[i]));
+      }
+    }
+    final area = Path.from(line)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+
+    canvas.drawPath(
+      area,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: 0.28), color.withValues(alpha: 0.02)],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawPath(
+      line,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_AreaPainter old) => old.values != values || old.color != color;
 }
