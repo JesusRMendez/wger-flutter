@@ -3403,5 +3403,27 @@
   "guidedPrevious": "Previous",
   "@guidedPrevious": {
     "description": "Tooltip of the previous set button"
+  },
+  "historySessionsIn": "sessions {month}",
+  "@historySessionsIn": {
+    "description": "Label under the number of sessions of the month in the training history",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTraining": "training",
+  "@historyTraining": {
+    "description": "Label under the hours trained in the month, training history"
+  },
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "description": "A duration in minutes, e.g. on the session card of the history",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
   }
 }
