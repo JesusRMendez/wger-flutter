@@ -33,10 +33,25 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('mp-generate')));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Cut plan'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Cut plan'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Breakfast · 08:00'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Breakfast · 08:00'), findsOneWidget);
     expect(find.text('Oats'), findsOneWidget);
     expect(find.text('80 g'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.textContaining('Skipped items'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.textContaining('2260 kcal'), findsOneWidget);
     expect(find.textContaining('Skipped items: Mystery bar'), findsOneWidget);
   });

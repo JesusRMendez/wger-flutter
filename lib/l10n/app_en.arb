@@ -465,6 +465,605 @@
   "@addIngredient": {},
   "logIngredient": "Log ingredient to nutrition diary",
   "@logIngredient": {},
+  "kcalLeft": "kcal left",
+  "@kcalLeft": {
+    "description": "Caption under the remaining calories in the energy ring"
+  },
+  "consumed": "Consumed",
+  "@consumed": {
+    "description": "Label of the energy eaten so far today"
+  },
+  "goalToday": "Goal today",
+  "@goalToday": {
+    "description": "Label of today's energy target"
+  },
+  "nextMealBanner": "Next: {meal} at {time} · {kcal} kcal planned",
+  "@nextMealBanner": {
+    "description": "Banner with the next meal of the plan",
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      },
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "allMealsLogged": "All of today's meals are logged",
+  "@allMealsLogged": {
+    "description": "Banner shown when every meal of the plan has been logged today"
+  },
+  "planDetails": "Plan details",
+  "@planDetails": {
+    "description": "Section label above the goals table of a nutritional plan"
+  },
+  "planActive": "Active plan",
+  "@planActive": {
+    "description": "Eyebrow of the card of the current nutritional plan"
+  },
+  "calcTitle": "Calculate goals",
+  "@calcTitle": {
+    "description": "Title of the card that estimates calorie and macro goals"
+  },
+  "newBadge": "NEW",
+  "@newBadge": {
+    "description": "Small badge on a new feature"
+  },
+  "goalLoseFat": "Lose fat",
+  "@goalLoseFat": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "goalMaintain": "Maintain",
+  "@goalMaintain": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "goalGainMuscle": "Gain muscle",
+  "@goalGainMuscle": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "calcBasedOn": "From your weight ({weight}) and a moderately active week:",
+  "@calcBasedOn": {
+    "description": "Line above the estimated calories",
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "calcNoWeight": "Log your weight to get an estimate of your goals.",
+  "@calcNoWeight": {
+    "description": "Shown by the calorie calculator without a weight entry"
+  },
+  "kcalPerDay": "kcal/day",
+  "@kcalPerDay": {
+    "description": "Unit of the daily energy goal"
+  },
+  "calcDeficit": "Deficit of {pct} % · about {kg} kg less per week.",
+  "@calcDeficit": {
+    "description": "Explanation of a calorie deficit",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "calcSurplus": "Surplus of {pct} % · about {kg} kg more per week.",
+  "@calcSurplus": {
+    "description": "Explanation of a calorie surplus",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "calcMaintenance": "Maintenance: your weight should stay about the same.",
+  "@calcMaintenance": {
+    "description": "Explanation of eating at maintenance"
+  },
+  "generateMealsAi": "Generate meals with AI",
+  "@generateMealsAi": {
+    "description": "Button that opens the coach meal plan generator"
+  },
+  "otherPlans": "Other plans",
+  "@otherPlans": {
+    "description": "Heading of the list of the not active nutritional plans"
+  },
+  "planArchived": "Archived",
+  "@planArchived": {
+    "description": "Status chip of a nutritional plan that ended"
+  },
+  "planUpcoming": "Upcoming",
+  "@planUpcoming": {
+    "description": "Status chip of a nutritional plan that did not start yet"
+  },
+  "planGoalsOnly": "Goals only · no meals",
+  "@planGoalsOnly": {
+    "description": "Subtitle of a plan that has goals but no meals"
+  },
+  "kcalGoalPerDay": "kcal goal per day",
+  "@kcalGoalPerDay": {
+    "description": "Label under the daily energy goal of a plan"
+  },
+  "kcalAverage7Days": "kcal 7-day average",
+  "@kcalAverage7Days": {
+    "description": "Label under the average energy logged in the last 7 days"
+  },
+  "macroSplit": "Protein {p} % · carbs {c} % · fat {f} %",
+  "@macroSplit": {
+    "description": "Share of each macro nutrient in the energy",
+    "placeholders": {
+      "p": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "f": {
+        "type": "String"
+      }
+    }
+  },
+  "proteinAbbr": "prot.",
+  "@proteinAbbr": {
+    "description": "Short label for protein under a figure"
+  },
+  "carbsAbbr": "carb.",
+  "@carbsAbbr": {
+    "description": "Short label for carbohydrates under a figure"
+  },
+  "fatAbbr": "fat",
+  "@fatAbbr": {
+    "description": "Short label for fat under a figure"
+  },
+  "nutritionalInformation": "Nutritional information",
+  "@nutritionalInformation": {
+    "description": "Heading of the nutrition table of an ingredient"
+  },
+  "perAmount": "per {amount}",
+  "@perAmount": {
+    "description": "Reference amount of a nutrition table, e.g. per 125 g",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "calorieSplit": "Calorie split: protein {p} % · carbohydrates {c} % · fat {f} %",
+  "@calorieSplit": {
+    "description": "Share of the energy by macro nutrient",
+    "placeholders": {
+      "p": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "f": {
+        "type": "String"
+      }
+    }
+  },
+  "ingredientSource": "{brand} · {source}",
+  "@ingredientSource": {
+    "description": "Brand and source line under an ingredient name",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "addToMeal": "Add to {meal}",
+  "@addToMeal": {
+    "description": "Button that adds an ingredient to a meal",
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "recents": "Recent",
+  "@recents": {
+    "description": "Filter chip for the ingredients added lately"
+  },
+  "allIngredients": "All",
+  "@allIngredients": {
+    "description": "Filter chip for all ingredients"
+  },
+  "ingredientCount": "{count} foods",
+  "@ingredientCount": {
+    "description": "Number of ingredients in the list",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "addToLog": "Add",
+  "@addToLog": {
+    "description": "Button that adds an ingredient to the diary"
+  },
+  "portion": "Portion",
+  "@portion": {
+    "description": "Heading of the portion stepper when logging a meal"
+  },
+  "coachGoalOnTrack": "On track",
+  "@coachGoalOnTrack": {
+    "description": "Status chip of a goal that progresses as planned"
+  },
+  "coachGoalWatch": "Watch",
+  "@coachGoalWatch": {
+    "description": "Status chip of a goal that falls behind"
+  },
+  "coachFinalGoal": "Final goal",
+  "@coachFinalGoal": {
+    "description": "Eyebrow of the card of the goal at the end of the plan"
+  },
+  "coachDataLow": "Low",
+  "@coachDataLow": {
+    "description": "Level of the data quality when it is low"
+  },
+  "coachDataMedium": "Medium",
+  "@coachDataMedium": {
+    "description": "Level of the data quality when it is medium"
+  },
+  "coachDataHigh": "High",
+  "@coachDataHigh": {
+    "description": "Level of the data quality when it is high"
+  },
+  "coachRecommendationAccuracy": "Accuracy of the recommendations",
+  "@coachRecommendationAccuracy": {
+    "description": "Caption above the level of the data quality"
+  },
+  "coachDataTitle": "Data for your coach",
+  "@coachDataTitle": {
+    "description": "Title of the data quality screen"
+  },
+  "coachDataSubtitle": "What the AI needs to adjust your plan",
+  "@coachDataSubtitle": {
+    "description": "Subtitle of the data quality screen"
+  },
+  "coachDataToDo": "To do",
+  "@coachDataToDo": {
+    "description": "Status chip of a data signal that is missing"
+  },
+  "coachDataSeeAll": "See all",
+  "@coachDataSeeAll": {
+    "description": "Link to the full data quality screen"
+  },
+  "coachDataAllGood": "Nothing is missing, your data is complete.",
+  "@coachDataAllGood": {
+    "description": "Shown when the coach has no missing data"
+  },
+  "coachYouAreHere": "You are here",
+  "@coachYouAreHere": {
+    "description": "Eyebrow of the card with the current plan phase"
+  },
+  "coachPhaseDone": "Done",
+  "@coachPhaseDone": {
+    "description": "Status chip of a plan phase that is over"
+  },
+  "coachPhaseNow": "Now",
+  "@coachPhaseNow": {
+    "description": "Status chip of the current plan phase"
+  },
+  "coachPhaseUpcoming": "Upcoming",
+  "@coachPhaseUpcoming": {
+    "description": "Status chip of a plan phase that did not start yet"
+  },
+  "coachPhaseWeeks": "Weeks {from}-{to}",
+  "@coachPhaseWeeks": {
+    "description": "Week range of a plan phase",
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "coachPhaseAdaptationHint": "Learn the movements and find your starting loads. Keep the effort moderate.",
+  "@coachPhaseAdaptationHint": {
+    "description": "Guidance of the adaptation phase"
+  },
+  "coachPhaseProgressionHint": "Add load or reps whenever you finish all sets with some reps in reserve.",
+  "@coachPhaseProgressionHint": {
+    "description": "Guidance of the progression phase"
+  },
+  "coachPhaseDeloadHint": "Lower the volume to recover. Keep the technique sharp.",
+  "@coachPhaseDeloadHint": {
+    "description": "Guidance of the deload phase"
+  },
+  "coachPhaseConsolidationHint": "Watch your strength and adherence and keep what you gained.",
+  "@coachPhaseConsolidationHint": {
+    "description": "Guidance of the consolidation phase"
+  },
+  "coachFollowUp": "Weekly follow-up",
+  "@coachFollowUp": {
+    "description": "Title of the weekly review screen"
+  },
+  "coachFollowUpSubtitle": "Review of the last {days} days",
+  "@coachFollowUpSubtitle": {
+    "description": "Subtitle of the weekly review screen",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "coachFollowUpOnPlan": "You are on plan",
+  "@coachFollowUpOnPlan": {
+    "description": "Verdict of the weekly review when nothing needs attention"
+  },
+  "coachFollowUpAttention": "A few things need attention",
+  "@coachFollowUpAttention": {
+    "description": "Verdict of the weekly review when there are warnings"
+  },
+  "coachFollowUpWeekPhase": "Week {week} · {phase}",
+  "@coachFollowUpWeekPhase": {
+    "description": "Eyebrow of the weekly review",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      },
+      "phase": {
+        "type": "String"
+      }
+    }
+  },
+  "coachFollowUpAdjustments": "Recommended adjustments",
+  "@coachFollowUpAdjustments": {
+    "description": "Heading of the recommendations of the weekly review"
+  },
+  "coachFollowUpPending": "{count} pending",
+  "@coachFollowUpPending": {
+    "description": "Number of recommendations",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coachFollowUpIndicators": "Indicators",
+  "@coachFollowUpIndicators": {
+    "description": "Heading of the indicators of the weekly review"
+  },
+  "coachFollowUpOpenRoutine": "Open routine",
+  "@coachFollowUpOpenRoutine": {
+    "description": "Button of a recommendation that opens the routine"
+  },
+  "coachFollowUpNone": "No plan data yet. Start a plan and come back after your first week.",
+  "@coachFollowUpNone": {
+    "description": "Weekly review without a plan"
+  },
+  "coachSubtitle": "Knows your routines, meals and progress",
+  "@coachSubtitle": {
+    "description": "Subtitle of the coach screen"
+  },
+  "coachWorkoutPlanHint": "Based on time, place and equipment",
+  "@coachWorkoutPlanHint": {
+    "description": "Subtitle of the workout plan tile of the coach"
+  },
+  "coachMealPlanHint": "Macros, tastes and budget",
+  "@coachMealPlanHint": {
+    "description": "Subtitle of the meal plan tile of the coach"
+  },
+  "coachDietVegetarian": "Vegetarian",
+  "@coachDietVegetarian": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietLactoseFree": "Lactose free",
+  "@coachDietLactoseFree": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietLowBudget": "Low budget",
+  "@coachDietLowBudget": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietQuick": "Quick to cook",
+  "@coachDietQuick": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachPlanTotal": "Plan total",
+  "@coachPlanTotal": {
+    "description": "Title of the totals card of a proposed meal plan"
+  },
+  "coachMealPlanTarget": "{kcal} / {target} kcal",
+  "@coachMealPlanTarget": {
+    "description": "Energy of the plan against the target",
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "coachEditEquipment": "Edit equipment",
+  "@coachEditEquipment": {
+    "description": "Link to the training locations from the workout plan form"
+  },
+  "coachPlanGoals": "Plan goals",
+  "@coachPlanGoals": {
+    "description": "Eyebrow of the card that lists the goals of the plan"
+  },
+  "progressSubtitleFollowUp": "Plan check, adjustments and data quality",
+  "@progressSubtitleFollowUp": {
+    "description": "Subtitle of the weekly follow-up row on the progress tab"
+  },
+  "measurementSourceManual": "Manual",
+  "@measurementSourceManual": {
+    "description": "Source label of an entry the user wrote"
+  },
+  "measurementSourceImported": "Imported",
+  "@measurementSourceImported": {
+    "description": "Source label of an entry that came from another app"
+  },
+  "measurementSourceCalculated": "Calculated",
+  "@measurementSourceCalculated": {
+    "description": "Source label of an entry computed from other data"
+  },
+  "weightProjection": "Projection",
+  "@weightProjection": {
+    "description": "Title of the card that projects when the weight goal is reached"
+  },
+  "weightProjectionReach": "At your current pace ({rate} {unit}/week) you will reach {target} {unit} around {date}.",
+  "@weightProjectionReach": {
+    "description": "Projection of the weight",
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "weightProjectionAway": "Right now your weight is moving away from {target} {unit}.",
+  "@weightProjectionAway": {
+    "description": "Projection of the weight when the trend goes the wrong way",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "registerWeight": "Log weight",
+  "@registerWeight": {
+    "description": "Button that opens the form of a new weight entry"
+  },
+  "galleryTitle": "Progress photos",
+  "@galleryTitle": {
+    "description": "Title of the photo gallery"
+  },
+  "galleryCompare": "Compare",
+  "@galleryCompare": {
+    "description": "Tab of the gallery with the before and after slider"
+  },
+  "galleryAllCount": "All · {count}",
+  "@galleryAllCount": {
+    "description": "Tab of the gallery with all photos and their number",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryNeedTwo": "Add at least two photos to compare them.",
+  "@galleryNeedTwo": {
+    "description": "Shown in the gallery compare tab with fewer than two photos"
+  },
+  "galleryPickPhoto": "Pick a photo",
+  "@galleryPickPhoto": {
+    "description": "Title of the dialog to choose a photo to compare"
+  },
+  "trophyNext": "Next trophy",
+  "@trophyNext": {
+    "description": "Eyebrow of the card of the trophy closest to being earned"
+  },
+  "authHero1": "Your training.",
+  "@authHero1": {
+    "description": "First line of the welcome headline"
+  },
+  "authHero2": "Your data.",
+  "@authHero2": {
+    "description": "Second line of the welcome headline"
+  },
+  "authHero3": "Your server.",
+  "@authHero3": {
+    "description": "Third line of the welcome headline, in the accent colour"
+  },
+  "authSubtitle": "Routines, nutrition and progress in a free app that syncs with wger.",
+  "@authSubtitle": {
+    "description": "Subtitle of the welcome screen"
+  },
+  "authServerHeading": "Server",
+  "@authServerHeading": {
+    "description": "Heading above the choice of the server on the welcome screen"
+  },
+  "authServerOfficial": "Official server",
+  "@authServerOfficial": {
+    "description": "Name of the official wger server in the server choice"
+  },
+  "authServerOfficialSub": "wger.de · official server",
+  "@authServerOfficialSub": {
+    "description": "Subtitle of the official wger server in the server choice"
+  },
+  "authServerCustom": "My server",
+  "@authServerCustom": {
+    "description": "Name of the own server in the server choice"
+  },
+  "authServerCustomSub": "Your own wger instance",
+  "@authServerCustomSub": {
+    "description": "Subtitle of the own server in the server choice when no address is set"
+  },
+  "authFooter": "Open source · AGPL-3.0 · No ads or tracking",
+  "@authFooter": {
+    "description": "Line at the bottom of the welcome screen"
+  },
+  "glossarySubtitle": "Terms and abbreviations of wger",
+  "@glossarySubtitle": {
+    "description": "Subtitle of the glossary"
+  },
+  "glossarySearchHint": "Search: RIR, 1RM, kcal…",
+  "@glossarySearchHint": {
+    "description": "Hint of the glossary search field"
+  },
+  "glossaryCategoryAll": "All",
+  "@glossaryCategoryAll": {
+    "description": "Glossary filter chip showing every term"
+  },
+  "glossaryCategoryTraining": "Training",
+  "@glossaryCategoryTraining": {
+    "description": "Glossary filter chip for training terms"
+  },
+  "glossaryCategoryNutrition": "Nutrition",
+  "@glossaryCategoryNutrition": {
+    "description": "Glossary filter chip for nutrition terms"
+  },
+  "glossaryCategoryProgress": "Progress",
+  "@glossaryCategoryProgress": {
+    "description": "Glossary filter chip for progress terms"
+  },
+  "glossaryCategoryHealth": "Health",
+  "@glossaryCategoryHealth": {
+    "description": "Glossary filter chip for health terms"
+  },
+  "glossaryTermCount": "{count} terms",
+  "@glossaryTermCount": {
+    "description": "Number of glossary terms shown",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "glossaryFooter": "On any screen, tap an underlined word or the help button to see its explanation.",
+  "@glossaryFooter": {
+    "description": "Hint at the bottom of the glossary"
+  },
   "searchIngredient": "Search ingredient",
   "@searchIngredient": {
     "description": "Label (or Hint text) on ingredient search form"

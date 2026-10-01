@@ -18,7 +18,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
-import 'package:wger/core/widgets/app_bar.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/features/trophies/widgets/trophies_overview.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
@@ -30,8 +30,21 @@ class TrophyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: EmptyAppBar(AppLocalizations.of(context).trophies),
-      body: const WidescreenWrapper(child: TrophiesOverview()),
+      body: SafeArea(
+        child: WidescreenWrapper(
+          child: Column(
+            children: [
+              AtlasHeader(
+                title: AppLocalizations.of(context).trophies,
+                centered: true,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                actions: const [SizedBox(width: 44)],
+              ),
+              const Expanded(child: TrophiesOverview()),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

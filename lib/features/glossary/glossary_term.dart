@@ -20,6 +20,8 @@ import 'package:wger/l10n/generated/app_localizations.dart';
 
 /// The abbreviations that are explained in the glossary. The texts (what it is,
 /// how it helps your goal, an example) are in the l10n files.
+enum GlossaryCategory { training, nutrition, progress, health }
+
 enum GlossaryTerm {
   oneRm,
   rir,
@@ -38,6 +40,25 @@ enum GlossaryTerm {
   hr,
   stepsPerMin,
   bpm;
+
+  /// The topic the term belongs to, for the filter chips of the glossary
+  GlossaryCategory get category => switch (this) {
+    GlossaryTerm.oneRm ||
+    GlossaryTerm.rir ||
+    GlossaryTerm.rpe ||
+    GlossaryTerm.doubleProgression ||
+    GlossaryTerm.deload ||
+    GlossaryTerm.superset ||
+    GlossaryTerm.amrap => GlossaryCategory.training,
+    GlossaryTerm.kcal ||
+    GlossaryTerm.macros ||
+    GlossaryTerm.nutriScore ||
+    GlossaryTerm.nova => GlossaryCategory.nutrition,
+    GlossaryTerm.pr ||
+    GlossaryTerm.volume ||
+    GlossaryTerm.movingAverage7 => GlossaryCategory.progress,
+    GlossaryTerm.hr || GlossaryTerm.stepsPerMin || GlossaryTerm.bpm => GlossaryCategory.health,
+  };
 
   String abbreviation(AppLocalizations i18n) {
     switch (this) {

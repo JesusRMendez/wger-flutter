@@ -20,7 +20,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/features/nutrition/models/ingredient.dart';
 import 'package:wger/features/nutrition/models/ingredient_image.dart';
+import 'package:wger/features/nutrition/models/ingredient_weight_unit.dart';
 import 'package:wger/features/nutrition/widgets/ingredient_dialogs.dart';
+import 'package:wger/features/nutrition/widgets/nutri_score_badge.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/l10n/localizations_delegates.dart';
 
@@ -222,17 +224,69 @@ void main() {
     );
   });
 
+  group('IngredientDetails portions', () {
+    testWidgets('a portion chip sets the amount and the values follow', (tester) async {
+      final ingredient = makeDetailIngredient()
+        ..weightUnits = [
+          const IngredientWeightUnit(
+            id: 1,
+            uuid: 'u',
+            ingredientId: 1,
+            name: 'cup',
+            grams: 250,
+          ),
+        ];
+      await tester.pumpWidget(detailHost(IngredientDetails(ingredient)));
+
+      // 100 g: 100 kcal
+      expect(find.text('per 100 g'), findsOneWidget);
+
+      await tester.tap(find.text('cup · 250 g'));
+      await tester.pumpAndSettle();
+      expect(find.text('per 250 g'), findsOneWidget);
+      // the amount and the energy tile
+      expect(find.text('250'), findsNWidgets(2));
+      // 250 g of an ingredient with 100 kcal per 100 g
+      expect(find.text('250 kcal'), findsOneWidget);
+    });
+
+    testWidgets('the Nutri-Score strip and the dietary chips show what is known', (tester) async {
+      final ingredient = Ingredient(
+        id: 1,
+        remoteId: '1',
+        sourceName: 'x',
+        sourceUrl: 'x',
+        code: null,
+        name: 'Oats',
+        created: DateTime.utc(2026),
+        energy: 370,
+        carbohydrates: 60,
+        protein: 13,
+        fat: 7,
+        isVegan: true,
+        isVegetarian: true,
+        nutriscore: NutriScore.a,
+      );
+      await tester.pumpWidget(detailHost(IngredientDetails(ingredient)));
+
+      expect(find.byType(NutriScoreStrip), findsOneWidget);
+      expect(find.text('Vegan'), findsOneWidget);
+      expect(find.text('Vegetarian'), findsOneWidget);
+    });
+  });
+
   group('IngredientDetails widget tests', () {
     testWidgets('renders the macronutrients header, dietary section and source', (tester) async {
       await tester.pumpWidget(detailHost(IngredientDetails(makeDetailIngredient())));
 
-      // "Macronutrients" appears as the section header and as a column
-      // header inside MacronutrientsTable, both occurrences are fine.
-      expect(find.text('Macronutrients'), findsAtLeast(1));
+      // The nutrition card is titled and the table has its column header
+      expect(find.text('Nutritional information'), findsOneWidget);
+      expect(find.text('MACRONUTRIENTS'), findsOneWidget);
       // DietaryInfoSection is rendered (its widget identity is stable).
       expect(find.byType(DietaryInfoSection), findsOneWidget);
       // Source line picks up the ingredient's sourceName.
-      expect(find.textContaining('Open Food Facts'), findsOneWidget);
+      // (shown in the header line and as the source link)
+      expect(find.textContaining('Open Food Facts'), findsAtLeast(1));
     });
 
     testWidgets('omits the image header when the ingredient has no image', (tester) async {
@@ -246,7 +300,7 @@ void main() {
         detailHost(IngredientDetails(makeDetailIngredient(sourceName: null))),
       );
 
-      expect(find.textContaining('unknown'), findsOneWidget);
+      expect(find.textContaining('unknown'), findsAtLeast(1));
     });
   });
 }

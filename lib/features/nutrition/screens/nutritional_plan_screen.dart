@@ -17,20 +17,34 @@
  */
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/form_screen.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/core/widgets/object_gone_redirect.dart';
 import 'package:wger/core/widgets/progress_indicator.dart';
 import 'package:wger/core/widgets/svg_icon.dart';
+import 'package:wger/features/nutrition/models/nutritional_plan.dart';
 import 'package:wger/features/nutrition/providers/nutrition_notifier.dart';
 import 'package:wger/features/nutrition/screens/log_meals_screen.dart';
 import 'package:wger/features/nutrition/widgets/forms.dart';
 import 'package:wger/features/nutrition/widgets/nutritional_plan_detail.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 enum NutritionalPlanOptions {
   edit,
   delete,
+}
+
+String _dateRange(BuildContext context, NutritionalPlan plan) {
+  final i18n = AppLocalizations.of(context);
+  final locale = Localizations.localeOf(context).languageCode;
+  final start = DateFormat.yMd(locale).format(plan.startDate);
+  if (plan.endDate != null) {
+    return i18n.planDateRange(start, DateFormat.yMd(locale).format(plan.endDate!));
+  }
+  return '${i18n.planStartDate(start)} (${i18n.openEnded})';
 }
 
 class NutritionalPlanScreen extends ConsumerWidget {
@@ -41,7 +55,6 @@ class NutritionalPlanScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final planId = ModalRoute.of(context)!.settings.arguments as String;
-    const appBarForeground = Colors.white;
 
     // Wait for the catalogue to stream in, then resolve the plan by id. A loaded
     // state that no longer has it means the plan was deleted (here or on another
@@ -92,73 +105,81 @@ class NutritionalPlanScreen extends ConsumerWidget {
       ),
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            foregroundColor: appBarForeground,
-            pinned: true,
-            iconTheme: const IconThemeData(color: appBarForeground),
-            actions: [
-              if (!nutritionalPlan.onlyLogging)
-                IconButton(
-                  icon: const SvgIcon('assets/icons/meal-add.svg'),
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      FormScreen.routeName,
-                      arguments: FormScreenArguments(
-                        AppLocalizations.of(context).addMeal,
-                        MealForm(nutritionalPlan.id!),
-                      ),
-                    );
-                  },
-                ),
-              PopupMenuButton<NutritionalPlanOptions>(
-                icon: const Icon(Icons.more_vert, color: appBarForeground),
-                onSelected: (value) {
-                  switch (value) {
-                    case NutritionalPlanOptions.edit:
+          SliverToBoxAdapter(
+            child: AtlasHeader(
+              eyebrow: DateFormat.MMMMEEEEd(
+                Localizations.localeOf(context).languageCode,
+              ).format(DateTime.now()),
+              title: nutritionalPlan.getLabel(context),
+              subtitle: _dateRange(context, nutritionalPlan),
+              actions: [
+                if (!nutritionalPlan.onlyLogging)
+                  RoundIconButton(
+                    icon: Icons.add,
+                    tooltip: AppLocalizations.of(context).addMeal,
+                    onPressed: () {
                       Navigator.pushNamed(
                         context,
                         FormScreen.routeName,
                         arguments: FormScreenArguments(
-                          AppLocalizations.of(context).edit,
-                          PlanForm(nutritionalPlan),
-                          hasListView: true,
+                          AppLocalizations.of(context).addMeal,
+                          MealForm(nutritionalPlan.id!),
                         ),
                       );
-                      break;
-                    case NutritionalPlanOptions.delete:
-                      ref.read(nutritionProvider.notifier).deletePlan(nutritionalPlan.id!);
-                      Navigator.of(context).pop();
-                      break;
-                  }
-                },
-                itemBuilder: (BuildContext context) {
-                  return [
-                    PopupMenuItem<NutritionalPlanOptions>(
-                      value: NutritionalPlanOptions.edit,
-                      child: ListTile(
-                        leading: const Icon(Icons.edit),
-                        title: Text(AppLocalizations.of(context).edit),
-                      ),
+                    },
+                  ),
+                PopupMenuButton<NutritionalPlanOptions>(
+                  tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: context.atlas.card,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: context.atlas.line),
                     ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem<NutritionalPlanOptions>(
-                      value: NutritionalPlanOptions.delete,
-                      child: ListTile(
-                        leading: const Icon(Icons.delete),
-                        title: Text(AppLocalizations.of(context).delete),
+                    child: const Icon(Icons.more_vert, size: 20),
+                  ),
+                  onSelected: (value) {
+                    switch (value) {
+                      case NutritionalPlanOptions.edit:
+                        Navigator.pushNamed(
+                          context,
+                          FormScreen.routeName,
+                          arguments: FormScreenArguments(
+                            AppLocalizations.of(context).edit,
+                            PlanForm(nutritionalPlan),
+                            hasListView: true,
+                          ),
+                        );
+                        break;
+                      case NutritionalPlanOptions.delete:
+                        ref.read(nutritionProvider.notifier).deletePlan(nutritionalPlan.id!);
+                        Navigator.of(context).pop();
+                        break;
+                    }
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      PopupMenuItem<NutritionalPlanOptions>(
+                        value: NutritionalPlanOptions.edit,
+                        child: ListTile(
+                          leading: const Icon(Icons.edit),
+                          title: Text(AppLocalizations.of(context).edit),
+                        ),
                       ),
-                    ),
-                  ];
-                },
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.fromLTRB(56, 0, 56, 16),
-              title: Text(
-                nutritionalPlan.getLabel(context),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: appBarForeground),
-              ),
+                      const PopupMenuDivider(),
+                      PopupMenuItem<NutritionalPlanOptions>(
+                        value: NutritionalPlanOptions.delete,
+                        child: ListTile(
+                          leading: const Icon(Icons.delete),
+                          title: Text(AppLocalizations.of(context).delete),
+                        ),
+                      ),
+                    ];
+                  },
+                ),
+              ],
             ),
           ),
           NutritionalPlanDetailWidget(nutritionalPlan),

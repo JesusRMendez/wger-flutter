@@ -106,4 +106,28 @@ void main() {
     await tester.pump();
     expect(find.byType(ExpansionTile), findsNothing);
   });
+
+  testWidgets('the category chips narrow the list and the count follows', (tester) async {
+    tester.view.physicalSize = const Size(800, 4000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(wrap(const GlossaryScreen()));
+    expect(find.text('17 terms'), findsOneWidget);
+
+    await tester.tap(find.text('Nutrition'));
+    await tester.pumpAndSettle();
+    final nutrition = GlossaryTerm.values.where((t) => t.category == GlossaryCategory.nutrition);
+    expect(find.byType(ExpansionTile), findsNWidgets(nutrition.length));
+    expect(find.text('${nutrition.length} terms'), findsOneWidget);
+
+    // Together with the search
+    await tester.enterText(find.byKey(const ValueKey('glossary-search')), 'kcal');
+    await tester.pump();
+    expect(find.byType(ExpansionTile), findsOneWidget);
+
+    await tester.tap(find.text('All'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ExpansionTile), findsOneWidget);
+  });
 }

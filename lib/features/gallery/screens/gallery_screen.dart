@@ -22,7 +22,7 @@ import 'package:wger/core/form_screen.dart';
 import 'package:wger/core/network/network_provider.dart';
 import 'package:wger/core/platform.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
-import 'package:wger/core/widgets/app_bar.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/features/gallery/widgets/forms.dart';
 import 'package:wger/features/gallery/widgets/overview.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
@@ -37,28 +37,46 @@ class GalleryScreen extends ConsumerWidget {
     // Adding an image is a binary REST upload, so it needs connectivity.
     final isOnline = ref.watch(networkStatusProvider);
 
+    final i18n = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: EmptyAppBar(AppLocalizations.of(context).gallery),
-      floatingActionButton: isDesktop
-          ? null
-          : FloatingActionButton(
-              backgroundColor: isOnline ? null : Colors.grey,
-              onPressed: isOnline
-                  ? () {
-                      Navigator.pushNamed(
-                        context,
-                        FormScreen.routeName,
-                        arguments: FormScreenArguments(
-                          AppLocalizations.of(context).addImage,
-                          ImageForm(),
-                          hasListView: true,
-                        ),
-                      );
-                    }
-                  : null,
-              child: const Icon(Icons.add),
-            ),
-      body: const WidescreenWrapper(child: Gallery()),
+      body: SafeArea(
+        child: WidescreenWrapper(
+          child: Column(
+            children: [
+              AtlasHeader(
+                title: i18n.galleryTitle,
+                centered: true,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                actions: [
+                  if (!isDesktop)
+                    RoundIconButton(
+                      icon: Icons.photo_camera_outlined,
+                      tooltip: i18n.addImage,
+                      // Adding an image is a binary REST upload, so it needs connectivity
+                      onPressed: isOnline
+                          ? () {
+                              Navigator.pushNamed(
+                                context,
+                                FormScreen.routeName,
+                                arguments: FormScreenArguments(
+                                  i18n.addImage,
+                                  ImageForm(),
+                                  hasListView: true,
+                                ),
+                              );
+                            }
+                          : null,
+                    )
+                  else
+                    const SizedBox(width: 44),
+                ],
+              ),
+              const Expanded(child: Gallery()),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

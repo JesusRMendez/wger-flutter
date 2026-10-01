@@ -97,10 +97,13 @@ void main() {
       ..goals = [const CoachGoal(id: 5, title: 'Bench 100 kg')];
     await pumpCoach(tester, const WorkoutPlanScreen(), repo, overrides: overrides);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('wp-notes')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.enterText(find.byKey(const ValueKey('wp-notes')), 'bad knee');
-    await tester.tap(find.byKey(const ValueKey('wp-location')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Gym centro').last);
+    await tester.tap(find.text('Gym centro'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('wp-generate')));
     await tester.pumpAndSettle();

@@ -116,10 +116,19 @@ class FlNutritionalPlanGoalWidget extends StatelessWidget {
 /// The day at a glance: a big ring for the energy and one small ring each for
 /// protein, carbohydrates and fat, logged against planned.
 class DiaryRings extends StatelessWidget {
-  const DiaryRings({super.key, required this.planned, required this.logged});
+  const DiaryRings({
+    super.key,
+    required this.planned,
+    required this.logged,
+    this.remaining = false,
+  });
 
   final NutritionalValues planned;
   final NutritionalValues logged;
+
+  /// Show the energy left to eat in the ring ("1847 kcal left") with the
+  /// consumed and goal values next to it, instead of the logged energy
+  final bool remaining;
 
   @override
   Widget build(BuildContext context) {
@@ -167,9 +176,13 @@ class DiaryRings extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  MonoText(logged.energy.toStringAsFixed(0), size: 26),
+                  MonoText(
+                    (remaining ? (planned.energy - logged.energy).abs() : logged.energy)
+                        .toStringAsFixed(0),
+                    size: 26,
+                  ),
                   Text(
-                    i18n.kcal,
+                    remaining ? i18n.kcalLeft : i18n.kcal,
                     style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
                   ),
                 ],
@@ -180,10 +193,16 @@ class DiaryRings extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(i18n.logged, style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3)),
+                  Text(
+                    remaining ? i18n.consumed : i18n.logged,
+                    style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                  ),
                   MonoText(i18n.kcalValue(logged.energy.toStringAsFixed(0)), size: 18),
                   const SizedBox(height: 10),
-                  Text(i18n.planned, style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3)),
+                  Text(
+                    remaining ? i18n.goalToday : i18n.planned,
+                    style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                  ),
                   MonoText(
                     i18n.kcalValue(planned.energy.toStringAsFixed(0)),
                     size: 18,

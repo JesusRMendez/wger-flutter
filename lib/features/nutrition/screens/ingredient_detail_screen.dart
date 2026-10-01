@@ -19,6 +19,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/core/widgets/progress_indicator.dart';
 import 'package:wger/features/nutrition/models/ingredient.dart';
 import 'package:wger/features/nutrition/providers/ingredient_notifier.dart';
@@ -38,7 +39,6 @@ class IngredientDetailScreen extends ConsumerWidget {
 
     final async = ref.watch(ingredientByIdStreamProvider(id));
     return Scaffold(
-      appBar: AppBar(title: Text(async.value?.name ?? '')),
       body: AsyncValueWidget<Ingredient?>(
         value: async,
         loggerName: 'IngredientDetailScreen',
@@ -48,10 +48,27 @@ class IngredientDetailScreen extends ConsumerWidget {
             // points at something that has since been deleted upstream).
             return const Center(child: Icon(Icons.help_outline, size: 48));
           }
-          return Padding(
-            padding: const EdgeInsets.all(10.0),
+          return SafeArea(
             child: SingleChildScrollView(
-              child: IngredientDetails(ingredient),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      children: [
+                        RoundIconButton(
+                          icon: Icons.chevron_left,
+                          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                          onPressed: () => Navigator.of(context).maybePop(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IngredientDetails(ingredient),
+                ],
+              ),
             ),
           );
         },

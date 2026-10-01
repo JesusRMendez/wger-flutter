@@ -17,11 +17,12 @@
  */
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod;
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/measurements/models/unit_conversion.dart';
 import 'package:wger/features/measurements/providers/body_weight_provider.dart';
 import 'package:wger/features/measurements/providers/measurement_notifier.dart';
+import 'package:wger/features/nutrition/models/meal.dart';
 import 'package:wger/features/nutrition/models/nutritional_plan.dart';
 import 'package:wger/features/nutrition/widgets/charts.dart';
 import 'package:wger/features/nutrition/widgets/macro_nutrients_table.dart';
@@ -29,6 +30,7 @@ import 'package:wger/features/nutrition/widgets/meal.dart';
 import 'package:wger/features/nutrition/widgets/nutritional_diary_table.dart';
 import 'package:wger/features/nutrition/widgets/plan_weight_chart.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class NutritionalPlanDetailWidget extends riverpod.ConsumerWidget {
   final NutritionalPlan _nutritionalPlan;
@@ -52,42 +54,60 @@ class NutritionalPlanDetailWidget extends riverpod.ConsumerWidget {
         : null;
 
     final i18n = AppLocalizations.of(context);
-    final locale = Localizations.localeOf(context).languageCode;
-    final startDateFormatted = DateFormat.yMd(locale).format(_nutritionalPlan.startDate);
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    final next = _nextMeal(context);
 
-    String dateDisplay;
-    if (_nutritionalPlan.endDate != null) {
-      final endDateFormatted = DateFormat.yMd(locale).format(_nutritionalPlan.endDate!);
-      dateDisplay = i18n.planDateRange(startDateFormatted, endDateFormatted);
-    } else {
-      dateDisplay = '${i18n.planStartDate(startDateFormatted)} (${i18n.openEnded})';
-    }
+    Widget banner(IconData icon, String text) => Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: atlas.brandSoft,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.primary),
+            ),
+          ),
+        ],
+      ),
+    );
 
     return SliverList(
       delegate: SliverChildListDelegate(
         [
-          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              dateDisplay,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontStyle: FontStyle.italic,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: AtlasCard(
+              child: Column(
+                children: [
+                  DiaryRings(
+                    planned: nutritionalGoals.toValues(),
+                    logged: _nutritionalPlan.loggedNutritionalValuesToday,
+                    remaining: true,
+                  ),
+                  if (next != null)
+                    banner(
+                      Icons.bolt,
+                      i18n.nextMealBanner(
+                        next.name,
+                        next.time!.format(context),
+                        next.plannedNutritionalValues.energy.toStringAsFixed(0),
+                      ),
+                    )
+                  else if (_nutritionalPlan.meals.isNotEmpty &&
+                      _nutritionalPlan.meals.every((m) => m.isCompletedToday))
+                    banner(Icons.check_circle_outline, i18n.allMealsLogged),
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: 300,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: FlNutritionalPlanGoalWidget(
-                nutritionalPlan: _nutritionalPlan,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
           ..._nutritionalPlan.meals.map(
             (meal) => MealWidget(
               meal,
@@ -100,57 +120,77 @@ class NutritionalPlanDetailWidget extends riverpod.ConsumerWidget {
             false,
             true,
           ),
-          if (nutritionalGoals.isComplete())
-            Container(
-              padding: const EdgeInsets.all(15),
-              height: 220,
-              child: FlNutritionalPlanPieChartWidget(nutritionalGoals.toValues()),
-            ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: MacronutrientsTable(
-              nutritionalGoals: nutritionalGoals,
-              plannedValuesPercentage: nutritionalGoals.energyPercentage(),
-              nutritionalGoalsGperKg: nutritionalGoalsGperKg,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            child: SectionEyebrow(i18n.planDetails),
           ),
-          const Padding(padding: EdgeInsets.all(8.0)),
-          Text(
-            AppLocalizations.of(context).logged,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          Container(
-            padding: const EdgeInsets.only(top: 16, left: 8, right: 8),
-            height: 300,
-            child: NutritionalDiaryChartWidgetFl(
-              nutritionalPlan: _nutritionalPlan,
-            ),
-          ),
-          if (_nutritionalPlan.logEntriesValues.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 15, left: 15, right: 15),
-              child: Column(
-                children: [
-                  Text(
-                    AppLocalizations.of(context).nutritionalDiary,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  SizedBox(
-                    height: 200,
-                    child: SingleChildScrollView(
-                      child: NutritionalDiaryTable(
-                        nutritionalPlan: _nutritionalPlan,
-                      ),
-                    ),
-                  ),
-                ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AtlasCard(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: MacronutrientsTable(
+                nutritionalGoals: nutritionalGoals,
+                plannedValuesPercentage: nutritionalGoals.energyPercentage(),
+                nutritionalGoalsGperKg: nutritionalGoalsGperKg,
               ),
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: SectionEyebrow(i18n.logged),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AtlasCard(
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+              child: SizedBox(
+                height: 300,
+                child: NutritionalDiaryChartWidgetFl(
+                  nutritionalPlan: _nutritionalPlan,
+                ),
+              ),
+            ),
+          ),
+          if (_nutritionalPlan.logEntriesValues.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: SectionEyebrow(i18n.nutritionalDiary),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: AtlasCard(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                child: SizedBox(
+                  height: 200,
+                  child: SingleChildScrollView(
+                    child: NutritionalDiaryTable(
+                      nutritionalPlan: _nutritionalPlan,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
           PlanWeightChart(_nutritionalPlan),
+          const SizedBox(height: 96),
         ],
       ),
+    );
+  }
+
+  /// The meal to eat next: the first one still to log whose time is not past,
+  /// or else the first one still to log.
+  Meal? _nextMeal(BuildContext context) {
+    final open = _nutritionalPlan.meals.where((m) => m.time != null && !m.isCompletedToday).toList()
+      ..sort((a, b) => (a.time!.hour * 60 + a.time!.minute) - (b.time!.hour * 60 + b.time!.minute));
+    if (open.isEmpty) {
+      return null;
+    }
+    final now = TimeOfDay.now();
+    final nowMin = now.hour * 60 + now.minute;
+    return open.firstWhere(
+      (m) => m.time!.hour * 60 + m.time!.minute >= nowMin,
+      orElse: () => open.first,
     );
   }
 }

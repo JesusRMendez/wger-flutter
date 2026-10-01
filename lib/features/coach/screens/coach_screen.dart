@@ -19,9 +19,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
 import 'package:wger/core/widgets/atlas.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/features/coach/models/chat_message.dart';
 import 'package:wger/features/coach/models/coach_access.dart';
 import 'package:wger/features/coach/providers/coach_providers.dart';
+import 'package:wger/features/coach/screens/follow_up_screen.dart';
 import 'package:wger/features/coach/screens/goals_screen.dart';
 import 'package:wger/features/coach/screens/meal_plan_screen.dart';
 import 'package:wger/features/coach/screens/memory_screen.dart';
@@ -43,10 +45,12 @@ class CoachScreen extends ConsumerStatefulWidget {
 
 class _CoachScreenState extends ConsumerState<CoachScreen> {
   final _controller = TextEditingController();
+  final _scroll = ScrollController();
 
   @override
   void dispose() {
     _controller.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -65,31 +69,45 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     final mode = ref.watch(coachModeProvider).value ?? CoachMode.none;
     final access = ref.watch(coachAccessProvider).value;
     final chat = ref.watch(coachChatProvider);
+    // Keep the newest message (or the error) in view
+    ref.listen(coachChatProvider, (prev, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scroll.hasClients) {
+          _scroll.animateTo(
+            _scroll.position.maxScrollExtent,
+            duration: AtlasMotion.of(context),
+            curve: AtlasMotion.curve,
+          );
+        }
+      });
+    });
     final nav = Navigator.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.coach),
-        actions: [
-          if (access?.memoryEnabled ?? false)
-            IconButton(
-              tooltip: i18n.coachMemory,
-              icon: const Icon(Icons.psychology_outlined),
-              onPressed: () => nav.pushNamed(MemoryScreen.routeName),
-            ),
-          IconButton(
-            tooltip: i18n.coachMyAi,
-            icon: const Icon(Icons.tune),
-            onPressed: () => nav.pushNamed(MyAiScreen.routeName),
-          ),
-        ],
-      ),
       body: WidescreenWrapper(
         child: Column(
           children: [
+            AtlasHeader(
+              title: i18n.coach,
+              subtitle: i18n.coachSubtitle,
+              actions: [
+                if (access?.memoryEnabled ?? false)
+                  RoundIconButton(
+                    tooltip: i18n.coachMemory,
+                    icon: Icons.psychology_outlined,
+                    onPressed: () => nav.pushNamed(MemoryScreen.routeName),
+                  ),
+                RoundIconButton(
+                  tooltip: i18n.coachMyAi,
+                  icon: Icons.tune,
+                  onPressed: () => nav.pushNamed(MyAiScreen.routeName),
+                ),
+              ],
+            ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(12),
+                controller: _scroll,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 children: [
                   const Align(alignment: Alignment.centerLeft, child: CoachModeBadge()),
                   const SizedBox(height: 10),
@@ -106,6 +124,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                         child: _ActionTile(
                           icon: Icons.fitness_center,
                           label: i18n.coachWorkoutPlan,
+                          hint: i18n.coachWorkoutPlanHint,
                           color: context.atlas.ok,
                           onTap: () => nav.pushNamed(WorkoutPlanScreen.routeName),
                         ),
@@ -115,6 +134,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                         child: _ActionTile(
                           icon: Icons.restaurant,
                           label: i18n.coachMealPlan,
+                          hint: i18n.coachMealPlanHint,
                           color: context.atlas.carbs,
                           onTap: () => nav.pushNamed(MealPlanScreen.routeName),
                         ),
@@ -122,12 +142,27 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _ActionTile(
-                    icon: Icons.flag_outlined,
-                    label: i18n.coachGoalsAndIndicators,
-                    color: Theme.of(context).colorScheme.primary,
-                    onTap: () => nav.pushNamed(GoalsScreen.routeName),
-                    wide: true,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.flag_outlined,
+                          label: i18n.coachGoalsAndIndicators,
+                          color: Theme.of(context).colorScheme.primary,
+                          onTap: () => nav.pushNamed(GoalsScreen.routeName),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.insights,
+                          label: i18n.coachFollowUp,
+                          color: context.atlas.fat,
+                          onTap: () => nav.pushNamed(FollowUpScreen.routeName),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   if (chat.messages.isEmpty)
@@ -277,14 +312,14 @@ class _ActionTile extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-  final bool wide;
+  final String? hint;
 
   const _ActionTile({
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
-    this.wide = false,
+    this.hint,
   });
 
   @override
@@ -295,22 +330,22 @@ class _ActionTile extends StatelessWidget {
       color: color,
       background: color.withValues(alpha: 0.14),
     );
-    final text = Text(label, style: Theme.of(context).textTheme.titleSmall);
+    final theme = Theme.of(context);
 
     return AtlasCard(
       onTap: onTap,
-      child: wide
-          ? Row(
-              children: [
-                badge,
-                const SizedBox(width: 12),
-                Expanded(child: text),
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [badge, const SizedBox(height: 10), text],
-            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          badge,
+          const SizedBox(height: 12),
+          Text(label, style: theme.textTheme.titleSmall),
+          if (hint != null) ...[
+            const SizedBox(height: 4),
+            Text(hint!, style: theme.textTheme.bodySmall?.copyWith(color: context.atlas.ink3)),
+          ],
+        ],
+      ),
     );
   }
 }
