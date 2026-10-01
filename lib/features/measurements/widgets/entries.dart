@@ -33,6 +33,7 @@ import 'package:wger/features/measurements/providers/measurement_notifier.dart';
 import 'package:wger/features/measurements/widgets/calculation_mark.dart';
 import 'package:wger/features/measurements/widgets/chart_range_selector.dart';
 import 'package:wger/features/measurements/widgets/helpers.dart';
+import 'package:wger/features/measurements/widgets/measurement_hero.dart';
 import 'package:wger/features/nutrition/models/nutritional_plan.dart';
 import 'package:wger/features/nutrition/providers/nutrition_notifier.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
@@ -64,6 +65,10 @@ class EntriesList extends ConsumerWidget {
   /// weight has one of its own, with quick steppers and a unit dropdown.
   final Widget Function(MeasurementEntry entry)? editFormBuilder;
 
+  /// Opens the chart with the newest value large and how much it moved over the
+  /// range. The weight screen asks for it, where that number is the point.
+  final bool showHero;
+
   const EntriesList(
     this.category, {
     required this.range,
@@ -72,6 +77,7 @@ class EntriesList extends ConsumerWidget {
     this.displayUnit,
     this.displayUnitLabel,
     this.editFormBuilder,
+    this.showHero = false,
   });
 
   @override
@@ -147,23 +153,27 @@ class EntriesList extends ConsumerWidget {
     final settings = category.chartSettings;
     final (:entries, :average) = chartSeriesFor(allPoints, range, settings);
 
-    return buildSeriesChartSection(
-      context,
-      name: name,
-      entriesAll: entries,
-      average: average,
-      unit: unitLabel,
-      planPeriods: planPeriods,
-      metricType: category.metricType,
-      chartType: category.chartType,
-      settings: settings,
-      distribution: MeasurementDistributionChart(
-        category: category,
-        range: range,
-        unitLabel: unitLabel,
-        targetUnit: unit,
+    return [
+      if (showHero && entries.isNotEmpty)
+        MeasurementHero(first: entries.first, last: entries.last, unit: unitLabel),
+      ...buildSeriesChartSection(
+        context,
+        name: name,
+        entriesAll: entries,
+        average: average,
+        unit: unitLabel,
+        planPeriods: planPeriods,
+        metricType: category.metricType,
+        chartType: category.chartType,
+        settings: settings,
+        distribution: MeasurementDistributionChart(
+          category: category,
+          range: range,
+          unitLabel: unitLabel,
+          targetUnit: unit,
+        ),
       ),
-    );
+    ];
   }
 
   /// Detail view of a multi-value group: one chart over all components, a

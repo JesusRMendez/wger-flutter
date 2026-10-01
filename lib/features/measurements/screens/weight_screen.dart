@@ -80,6 +80,7 @@ class WeightScreen extends ConsumerWidget {
                   onRangeChanged: (range) =>
                       ref.read(chartRangeSettingProvider.notifier).set(range),
                   title: i18n.weight,
+                  showHero: true,
                   displayUnit: weightDisplayUnit(profile.isMetric),
                   displayUnitLabel: weightUnit(profile.isMetric, context),
                   editFormBuilder: (entry) => WeightForm(category, entry),

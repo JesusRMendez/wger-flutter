@@ -3112,5 +3112,20 @@
         "type": "int"
       }
     }
+  },
+  "measurementHeroChange": "{delta} {unit} in {days, plural, one{1 day} other{{days} days}}",
+  "@measurementHeroChange": {
+    "description": "Change of a measurement over the chart range, e.g. '-1.7 kg in 90 days'",
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
   }
 }
