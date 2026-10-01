@@ -21,6 +21,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/network/network_provider.dart';
 import 'package:wger/features/exercises/screens/add_exercise_screen.dart';
 import 'package:wger/features/exercises/screens/exercises_screen.dart';
+import 'package:wger/features/glossary/widgets/glossary_widgets.dart';
 import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/screens/routine_edit_screen.dart';
@@ -109,6 +110,7 @@ class RoutineDetailAppBar extends ConsumerWidget implements PreferredSizeWidget 
     return AppBar(
       title: Text(routine.name),
       actions: [
+        const GlossaryHelpButton(),
         PopupMenuButton(
           itemBuilder: (context) {
             return [

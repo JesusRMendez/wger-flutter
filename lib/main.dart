@@ -53,10 +53,19 @@ import 'package:wger/core/widgets/scroll_behavior.dart';
 import 'package:wger/features/account/widgets/settings.dart';
 import 'package:wger/features/auth/screens/auth_screen.dart';
 import 'package:wger/features/auth/screens/auto_login_error_screen.dart';
+import 'package:wger/features/coach/screens/coach_screen.dart';
+import 'package:wger/features/coach/screens/goals_screen.dart';
+import 'package:wger/features/coach/screens/meal_plan_screen.dart';
+import 'package:wger/features/coach/screens/memory_screen.dart';
+import 'package:wger/features/coach/screens/my_ai_screen.dart';
+import 'package:wger/features/coach/screens/workout_plan_screen.dart';
 import 'package:wger/features/exercises/screens/add_exercise_screen.dart';
 import 'package:wger/features/exercises/screens/exercise_screen.dart';
 import 'package:wger/features/exercises/screens/exercises_screen.dart';
 import 'package:wger/features/gallery/screens/gallery_screen.dart';
+import 'package:wger/features/glossary/screens/glossary_screen.dart';
+import 'package:wger/features/locations/screens/location_edit_screen.dart';
+import 'package:wger/features/locations/screens/locations_screen.dart';
 import 'package:wger/features/measurements/screens/measurement_categories_screen.dart';
 import 'package:wger/features/measurements/screens/measurement_category_sort_screen.dart';
 import 'package:wger/features/measurements/screens/measurement_entries_screen.dart';
@@ -68,6 +77,7 @@ import 'package:wger/features/nutrition/screens/log_meals_screen.dart';
 import 'package:wger/features/nutrition/screens/nutritional_diary_screen.dart';
 import 'package:wger/features/nutrition/screens/nutritional_plan_screen.dart';
 import 'package:wger/features/nutrition/screens/nutritional_plans_screen.dart';
+import 'package:wger/features/routines/screens/guided_mode.dart';
 import 'package:wger/features/routines/screens/gym_mode.dart';
 import 'package:wger/features/routines/screens/routine_edit_screen.dart';
 import 'package:wger/features/routines/screens/routine_list_screen.dart';
@@ -304,6 +314,16 @@ class MainApp extends ConsumerWidget {
                 ConfigureDashboardWidgetsScreen.routeName: (ctx) =>
                     const ConfigureDashboardWidgetsScreen(),
                 TrophyScreen.routeName: (ctx) => const TrophyScreen(),
+                CoachScreen.routeName: (ctx) => const CoachScreen(),
+                WorkoutPlanScreen.routeName: (ctx) => const WorkoutPlanScreen(),
+                MealPlanScreen.routeName: (ctx) => const MealPlanScreen(),
+                GoalsScreen.routeName: (ctx) => const GoalsScreen(),
+                MemoryScreen.routeName: (ctx) => const MemoryScreen(),
+                MyAiScreen.routeName: (ctx) => const MyAiScreen(),
+                GuidedModeScreen.routeName: (ctx) => const GuidedModeScreen(),
+                LocationsScreen.routeName: (ctx) => const LocationsScreen(),
+                LocationEditScreen.routeName: (ctx) => const LocationEditScreen(),
+                GlossaryScreen.routeName: (ctx) => const GlossaryScreen(),
               },
               localeListResolutionCallback: resolveLocale,
               localizationsDelegates: appLocalizationsDelegates,

@@ -17,18 +17,22 @@
  */
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/consts.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
+import 'package:wger/features/routines/widgets/gym_mode/countdown_alert.dart';
 import 'package:wger/features/routines/widgets/gym_mode/navigation.dart';
+import 'package:wger/features/routines/widgets/gym_mode/next_exercise_preview.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
 class TimerWidget extends StatefulWidget {
   final PageController _controller;
 
-  const TimerWidget(this._controller);
+  const TimerWidget(this._controller, {super.key});
 
   @override
   _TimerWidgetState createState() => _TimerWidgetState();
@@ -90,59 +94,144 @@ class TimerCountdownWidget extends ConsumerStatefulWidget {
   final PageController _controller;
   final int _seconds;
 
+  /// The slot (timer) page this countdown is shown on. It is needed to show
+  /// what comes next and to know whether the page is still the current one
+  /// when the countdown ends.
+  final String? slotUuid;
+
   const TimerCountdownWidget(
     this._controller,
-    this._seconds,
-  );
+    this._seconds, {
+    this.slotUuid,
+    super.key,
+  });
 
   @override
   _TimerCountdownWidgetState createState() => _TimerCountdownWidgetState();
 }
 
 class _TimerCountdownWidgetState extends ConsumerState<TimerCountdownWidget> {
-  late DateTime _endTime;
-  late Timer _uiTimer;
+  /// How often the remaining time is checked. This is finer than a second so
+  /// that the alerts are not delayed noticeably by an unlucky tick.
+  static const _checkInterval = Duration(milliseconds: 250);
 
-  bool _hasNotified = false;
+  /// Pause between the two haptic pulses of the 20 second warning
+  static const _doubleHapticDelay = Duration(milliseconds: 150);
+
+  late DateTime _endTime;
+  late int _remainingSeconds;
+  Timer? _uiTimer;
+  Timer? _secondHapticTimer;
+  bool _finished = false;
 
   @override
   void initState() {
     super.initState();
-    _endTime = DateTime.now().add(Duration(seconds: widget._seconds));
+    _endTime = clock.now().add(Duration(seconds: widget._seconds));
+    _remainingSeconds = widget._seconds;
 
-    _uiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      // ignore: no-empty-block, avoid-empty-setstate
-      if (mounted) {
-        setState(() {});
-      }
-    });
+    _uiTimer = Timer.periodic(_checkInterval, (_) => _onTick());
   }
 
   @override
   void dispose() {
-    _uiTimer.cancel();
+    // Cancelling here also guarantees that nothing (alert, auto-advance) can
+    // happen after the user left the page and the widget is gone
+    _uiTimer?.cancel();
+    _secondHapticTimer?.cancel();
     super.dispose();
+  }
+
+  /// Remaining time, rounded up so that zero is only shown when it is over
+  int _calculateRemainingSeconds() {
+    final milliseconds = _endTime.difference(clock.now()).inMilliseconds;
+    return milliseconds <= 0 ? 0 : (milliseconds / 1000).ceil();
+  }
+
+  void _onTick() {
+    if (!mounted) {
+      return;
+    }
+
+    final remaining = _calculateRemainingSeconds();
+    // A countdown that starts at zero still has to finish once
+    if (remaining == _remainingSeconds && (remaining != 0 || _finished)) {
+      return;
+    }
+    setState(() => _remainingSeconds = remaining);
+
+    final gymState = ref.read(gymStateProvider);
+    final alert = countdownAlertFor(
+      remainingSeconds: remaining,
+      totalSeconds: widget._seconds,
+      alertAt20s: gymState.alertAt20s,
+      alertLast5s: gymState.alertLast5s,
+      alertAtEnd: gymState.alertOnCountdownEnd,
+    );
+    _play(alert);
+
+    // The countdown is over: stop checking, it must only end once
+    if (remaining == 0) {
+      _finished = true;
+      _uiTimer?.cancel();
+      _advanceToNextPage();
+    }
+  }
+
+  void _play(CountdownAlert alert) {
+    switch (alert) {
+      case CountdownAlert.none:
+        break;
+      case CountdownAlert.warning:
+        HapticFeedback.mediumImpact();
+        _secondHapticTimer?.cancel();
+        _secondHapticTimer = Timer(_doubleHapticDelay, HapticFeedback.mediumImpact);
+        SystemSound.play(SystemSoundType.alert);
+      case CountdownAlert.tick:
+        HapticFeedback.lightImpact();
+        SystemSound.play(SystemSoundType.click);
+      case CountdownAlert.end:
+        HapticFeedback.mediumImpact();
+
+        // Note that this only works on desktop platforms
+        SystemSound.play(SystemSoundType.alert);
+    }
+  }
+
+  /// Goes to the next page, if wanted and if the user did not navigate on
+  /// their own in the meantime
+  void _advanceToNextPage() {
+    final gymState = ref.read(gymStateProvider);
+    if (!gymState.autoAdvanceAfterRest || widget.slotUuid == null) {
+      return;
+    }
+
+    // Only if this page is still the one being shown
+    final slotPage = gymState.getSlotPageByUUID(widget.slotUuid!);
+    if (slotPage == null || gymState.currentPage != slotPage.pageIndex) {
+      return;
+    }
+
+    // Not while a dialog (e.g. the workout menu) is open on top of the page
+    if (ModalRoute.of(context)?.isCurrent == false) {
+      return;
+    }
+
+    // Not while the user is dragging the page or an animation is running
+    final controller = widget._controller;
+    if (!controller.hasClients || controller.position.isScrollingNotifier.value) {
+      return;
+    }
+
+    controller.nextPage(
+      duration: DEFAULT_ANIMATION_DURATION,
+      curve: DEFAULT_ANIMATION_CURVE,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final remaining = _endTime.difference(DateTime.now());
-    final remainingSeconds = remaining.inSeconds <= 0 ? 0 : remaining.inSeconds;
-    final displayTime = DateTime(2000, 1, 1, 0, 0, 0).add(Duration(seconds: remainingSeconds));
-    final gymState = ref.watch(gymStateProvider);
-
-    //  When countdown finishes, notify ONCE, and respect settings
-    if (remainingSeconds == 0 && !_hasNotified) {
-      if (gymState.alertOnCountdownEnd) {
-        HapticFeedback.mediumImpact();
-
-        // Not that this only works on desktop platforms
-        SystemSound.play(SystemSoundType.alert);
-      }
-      setState(() {
-        _hasNotified = true;
-      });
-    }
+    final displayTime = DateTime(2000, 1, 1, 0, 0, 0).add(Duration(seconds: _remainingSeconds));
 
     return Column(
       children: [
@@ -151,19 +240,16 @@ class _TimerCountdownWidgetState extends ConsumerState<TimerCountdownWidget> {
           widget._controller,
         ),
         Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                DateFormat('m:ss').format(displayTime),
-                style: Theme.of(
-                  context,
-                ).textTheme.displayLarge!.copyWith(color: Theme.of(context).colorScheme.primary),
-              ),
-              const SizedBox(height: 16),
-            ],
+          child: Center(
+            child: Text(
+              DateFormat('m:ss').format(displayTime),
+              style: Theme.of(
+                context,
+              ).textTheme.displayLarge!.copyWith(color: Theme.of(context).colorScheme.primary),
+            ),
           ),
         ),
+        if (widget.slotUuid != null) NextExercisePreview(widget.slotUuid!),
         NavigationFooter(widget._controller),
       ],
     );

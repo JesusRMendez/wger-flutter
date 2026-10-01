@@ -19,6 +19,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/consts.dart';
+import 'package:wger/features/glossary/widgets/glossary_widgets.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/elapsed_time.dart';
 import 'package:wger/features/routines/widgets/gym_mode/workout_menu.dart';
@@ -55,6 +56,7 @@ class NavigationHeader extends StatelessWidget {
             ),
           ),
         ),
+        const GlossaryHelpButton(),
         IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () {

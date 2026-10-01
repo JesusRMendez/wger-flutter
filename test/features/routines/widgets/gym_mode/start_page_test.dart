@@ -21,6 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:wger/core/shared_preferences.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/start_page.dart';
@@ -217,5 +218,54 @@ void main() {
     await tester.pump();
 
     expect(notifier.state.showDistinctLogs, isFalse);
+  });
+
+  testWidgets('Rest alert and auto-advance switches update the notifier and are saved', (
+    tester,
+  ) async {
+    await pumpGymModeOptions(tester);
+    await tester.tap(find.byKey(const ValueKey('gym-mode-options-tile')));
+    await tester.pumpAndSettle();
+
+    final notifier = container.read(gymStateProvider.notifier);
+    expect(notifier.state.alertAt20s, isTrue);
+    expect(notifier.state.alertLast5s, isTrue);
+    expect(notifier.state.autoAdvanceAfterRest, isTrue);
+
+    for (final key in [
+      'gym-mode-alert-at-20s',
+      'gym-mode-alert-last-5s',
+      'gym-mode-auto-advance',
+    ]) {
+      final switchTile = find.byKey(ValueKey(key));
+      await tester.ensureVisible(switchTile);
+      await tester.pumpAndSettle();
+      await tester.tap(switchTile);
+      await tester.pumpAndSettle();
+    }
+
+    expect(notifier.state.alertAt20s, isFalse);
+    expect(notifier.state.alertLast5s, isFalse);
+    expect(notifier.state.autoAdvanceAfterRest, isFalse);
+    expect(await PreferenceHelper.asyncPref.getBool(PREFS_ALERT_AT_20S), isFalse);
+    expect(await PreferenceHelper.asyncPref.getBool(PREFS_ALERT_LAST_5S), isFalse);
+    expect(await PreferenceHelper.asyncPref.getBool(PREFS_AUTO_ADVANCE_AFTER_REST), isFalse);
+  });
+
+  testWidgets('The new switches are disabled without timer pages', (tester) async {
+    container.read(gymStateProvider.notifier).setShowTimerPages(false);
+    await pumpGymModeOptions(tester);
+    await tester.tap(find.byKey(const ValueKey('gym-mode-options-tile')));
+    await tester.pumpAndSettle();
+
+    for (final key in [
+      'gym-mode-alert-at-20s',
+      'gym-mode-alert-last-5s',
+      'gym-mode-auto-advance',
+    ]) {
+      final switchTile = find.byKey(ValueKey(key));
+      await tester.ensureVisible(switchTile);
+      expect(tester.widget<SwitchListTile>(switchTile).onChanged, isNull, reason: key);
+    }
   });
 }

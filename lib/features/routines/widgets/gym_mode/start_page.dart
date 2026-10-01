@@ -24,6 +24,8 @@ import 'package:wger/features/routines/models/day.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/navigation.dart';
+import 'package:wger/features/routines/widgets/gym_mode/planning_card.dart';
+import 'package:wger/features/routines/widgets/music_bpm_card.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
 class GymModeOptions extends ConsumerStatefulWidget {
@@ -166,6 +168,30 @@ class _GymModeOptionsState extends ConsumerState<GymModeOptions> {
                             ? (value) => gymNotifier.setAlertOnCountdownEnd(value)
                             : null,
                       ),
+                      SwitchListTile(
+                        key: const ValueKey('gym-mode-alert-at-20s'),
+                        title: Text(i18n.gymModeAlertAt20s),
+                        value: gymState.alertAt20s,
+                        onChanged: gymState.showTimerPages
+                            ? (value) => gymNotifier.setAlertAt20s(value)
+                            : null,
+                      ),
+                      SwitchListTile(
+                        key: const ValueKey('gym-mode-alert-last-5s'),
+                        title: Text(i18n.gymModeAlertLast5s),
+                        value: gymState.alertLast5s,
+                        onChanged: gymState.showTimerPages
+                            ? (value) => gymNotifier.setAlertLast5s(value)
+                            : null,
+                      ),
+                      SwitchListTile(
+                        key: const ValueKey('gym-mode-auto-advance'),
+                        title: Text(i18n.gymModeAutoAdvanceAfterRest),
+                        value: gymState.autoAdvanceAfterRest,
+                        onChanged: gymState.showTimerPages
+                            ? (value) => gymNotifier.setAutoAdvanceAfterRest(value)
+                            : null,
+                      ),
 
                       const Divider(),
                       ListTile(
@@ -274,6 +300,8 @@ class StartPage extends ConsumerWidget {
                       ],
                     );
                   }),
+              const GymPlanningCard(),
+              const MusicBpmCard(),
             ],
           ),
         ),

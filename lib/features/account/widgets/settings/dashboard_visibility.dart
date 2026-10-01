@@ -42,6 +42,8 @@ class SettingsDashboardVisibility extends ConsumerWidget {
           return i18n.nutritionalPlans;
         case DashboardWidget.trophies:
           return i18n.trophies;
+        case DashboardWidget.coach:
+          return i18n.coach;
       }
     }
 
