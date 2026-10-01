@@ -122,11 +122,12 @@ void main() {
       final items = settings.dashboardItems;
 
       // Loaded: [nutrition, routines], then defaults insert around:
-      // activity (0) → 0, weight (3), measurements (4), calendar (5)
+      // activity (0) → 0, water (3), weight (4), measurements (5), calendar (6)
       expect(items.allWidgets[0], DashboardWidget.activity);
       expect(items.allWidgets[1], DashboardWidget.nutrition);
       expect(items.allWidgets[2], DashboardWidget.routines);
-      expect(items.allWidgets[3], DashboardWidget.weight);
+      expect(items.allWidgets[3], DashboardWidget.water);
+      expect(items.allWidgets[4], DashboardWidget.weight);
 
       expect(items.isWidgetVisible(DashboardWidget.nutrition), true);
       expect(items.isWidgetVisible(DashboardWidget.routines), false);
