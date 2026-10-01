@@ -58,6 +58,9 @@ jobs:
       - name: Upload coverage to Coveralls
         uses: coverallsapp/github-action@v2
         with:
+          # Coverage reporting must not fail CI, e.g. on forks that are not set
+          # up on coveralls.io (it answers with an error then)
+          fail-on-error: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
           flag-name: shard-${{ matrix.shard }}
           parallel: true
@@ -71,5 +74,8 @@ jobs:
       - name: Close parallel Coveralls build
         uses: coverallsapp/github-action@v2
         with:
+          # Coverage reporting must not fail CI, e.g. on forks that are not set
+          # up on coveralls.io (it answers with an error then)
+          fail-on-error: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
