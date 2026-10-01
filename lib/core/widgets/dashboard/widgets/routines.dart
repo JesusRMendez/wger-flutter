@@ -28,6 +28,7 @@ import 'package:wger/core/widgets/error.dart';
 import 'package:wger/features/routines/models/day_data.dart';
 import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
+import 'package:wger/features/routines/screens/guided_mode.dart';
 import 'package:wger/features/routines/screens/gym_mode.dart';
 import 'package:wger/features/routines/screens/routine_screen.dart';
 import 'package:wger/features/routines/widgets/forms/routine.dart';
@@ -243,7 +244,22 @@ class DetailContentWidget extends StatelessWidget {
                     ),
                     if (dayData.day == null || dayData.day!.isRest)
                       const Icon(Icons.hotel)
-                    else
+                    else ...[
+                      IconButton(
+                        tooltip: AppLocalizations.of(context).guidedMode,
+                        icon: const Icon(Icons.timer_outlined),
+                        color: Theme.of(context).colorScheme.primary,
+                        onPressed: () {
+                          Navigator.of(context).pushNamed(
+                            GuidedModeScreen.routeName,
+                            arguments: GymModeArguments(
+                              dayData.day!.routineId,
+                              dayData.day!.id!,
+                              dayData.iteration,
+                            ),
+                          );
+                        },
+                      ),
                       IconButton(
                         tooltip: AppLocalizations.of(context).gymMode,
                         icon: const Icon(Icons.play_arrow),
@@ -259,6 +275,7 @@ class DetailContentWidget extends StatelessWidget {
                           );
                         },
                       ),
+                    ],
                   ],
                 ),
               ),

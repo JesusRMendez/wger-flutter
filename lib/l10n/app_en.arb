@@ -1978,5 +1978,246 @@
       "min": { "type": "int" },
       "max": { "type": "int" }
     }
-  }
+  },
+  "locationsTitle": "Training locations",
+  "locationsAdd": "Add location",
+  "locationsEdit": "Edit location",
+  "locationsEmpty": "You have no training locations yet. Add one to plan with your equipment and zones.",
+  "locationsDefault": "Default location",
+  "locationsDefaultHelp": "Used for new workouts unless you pick another one",
+  "locationsEquipmentCount": "{count, plural, =0{No equipment} =1{1 piece of equipment} other{{count} pieces of equipment}}",
+  "@locationsEquipmentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "locationsMinutesValue": "{minutes} min",
+  "@locationsMinutesValue": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "locationsAvailableMinutes": "Available minutes",
+  "locationsAvailableMinutesHelp": "How long you usually can train here (optional)",
+  "locationsInvalidMinutes": "Enter a number between 1 and 600",
+  "locationsSaved": "Location saved",
+  "locationsZones": "Zones",
+  "locationsZonesHelp": "Zones are the areas of the location in the order you walk through them. Drag to reorder. A zone can only offer equipment of the location.",
+  "locationsSaveFirst": "Save the location first, then you can add zones.",
+  "locationsAddZone": "Add zone",
+  "locationsEditZone": "Edit zone",
+  "locationsZoneEquipment": "Select equipment of this zone",
+  "locationsNoEquipmentAvailable": "No equipment available. Select the equipment of the location first.",
+  "gymModeNoLocation": "No location",
+  "gymModeSetUpLocations": "Set up training locations to order exercises by zone",
+  "gymModeZoneChanges": "Zone changes: {planned} → {suggested}",
+  "@gymModeZoneChanges": {
+    "placeholders": {
+      "planned": {
+        "type": "int"
+      },
+      "suggested": {
+        "type": "int"
+      }
+    }
+  },
+  "gymModeOrderByZone": "Order by zone",
+  "gymModeOrderedByZone": "The remaining exercises were ordered by zone.",
+  "gymModeAlreadyOrdered": "The exercises are already in the suggested order.",
+  "gymModeMissingEquipment": "Missing equipment at {location}",
+  "@gymModeMissingEquipment": {
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "gymModeMissingEquipmentShort": "Equipment missing",
+  "gymModeTimeBudget": "Time available",
+  "gymModeEstimatedDuration": "Estimated duration: {minutes} min",
+  "@gymModeEstimatedDuration": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gymModeFitsBudget": "The workout fits into your time.",
+  "gymModeDropSetsSuggestion": "Drop {count} sets to finish in about {minutes} min:",
+  "@gymModeDropSetsSuggestion": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gymModeDropSetsNotEnough": "Even after dropping {count} sets it takes about {minutes} min:",
+  "@gymModeDropSetsNotEnough": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gymModeApplySuggestion": "Apply",
+  "musicByBpm": "Music by BPM",
+  "musicPhaseWarmUp": "Warm-up",
+  "musicPhaseStrength": "Strength",
+  "musicPhaseHiit": "HIIT",
+  "musicPhaseRest": "Rest / cooldown",
+  "musicRecommendation": "Recommended tempo: {range} BPM",
+  "@musicRecommendation": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "musicOpenSpotify": "Spotify",
+  "musicOpenYoutubeMusic": "YouTube Music",
+  "guidedMode": "Guided routine",
+  "guidedGetReady": "Get ready",
+  "guidedWork": "Work",
+  "guidedRest": "Rest",
+  "guidedHowManyReps": "How many reps did you do?",
+  "guidedSetOf": "Set {round} of {total}",
+  "@guidedSetOf": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "guidedResume": "Resume",
+  "guidedSkip": "Skip",
+  "guidedNextUp": "Next up",
+  "guidedLastSet": "Last set",
+  "guidedDone": "Routine finished",
+  "guidedSummary": "{sets} sets completed in {time}",
+  "@guidedSummary": {
+    "placeholders": {
+      "sets": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedJumpSkipsWarning": "You are skipping exercises that are not done yet. The planned order may matter for your training.",
+  "guidedJumpRepeatsWarning": "You already did this set.",
+  "guidedJumpAnyway": "Go anyway",
+  "glossaryTitle": "Glossary",
+  "glossarySearch": "Search",
+  "glossaryWhat": "What it is",
+  "glossaryHow": "How it helps your goal",
+  "glossaryExample": "Example",
+  "glossaryOpenAll": "Open the glossary",
+  "glossaryExplain": "Explain {term}",
+  "@glossaryExplain": {
+    "placeholders": {
+      "term": {
+        "type": "String"
+      }
+    }
+  },
+  "glossaryHelp": "Help: glossary",
+  "glossaryOneRmAbbr": "1RM",
+  "glossaryOneRmName": "One-repetition maximum",
+  "glossaryOneRmWhat": "The heaviest weight you could lift for a single clean repetition of an exercise. It is usually estimated from a lighter set instead of tested directly.",
+  "glossaryOneRmHow": "It gives you one number to compare your strength over time and to pick training weights as a percentage, e.g. 70-85% for strength work.",
+  "glossaryOneRmExample": "You bench 80 kg for 5 reps. The Epley estimate is about 93 kg, so a set at 80% would use roughly 75 kg.",
+  "glossaryRirAbbr": "RIR",
+  "glossaryRirName": "Reps in reserve",
+  "glossaryRirWhat": "How many more repetitions you could still do with good form when you stop a set. 0 RIR means you could not do another rep.",
+  "glossaryRirHow": "It keeps sets hard enough to grow stronger without grinding to failure every time, and tells you when to add weight.",
+  "glossaryRirExample": "You plan 8 reps at 2 RIR. If you finish 8 and feel you had 4 left, the weight is too light and you can increase it.",
+  "glossaryRpeAbbr": "RPE",
+  "glossaryRpeName": "Rate of perceived exertion",
+  "glossaryRpeWhat": "A 1 to 10 score of how hard a set felt. RPE 10 is maximal effort, RPE 8 means about two reps were left.",
+  "glossaryRpeHow": "It lets you autoregulate: on a bad day you lower the weight to hit the target RPE, on a good day you can do more.",
+  "glossaryRpeExample": "Squats at RPE 8 felt like you had two clean reps left. Next week you try the same weight for RPE 7.5.",
+  "glossaryDoubleProgressionAbbr": "Double progression",
+  "glossaryDoubleProgressionName": "Double progression",
+  "glossaryDoubleProgressionWhat": "A progression method with a rep range, for example 8-12. You keep the weight until you reach the top of the range on every set, then you add weight and start at the bottom again.",
+  "glossaryDoubleProgressionHow": "It makes progress simple and measurable without needing a complicated plan, and works well for muscle growth.",
+  "glossaryDoubleProgressionExample": "Dumbbell press 3 x 8-12 at 20 kg. Once you do 12, 12, 12 you move to 22 kg and aim for 8 reps again.",
+  "glossaryDeloadAbbr": "Deload",
+  "glossaryDeloadName": "Deload week",
+  "glossaryDeloadWhat": "A planned lighter week with less weight or fewer sets so your body can recover from accumulated fatigue.",
+  "glossaryDeloadHow": "It lowers the risk of injury and stalled progress, so you come back stronger in the following weeks.",
+  "glossaryDeloadExample": "After four hard weeks you do your usual exercises with about 60% of the sets, or 10% less weight, for one week.",
+  "glossarySupersetAbbr": "Superset",
+  "glossarySupersetName": "Superset",
+  "glossarySupersetWhat": "Two or more exercises done back to back with little or no rest in between, then a rest after the whole round.",
+  "glossarySupersetHow": "It saves time and, when the exercises train opposite muscles, keeps performance high while the other muscle rests.",
+  "glossarySupersetExample": "Bench press followed straight away by rows, then a 90 second rest, repeated for 3 rounds.",
+  "glossaryAmrapAbbr": "AMRAP",
+  "glossaryAmrapName": "As many reps as possible",
+  "glossaryAmrapWhat": "A set where you continue until you cannot do another good repetition, or until the time is up.",
+  "glossaryAmrapHow": "It shows your real capacity and is a useful test of progress, because more reps at the same weight means you got stronger.",
+  "glossaryAmrapExample": "Push-ups AMRAP: you do 18 clean reps this week. Next month you aim for 20 or more.",
+  "glossaryPrAbbr": "PR",
+  "glossaryPrName": "Personal record",
+  "glossaryPrWhat": "Your best result so far for an exercise: the heaviest weight, the most reps at a weight or the best estimated 1RM.",
+  "glossaryPrHow": "PRs are a clear sign that your plan works and a good source of motivation.",
+  "glossaryPrExample": "Last month you did 100 kg for 5 reps on deadlift. Today you did 100 kg for 6 reps, a new PR.",
+  "glossaryVolumeAbbr": "Volume",
+  "glossaryVolumeName": "Training volume",
+  "glossaryVolumeWhat": "The total amount of work you do, usually counted as sets per muscle group per week, or as sets x reps x weight.",
+  "glossaryVolumeHow": "Enough volume drives muscle growth, too much slows recovery. Tracking it shows whether you do enough for your goal.",
+  "glossaryVolumeExample": "12 to 16 hard sets of chest per week is a common target. 4 sets of 10 reps at 50 kg is 2000 kg of volume.",
+  "glossaryKcalAbbr": "kcal",
+  "glossaryKcalName": "Kilocalories",
+  "glossaryKcalWhat": "The unit for the energy in food and the energy you burn. One kcal is what people usually call a calorie.",
+  "glossaryKcalHow": "Eating more than you burn leads to weight gain, less than you burn to weight loss. Your target kcal is how you steer this.",
+  "glossaryKcalExample": "A maintenance intake of 2500 kcal and a goal to lose weight could mean eating about 2100 to 2250 kcal per day.",
+  "glossaryMacrosAbbr": "Macros",
+  "glossaryMacrosName": "Macronutrients",
+  "glossaryMacrosWhat": "Protein, carbohydrates and fat: the three nutrients that provide energy and that you need in larger amounts. Protein and carbohydrates have 4 kcal per gram, fat has 9.",
+  "glossaryMacrosHow": "The split affects recovery, energy and hunger. Enough protein protects muscle while you diet or build.",
+  "glossaryMacrosExample": "A 80 kg lifter might eat 160 g protein, 250 g carbohydrates and 70 g fat, which is about 2270 kcal.",
+  "glossaryNutriScoreAbbr": "Nutri-Score",
+  "glossaryNutriScoreName": "Nutri-Score",
+  "glossaryNutriScoreWhat": "A label from A (green) to E (red) that rates the overall nutritional quality of a food, based on things like sugar, salt, saturated fat, fibre and protein.",
+  "glossaryNutriScoreHow": "It helps you pick the better option within the same type of food quickly. It does not replace your calorie and protein targets.",
+  "glossaryNutriScoreExample": "Two breakfast cereals: one rated A and one rated D. The A one has less sugar and more fibre per 100 g.",
+  "glossaryNovaAbbr": "NOVA",
+  "glossaryNovaName": "NOVA food classification",
+  "glossaryNovaWhat": "A scale from 1 to 4 that groups foods by how processed they are: 1 unprocessed, 2 culinary ingredients, 3 processed, 4 ultra-processed.",
+  "glossaryNovaHow": "Diets high in group 4 foods tend to be easier to overeat. Choosing more group 1 and 2 foods helps with fullness and quality.",
+  "glossaryNovaExample": "An apple is NOVA 1, olive oil is 2, canned beans are 3 and a sugary soft drink is 4.",
+  "glossaryMovingAverage7Abbr": "7-day average",
+  "glossaryMovingAverage7Name": "7-day moving average",
+  "glossaryMovingAverage7What": "The average of the last seven days, recalculated every day. It smooths out the daily ups and downs.",
+  "glossaryMovingAverage7How": "Body weight changes a lot from day to day because of water and food. The trend line shows whether you are really gaining or losing.",
+  "glossaryMovingAverage7Example": "Your scale shows 81.2, 80.6, 81.5 and so on. The 7-day average of 81.0 is what you compare to last week.",
+  "glossaryHrAbbr": "HR",
+  "glossaryHrName": "Heart rate",
+  "glossaryHrWhat": "How many times your heart beats per minute (bpm).",
+  "glossaryHrHow": "It shows how hard you are working. Training in the right zone helps endurance and fat burning, and a lower resting HR over time shows fitness.",
+  "glossaryHrExample": "A resting HR of 62 bpm and 150 bpm during intervals. A rough maximum is 220 minus your age.",
+  "glossaryStepsPerMinAbbr": "steps/min",
+  "glossaryStepsPerMinName": "Steps per minute (cadence)",
+  "glossaryStepsPerMinWhat": "How many steps you take in one minute while walking or running.",
+  "glossaryStepsPerMinHow": "Walking at around 100 steps per minute is moderate intensity, 130 or more is brisk. It is an easy way to check effort without a heart rate monitor.",
+  "glossaryStepsPerMinExample": "A 30 minute walk at 110 steps per minute is about 3300 steps of moderate activity.",
+  "glossaryBpmAbbr": "BPM",
+  "glossaryBpmName": "Beats per minute",
+  "glossaryBpmWhat": "The tempo of a song. Here it is used to pick music that matches the phase of your workout.",
+  "glossaryBpmHow": "A steady beat helps you keep a rhythm and can make hard work feel easier. Slower music suits rest, faster music suits intervals.",
+  "glossaryBpmExample": "100-120 BPM for warm-up, 120-140 for strength, 150-170 for HIIT and 90-110 for rest or cooldown."
 }

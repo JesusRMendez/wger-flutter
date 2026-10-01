@@ -364,6 +364,7 @@ class _LogFormWidgetState extends ConsumerState<LogFormWidget> {
           RiRInputWidget(
             key: const ValueKey('rir-input-widget'),
             log.rir,
+            showHelp: true,
             onChanged: (value) {
               log.rir = value == '' ? null : num.parse(value);
             },
