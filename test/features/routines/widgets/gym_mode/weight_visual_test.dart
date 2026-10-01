@@ -72,7 +72,7 @@ void main() {
     // 80 kg on a 20 kg bar: 25 + 5 per side
     expect(find.text('25'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
-    expect(find.text('Bar weight 20'), findsOneWidget);
+    expect(find.text('Bar weight 20 kg'), findsOneWidget);
   });
 
   testWidgets('a weight that cannot be loaded says so', (tester) async {

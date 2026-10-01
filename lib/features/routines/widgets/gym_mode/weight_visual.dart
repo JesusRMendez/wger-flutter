@@ -151,7 +151,7 @@ class _Barbell extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             state.hasPlates || (weight ?? 0) <= state.barWeight
-                ? '${i18n.barWeight} ${state.barWeight}'
+                ? '${i18n.barWeight} ${state.barWeight} ${state.isMetric ? i18n.kg : i18n.lb}'
                 : i18n.plateCalculatorNotDivisible,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: atlas.ink3),
             textAlign: TextAlign.center,
