@@ -2726,5 +2726,115 @@
   "glossaryBpmName": "Beats per minute",
   "glossaryBpmWhat": "The tempo of a song. Here it is used to pick music that matches the phase of your workout.",
   "glossaryBpmHow": "A steady beat helps you keep a rhythm and can make hard work feel easier. Slower music suits rest, faster music suits intervals.",
-  "glossaryBpmExample": "100-120 BPM for warm-up, 120-140 for strength, 150-170 for HIIT and 90-110 for rest or cooldown."
+  "glossaryBpmExample": "100-120 BPM for warm-up, 120-140 for strength, 150-170 for HIIT and 90-110 for rest or cooldown.",
+  "dashboardActivity": "Week and streak",
+  "@dashboardActivity": {
+    "description": "Title of the dashboard card holding the week strip, the readiness and the streak"
+  },
+  "readiness": "Readiness",
+  "@readiness": {
+    "description": "Eyebrow of the dashboard card that rates how recovered the user is"
+  },
+  "readinessHigh": "High",
+  "@readinessHigh": {
+    "description": "Readiness level, 75 or more of 100"
+  },
+  "readinessMedium": "Medium",
+  "@readinessMedium": {
+    "description": "Readiness level, 50 to 74 of 100"
+  },
+  "readinessLow": "Low",
+  "@readinessLow": {
+    "description": "Readiness level, below 50 of 100"
+  },
+  "readinessSleep": "Sleep {duration}",
+  "@readinessSleep": {
+    "description": "Readiness card line with last night's sleep, e.g. 'Sleep 7 h 40'",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "readinessNoData": "Log your sleep or sync it from Health to see your readiness.",
+  "@readinessNoData": {
+    "description": "Readiness card hint shown when there is no sleep data"
+  },
+  "streak": "Streak",
+  "@streak": {
+    "description": "Eyebrow of the dashboard card counting consecutive training weeks"
+  },
+  "streakWeeks": "{count, plural, one{week in a row} other{weeks in a row}}",
+  "@streakWeeks": {
+    "description": "Unit next to the streak count, shown under the number of consecutive training weeks",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "labelBottomNavProgress": "Progress",
+  "@labelBottomNavProgress": {
+    "description": "Label of the bottom navigation tab that gathers weight, measurements, photos and trophies"
+  },
+  "quickAddTitle": "Log",
+  "@quickAddTitle": {
+    "description": "Title of the sheet the central plus button of the navigation bar opens"
+  },
+  "quickAddWorkoutHint": "Start today's session",
+  "@quickAddWorkoutHint": {
+    "description": "Hint of the quick-add tile that starts today's workout"
+  },
+  "quickAddWorkoutNone": "Open your routines",
+  "@quickAddWorkoutNone": {
+    "description": "Hint of the quick-add tile for a workout when no session is scheduled today"
+  },
+  "quickAddMeal": "Meal",
+  "@quickAddMeal": {
+    "description": "Quick-add tile that opens the nutrition diary"
+  },
+  "quickAddMealHint": "Search food",
+  "@quickAddMealHint": {
+    "description": "Hint of the quick-add meal tile"
+  },
+  "quickAddWeightHint": "Scale or manual",
+  "@quickAddWeightHint": {
+    "description": "Hint of the quick-add weight tile"
+  },
+  "quickAddMeasurementHint": "Waist, arm…",
+  "@quickAddMeasurementHint": {
+    "description": "Hint of the quick-add measurement tile"
+  },
+  "quickAddPhoto": "Photo",
+  "@quickAddPhoto": {
+    "description": "Quick-add tile that adds a progress photo"
+  },
+  "quickAddPhotoHint": "Body progress",
+  "@quickAddPhotoHint": {
+    "description": "Hint of the quick-add photo tile"
+  },
+  "quickAddCoachHint": "Ask anything",
+  "@quickAddCoachHint": {
+    "description": "Hint of the quick-add coach tile"
+  },
+  "progressSubtitleWeight": "Entries and chart",
+  "@progressSubtitleWeight": {
+    "description": "Subtitle of the weight row on the progress tab"
+  },
+  "progressSubtitleMeasurements": "Body measurements and health metrics",
+  "@progressSubtitleMeasurements": {
+    "description": "Subtitle of the measurements row on the progress tab"
+  },
+  "progressSubtitleGallery": "Photos over time",
+  "@progressSubtitleGallery": {
+    "description": "Subtitle of the gallery row on the progress tab"
+  },
+  "progressSubtitleTrophies": "Achievements and streaks",
+  "@progressSubtitleTrophies": {
+    "description": "Subtitle of the trophies row on the progress tab"
+  },
+  "progressSubtitleGoals": "Weekly, monthly and plan goals",
+  "@progressSubtitleGoals": {
+    "description": "Subtitle of the goals row on the progress tab"
+  }
 }

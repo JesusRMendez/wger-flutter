@@ -51,12 +51,13 @@ void main() {
       expect(
         items.allWidgets,
         orderedEquals([
-          DashboardWidget.trophies,
+          DashboardWidget.activity,
           DashboardWidget.routines,
           DashboardWidget.nutrition,
           DashboardWidget.weight,
           DashboardWidget.measurements,
           DashboardWidget.calendar,
+          DashboardWidget.trophies,
           DashboardWidget.coach,
         ]),
       );
@@ -120,8 +121,8 @@ void main() {
       final items = settings.dashboardItems;
 
       // Loaded: [nutrition, routines], then defaults insert around:
-      // trophies (0) → 0, weight (3), measurements (4), calendar (5)
-      expect(items.allWidgets[0], DashboardWidget.trophies);
+      // activity (0) → 0, weight (3), measurements (4), calendar (5)
+      expect(items.allWidgets[0], DashboardWidget.activity);
       expect(items.allWidgets[1], DashboardWidget.nutrition);
       expect(items.allWidgets[2], DashboardWidget.routines);
       expect(items.allWidgets[3], DashboardWidget.weight);
@@ -157,8 +158,8 @@ void main() {
       await notifier.setDashboardOrder(0, 1);
 
       final items = container.read(appSettingsProvider).requireValue.dashboardItems;
-      // Reversed order: coach, calendar, measurements, ... then item 0 moves to 1
-      expect(items.allWidgets[0], DashboardWidget.calendar);
+      // Reversed order: coach, trophies, calendar, ... then item 0 moves to 1
+      expect(items.allWidgets[0], DashboardWidget.trophies);
       expect(items.allWidgets[1], DashboardWidget.coach);
     });
   });

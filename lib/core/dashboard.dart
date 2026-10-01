@@ -24,6 +24,7 @@ import 'package:wger/core/app_settings_notifier.dart';
 import 'package:wger/core/material.dart';
 import 'package:wger/core/widgets/app_bar.dart';
 import 'package:wger/core/widgets/dashboard/calendar.dart';
+import 'package:wger/core/widgets/dashboard/widgets/activity.dart';
 import 'package:wger/core/widgets/dashboard/widgets/coach.dart';
 import 'package:wger/core/widgets/dashboard/widgets/measurements.dart';
 import 'package:wger/core/widgets/dashboard/widgets/nutrition.dart';
@@ -39,6 +40,8 @@ class DashboardScreen extends ConsumerWidget {
 
   Widget _getDashboardWidget(DashboardWidget widget) {
     switch (widget) {
+      case DashboardWidget.activity:
+        return const DashboardActivityWidget();
       case DashboardWidget.routines:
         return const DashboardRoutineWidget();
       case DashboardWidget.weight:
