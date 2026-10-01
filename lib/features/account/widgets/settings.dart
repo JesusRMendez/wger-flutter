@@ -54,7 +54,7 @@ class SettingsPage extends StatelessWidget {
             _SettingsSection(i18n.settingsCacheTitle, const [SettingsImageCache()]),
             _SettingsSection(i18n.settingsDataTitle, const [
               SettingsDataPrivacy(),
-              HealthSyncSettingsTile(),
+              HealthSyncSettingsTile(topDivider: true),
             ]),
             _SettingsSection(i18n.others, [
               const SettingsLanguage(),
@@ -115,7 +115,8 @@ class _SettingsSection extends StatelessWidget {
             child: Column(
               children: [
                 for (final (i, c) in children.indexed) ...[
-                  if (i > 0) Divider(height: 1, indent: 16, endIndent: 16, color: line),
+                  if (i > 0 && c is! HealthSyncSettingsTile)
+                    Divider(height: 1, indent: 16, endIndent: 16, color: line),
                   c,
                 ],
               ],

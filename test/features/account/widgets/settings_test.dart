@@ -24,6 +24,7 @@ import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wger/core/app_settings_notifier.dart';
 import 'package:wger/core/consts.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/account/widgets/settings.dart';
 import 'package:wger/features/health/providers/health_repository.dart';
 import 'package:wger/features/health/providers/health_sync.dart';
@@ -83,6 +84,22 @@ void main() {
       ),
     );
   }
+
+  group('Sections', () {
+    testWidgets('no divider hangs below the last row when the health tile is hidden', (
+      tester,
+    ) async {
+      await tester.pumpWidget(createSettingsScreen());
+      await tester.pumpAndSettle();
+
+      final privacyCard = find.ancestor(
+        of: find.byKey(const ValueKey('keepDataOnLogoutSwitch')),
+        matching: find.byType(AtlasCard),
+      );
+      expect(privacyCard, findsOneWidget);
+      expect(find.descendant(of: privacyCard, matching: find.byType(Divider)), findsNothing);
+    });
+  });
 
   group('Theme settings', () {
     testWidgets('Test changing the theme mode in preferences', (WidgetTester tester) async {
