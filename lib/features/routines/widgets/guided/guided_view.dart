@@ -22,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/i18n.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/exercises/widgets/images.dart';
 import 'package:wger/features/glossary/widgets/glossary_widgets.dart';
 import 'package:wger/features/routines/logic/guided_engine.dart';
@@ -31,6 +32,7 @@ import 'package:wger/features/routines/widgets/gym_mode/countdown_alert.dart';
 import 'package:wger/features/routines/widgets/gym_mode/next_exercise_preview.dart';
 import 'package:wger/features/routines/widgets/music_bpm_card.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 String formatGuidedTime(int seconds) {
   final m = seconds ~/ 60;
@@ -192,27 +194,41 @@ class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
     final step = _engine.currentStep;
     final phase = _engine.phase;
 
-    final header = Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: widget.onClose ?? () => Navigator.of(context).maybePop(),
-        ),
-        Expanded(
-          child: Text(
-            i18n.guidedMode,
-            style: theme.textTheme.headlineSmall,
-            textAlign: TextAlign.center,
+    final atlas = context.atlas;
+    final circle = IconButton.styleFrom(
+      backgroundColor: atlas.card,
+      side: BorderSide(color: atlas.line),
+      fixedSize: const Size(40, 40),
+      minimumSize: const Size(40, 40),
+      padding: EdgeInsets.zero,
+    );
+    final header = Padding(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+      child: Row(
+        children: [
+          IconButton(
+            style: circle,
+            icon: const Icon(Icons.close, size: 20),
+            onPressed: widget.onClose ?? () => Navigator.of(context).maybePop(),
           ),
-        ),
-        const GlossaryHelpButton(),
-        IconButton(
-          key: const ValueKey('guided-overview-button'),
-          icon: const Icon(Icons.menu),
-          tooltip: i18n.jumpTo,
-          onPressed: _openOverview,
-        ),
-      ],
+          Expanded(
+            child: Text(
+              i18n.guidedMode,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const GlossaryHelpButton(),
+          const SizedBox(width: 6),
+          IconButton(
+            style: circle,
+            key: const ValueKey('guided-overview-button'),
+            icon: const Icon(Icons.menu, size: 20),
+            tooltip: i18n.jumpTo,
+            onPressed: _openOverview,
+          ),
+        ],
+      ),
     );
 
     if (phase == GuidedPhase.done || step == null) {
@@ -242,48 +258,102 @@ class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             children: [
-              LinearProgressIndicator(
-                value: widget.steps.isEmpty ? 0 : _engine.completedCount / widget.steps.length,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AtlasRadius.pill),
+                child: LinearProgressIndicator(
+                  minHeight: 5,
+                  value: widget.steps.isEmpty ? 0 : _engine.completedCount / widget.steps.length,
+                ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                phaseLabel,
-                key: const ValueKey('guided-phase'),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.primary),
-              ),
+              const SizedBox(height: 20),
               if (timed)
-                Text(
-                  formatGuidedTime(_engine.remainingSeconds!),
-                  key: const ValueKey('guided-time'),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.displayLarge?.copyWith(color: theme.colorScheme.primary),
+                Center(
+                  child: ProgressRing(
+                    size: 232,
+                    strokeWidth: 14,
+                    value: _engine.phaseTotalSeconds == 0
+                        ? 0
+                        : _engine.remainingSeconds! / _engine.phaseTotalSeconds,
+                    color: switch (phase) {
+                      GuidedPhase.rest => atlas.ok,
+                      GuidedPhase.countdown => atlas.warn,
+                      _ => theme.colorScheme.primary,
+                    },
+                    duration: const Duration(milliseconds: 240),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MonoText(
+                          formatGuidedTime(_engine.remainingSeconds!),
+                          key: const ValueKey('guided-time'),
+                          size: 56,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          phaseLabel,
+                          key: const ValueKey('guided-phase'),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            letterSpacing: 0.9,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Center(
+                  child: Container(
+                    height: 32,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: atlas.brandSoft,
+                      borderRadius: BorderRadius.circular(AtlasRadius.pill),
+                    ),
+                    child: Text(
+                      phaseLabel,
+                      key: const ValueKey('guided-phase'),
+                      style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary),
+                    ),
+                  ),
                 ),
               const SizedBox(height: 8),
               if (phase != GuidedPhase.rest) ...[
+                const SizedBox(height: 12),
                 Center(
-                  child: SizedBox(
-                    width: 120,
-                    height: 120,
-                    child: ExerciseImageWidget(image: step.exercise.getMainImage, height: 120),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: SizedBox(
+                      width: 96,
+                      height: 96,
+                      child: ExerciseImageWidget(image: step.exercise.getMainImage, height: 96),
+                    ),
                   ),
                 ),
+                const SizedBox(height: 8),
                 Text(
                   _name(step),
                   key: const ValueKey('guided-exercise'),
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall,
+                  style: theme.textTheme.titleLarge,
                 ),
                 Text(
                   _summary(step),
                   key: const ValueKey('guided-summary'),
                   textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink2),
                 ),
-                Text(
-                  i18n.guidedSetOf(step.round, step.totalRounds),
-                  key: const ValueKey('guided-round'),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall,
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      i18n.guidedSetOf(step.round, step.totalRounds),
+                      key: const ValueKey('guided-round'),
+                      style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                    ),
+                  ),
                 ),
               ] else
                 _NextIntro(
@@ -321,10 +391,18 @@ class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
                   ],
                 ),
               if (phase == GuidedPhase.work)
-                FilledButton(
-                  key: const ValueKey('guided-done-button'),
-                  onPressed: () => setState(_engine.done),
-                  child: Text(i18n.done),
+                SizedBox(
+                  height: 56,
+                  child: FilledButton.icon(
+                    key: const ValueKey('guided-done-button'),
+                    icon: const Icon(Icons.check),
+                    style: FilledButton.styleFrom(
+                      textStyle: theme.textTheme.titleMedium,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    ),
+                    onPressed: () => setState(_engine.done),
+                    label: Text(i18n.done),
+                  ),
                 ),
               const SizedBox(height: 8),
               Row(
