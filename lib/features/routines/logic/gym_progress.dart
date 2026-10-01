@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'package:wger/core/consts.dart';
+import 'package:wger/features/routines/models/set_config_data.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 
 /// Where a set page sits in the workout: "exercise 2 of 8, set 3 of 4"
@@ -83,3 +85,56 @@ String formatRest(num seconds) {
   final s = seconds.round();
   return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
 }
+
+/// What a training day adds up to, from its plan
+class DayStats {
+  const DayStats({required this.sets, this.averageRestSeconds, this.volumeKg});
+
+  final int sets;
+
+  /// Mean planned rest, null when no set plans one
+  final double? averageRestSeconds;
+
+  /// Planned sets x repetitions x weight, in kg. Null when nothing is planned
+  /// with both a weight and repetitions. Weights in other units than kg are
+  /// left out rather than guessed.
+  final double? volumeKg;
+}
+
+/// The totals of the planned sets [configs] of a training day
+DayStats dayStats(Iterable<SetConfigData> configs) {
+  var sets = 0;
+  var restSum = 0.0;
+  var restCount = 0;
+  var volume = 0.0;
+  var hasVolume = false;
+
+  for (final c in configs) {
+    final n = (c.nrOfSets ?? 1).toInt();
+    sets += n;
+
+    final rest = c.restTime;
+    if (rest != null) {
+      restSum += rest * n;
+      restCount += n;
+    }
+
+    final weight = c.weight;
+    final reps = c.repetitions;
+    final isKg = c.weightUnitId == null || c.weightUnitId == WEIGHT_UNIT_KG;
+    if (weight != null && weight > 0 && reps != null && isKg) {
+      volume += n * reps * weight;
+      hasVolume = true;
+    }
+  }
+
+  return DayStats(
+    sets: sets,
+    averageRestSeconds: restCount == 0 ? null : restSum / restCount,
+    volumeKg: hasVolume ? volume : null,
+  );
+}
+
+/// A volume for a tile: tonnes from one tonne up, else kilograms
+String formatVolume(double kg) =>
+    kg >= 1000 ? '${(kg / 1000).toStringAsFixed(1)} t' : '${kg.round()} kg';

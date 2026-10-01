@@ -3013,5 +3013,75 @@
         "type": "String"
       }
     }
+  },
+  "routinesWeekOf": "Week {week} of {weeks}",
+  "@routinesWeekOf": {
+    "description": "Position within the weeks of the running routine",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      },
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "routinesStartToday": "{day} · today",
+  "@routinesStartToday": {
+    "description": "Button on the running routine that starts today's training day",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "routinesProgram": "Program",
+  "@routinesProgram": {
+    "description": "Button on the running routine that opens it"
+  },
+  "routinesGenerateTitle": "Generate with a goal",
+  "@routinesGenerateTitle": {
+    "description": "Title of the tile that opens the coach's workout plan generator"
+  },
+  "routinesGenerateHint": "Time, place, equipment and goals → routine with AI",
+  "@routinesGenerateHint": {
+    "description": "Hint of the tile that opens the coach's workout plan generator"
+  },
+  "routinesGuidedTitle": "Timed guided routine",
+  "@routinesGuidedTitle": {
+    "description": "Title of the tile that opens the guided mode"
+  },
+  "routinesGuidedHint": "Circuit, core or mobility · no weights to log",
+  "@routinesGuidedHint": {
+    "description": "Hint of the tile that opens the guided mode"
+  },
+  "routinesNewBadge": "New",
+  "@routinesNewBadge": {
+    "description": "Badge on a tile for a new feature"
+  },
+  "routinesMine": "My routines",
+  "@routinesMine": {
+    "description": "Eyebrow above the list of routines"
+  },
+  "gymStatSets": "sets",
+  "@gymStatSets": {
+    "description": "Label under the number of sets in the gym mode start page"
+  },
+  "gymStatRest": "rest",
+  "@gymStatRest": {
+    "description": "Label under the average rest in the gym mode start page"
+  },
+  "gymStatVolume": "volume",
+  "@gymStatVolume": {
+    "description": "Label under the planned volume in the gym mode start page"
+  },
+  "gymStartMinutes": "Start · {minutes} min",
+  "@gymStartMinutes": {
+    "description": "Label of the start button of the gym mode, with the estimated duration",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
   }
 }

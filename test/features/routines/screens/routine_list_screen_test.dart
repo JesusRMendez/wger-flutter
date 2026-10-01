@@ -99,6 +99,19 @@ void main() {
     expect(find.byType(ListTile), findsNWidgets(2));
   });
 
+  testWidgets('offers the coach generator, and the guided mode only with a day to run', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(renderWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('routines-generate')), findsOneWidget);
+    expect(find.text('Generate with a goal'), findsOneWidget);
+    expect(find.text('MY ROUTINES'), findsOneWidget);
+    // Neither routine is running, so there is no day to guide through
+    expect(find.byKey(const ValueKey('routines-guided')), findsNothing);
+  });
+
   testWidgets('Test deleting an item using the Delete button', (WidgetTester tester) async {
     await tester.pumpWidget(renderWidget());
     await tester.pumpAndSettle();

@@ -268,4 +268,29 @@ void main() {
       expect(tester.widget<SwitchListTile>(switchTile).onChanged, isNull, reason: key);
     }
   });
+
+  testWidgets('shows what the day adds up to and its duration on the start button', (
+    tester,
+  ) async {
+    final controller = PageController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: appLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: PageView(controller: controller, children: [StartPage(controller)]),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('day-stat-sets')), findsOneWidget);
+    expect(find.textContaining('Start · '), findsOneWidget);
+    expect(find.textContaining(' min'), findsWidgets);
+  });
 }

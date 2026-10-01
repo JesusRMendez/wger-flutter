@@ -21,7 +21,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
 import 'package:wger/features/exercises/widgets/images.dart';
+import 'package:wger/features/routines/logic/gym_progress.dart';
 import 'package:wger/features/routines/models/day.dart';
+import 'package:wger/features/routines/models/set_config_data.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/navigation.dart';
@@ -253,7 +255,9 @@ class StartPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dayDataDisplay = ref.watch(gymStateProvider).dayDataDisplay;
+    final gymState = ref.watch(gymStateProvider);
+    final dayDataDisplay = gymState.dayDataDisplay;
+    final minutes = estimatedMinutesLeft(gymState);
     final i18n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
@@ -333,6 +337,8 @@ class StartPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              _DayStatsRow(dayDataDisplay.slots.expand((slot) => slot.setConfigs)),
+              const SizedBox(height: 12),
               const GymPlanningCard(),
               const MusicBpmCard(),
             ],
@@ -346,7 +352,10 @@ class StartPage extends ConsumerWidget {
             height: 56,
             child: FilledButton.icon(
               icon: const Icon(Icons.play_arrow),
-              label: Text(i18n.start),
+              label: Text(
+                minutes > 0 ? i18n.gymStartMinutes(minutes) : i18n.start,
+                key: const ValueKey('start-label'),
+              ),
               style: FilledButton.styleFrom(
                 textStyle: theme.textTheme.titleMedium,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -362,6 +371,52 @@ class StartPage extends ConsumerWidget {
           ),
         ),
         NavigationFooter(_controller, showPrevious: false, showElapsedTime: false),
+      ],
+    );
+  }
+}
+
+/// The sets, the mean rest and the volume the day plans
+class _DayStatsRow extends StatelessWidget {
+  const _DayStatsRow(this.configs);
+
+  final Iterable<SetConfigData> configs;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final stats = dayStats(configs);
+
+    Widget tile(String key, String value, String label) {
+      return Expanded(
+        child: AtlasCard(
+          key: ValueKey(key),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MonoText(value, size: 22),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.atlas.ink3),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        tile('day-stat-sets', '${stats.sets}', i18n.gymStatSets),
+        if (stats.averageRestSeconds != null) ...[
+          const SizedBox(width: 8),
+          tile('day-stat-rest', formatRest(stats.averageRestSeconds!), i18n.gymStatRest),
+        ],
+        if (stats.volumeKg != null) ...[
+          const SizedBox(width: 8),
+          tile('day-stat-volume', formatVolume(stats.volumeKg!), i18n.gymStatVolume),
+        ],
       ],
     );
   }

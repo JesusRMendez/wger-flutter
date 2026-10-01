@@ -21,6 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:wger/features/routines/logic/gym_progress.dart';
+import 'package:wger/features/routines/models/set_config_data.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 
@@ -82,5 +83,48 @@ void main() {
     expect(formatRest(90), '1:30');
     expect(formatRest(5), '0:05');
     expect(formatRest(600), '10:00');
+  });
+
+  group('dayStats', () {
+    SetConfigData cfg({num? sets, num? reps, num? weight, num? rest, int? weightUnit}) =>
+        SetConfigData(
+          exerciseId: 1,
+          slotEntryId: 1,
+          nrOfSets: sets,
+          repetitions: reps,
+          weight: weight,
+          restTime: rest,
+          weightUnitId: weightUnit,
+        );
+
+    test('adds up the sets, the mean rest and the volume', () {
+      final stats = dayStats([
+        cfg(sets: 4, reps: 8, weight: 100, rest: 120),
+        cfg(sets: 2, reps: 10, weight: 50, rest: 60),
+      ]);
+
+      expect(stats.sets, 6);
+      expect(stats.averageRestSeconds, closeTo((4 * 120 + 2 * 60) / 6, 0.001));
+      expect(stats.volumeKg, 4 * 8 * 100 + 2 * 10 * 50);
+    });
+
+    test('a set without a plan counts once and adds nothing else', () {
+      final stats = dayStats([cfg()]);
+
+      expect(stats.sets, 1);
+      expect(stats.averageRestSeconds, isNull);
+      expect(stats.volumeKg, isNull);
+    });
+
+    test('weights in pounds are left out of the volume', () {
+      final stats = dayStats([cfg(sets: 3, reps: 5, weight: 100, weightUnit: 2)]);
+
+      expect(stats.volumeKg, isNull);
+    });
+
+    test('volume is shown in tonnes from one tonne', () {
+      expect(formatVolume(6920), '6.9 t');
+      expect(formatVolume(850.4), '850 kg');
+    });
   });
 }
