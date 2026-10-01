@@ -23,7 +23,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/network/network_provider.dart';
 import 'package:wger/database/powersync/database.dart';
-import 'package:wger/database/powersync/powersync.dart';
 import 'package:wger/features/exercises/models/category.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
 import 'package:wger/features/exercises/providers/exercise_filter_state.dart';
