@@ -16,90 +16,125 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/date.dart';
+import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/widgets/atlas.dart';
-import 'package:wger/core/widgets/core.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
 import 'package:wger/features/exercises/widgets/exercises.dart';
-import 'package:wger/features/exercises/widgets/images.dart';
 import 'package:wger/features/routines/logic/gym_progress.dart';
 import 'package:wger/features/routines/models/day_data.dart';
+import 'package:wger/features/routines/models/set_config_data.dart';
 import 'package:wger/features/routines/models/slot_data.dart';
+import 'package:wger/features/routines/models/slot_entry.dart';
 import 'package:wger/features/routines/screens/guided_mode.dart';
 import 'package:wger/features/routines/screens/gym_mode.dart';
+import 'package:wger/features/routines/widgets/forms/slot_summary.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/theme/atlas.dart';
 
-/// One exercise of a slot: its number in the day, the name (opens the exercise)
-/// and what is planned, with a small picture on the right.
+/// The planned headline of the sets of one exercise, e.g. `4 × 6-8 @ 85 kg`
+String setConfigHeadline(SetConfigData c, NumberFormat nf) {
+  final parts = <String>[];
+  final reps = c.repetitions;
+  final maxReps = c.maxRepetitions;
+  final repsText = reps == null
+      ? null
+      : (maxReps != null && maxReps != reps
+            ? '${nf.format(reps)}-${nf.format(maxReps)}'
+            : nf.format(reps));
+  final sets = c.nrOfSets;
+  if (sets != null && repsText != null) {
+    parts.add('${nf.format(sets)} × $repsText');
+  } else if (sets != null) {
+    parts.add('${nf.format(sets)} ×');
+  } else if (repsText != null) {
+    parts.add(repsText);
+  }
+  var text = parts.join();
+  final weight = c.weight;
+  if (weight != null && weight > 0) {
+    final unit = c.weightUnit?.name ?? 'kg';
+    text += '${text.isEmpty ? '' : ' @ '}${nf.format(weight)} $unit';
+  }
+  return text;
+}
+
+/// One exercise of a slot with what is planned for it: the headline in mono
+/// and chips for the rest, the RiR and the set type.
 class SetConfigDataWidget extends StatelessWidget {
   final Exercise exercise;
-  final Widget textRepetitionsWidget;
+  final List<SetConfigData> configs;
 
-  /// 1-based position of the slot in the day, null for no badge
-  final int? number;
-
-  const SetConfigDataWidget({
-    required this.exercise,
-    required this.textRepetitionsWidget,
-    this.number,
-  });
+  const SetConfigDataWidget({required this.exercise, required this.configs, super.key});
 
   @override
   Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
     final languageCode = Localizations.localeOf(context).languageCode;
     final atlas = context.atlas;
+    final nf = localizedNumberFormat(context);
+    final first = configs.first;
 
-    return ListTile(
-      contentPadding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-      leading: number == null
-          ? null
-          : Container(
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: atlas.surface3, shape: BoxShape.circle),
-              child: MonoText('$number', size: 14),
-            ),
-      trailing: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: ExerciseImageWidget(image: exercise.getMainImage),
+    final chips = <Widget>[
+      if (first.restTime != null)
+        PillChip(
+          i18n.slotChipRest(restLabel(first.restTime!)),
+          mono: true,
+          height: 28,
+          fontSize: 12,
+        ),
+      if (first.rir != null)
+        PillChip(i18n.slotChipRir(nf.format(first.rir)), mono: true, fontSize: 12),
+      if (first.type != SlotEntryType.normal)
+        PillChip(first.type.name.toUpperCase(), tone: ChipTone.warn, fontSize: 11),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text(exercise.getTranslation(languageCode).name),
+                  content: ExerciseDetail(exercise),
+                  actions: [
+                    TextButton(
+                      child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          child: Text(
+            exercise.getTranslation(languageCode).name,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text(exercise.getTranslation(languageCode).name),
-                content: ExerciseDetail(exercise),
-                actions: [
-                  TextButton(
-                    child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      ),
-      title: Text(
-        exercise.getTranslation(languageCode).name,
-        style: Theme.of(context).textTheme.titleSmall,
-      ),
-      subtitle: DefaultTextStyle.merge(
-        style: TextStyle(color: atlas.ink2),
-        child: textRepetitionsWidget,
-      ),
+        const SizedBox(height: 4),
+        if (configs.length == 1)
+          MonoText(
+            setConfigHeadline(first, nf),
+            key: ValueKey('slot-headline-${first.slotEntryId}'),
+            size: 17,
+            color: Theme.of(context).colorScheme.onSurface,
+          )
+        else
+          for (final c in configs) Text(c.textReprWithType, style: TextStyle(color: atlas.ink2)),
+        if (chips.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Wrap(spacing: 8, runSpacing: 8, children: chips),
+        ],
+      ],
     );
   }
 }
@@ -109,44 +144,78 @@ class RoutineDayWidget extends StatelessWidget {
   final int _routineId;
   final bool _viewMode;
 
-  const RoutineDayWidget(this._dayData, this._routineId, this._viewMode);
+  /// Draw the day as a card with its header; the tabbed view shows the day
+  /// bare, the tab already names it
+  final bool framed;
+
+  const RoutineDayWidget(
+    this._dayData,
+    this._routineId,
+    this._viewMode, {
+    this.framed = true,
+    super.key,
+  });
 
   Widget getSlotDataRow(SlotData slotData, int number, BuildContext context) {
     final atlas = context.atlas;
+    final brand = Theme.of(context).colorScheme.primary;
+
+    // If there's a single exercise with different sets, group them all into
+    // the one exercise and don't show separate rows for each one.
+    final groups = slotData.setConfigs.fold<Map<Exercise, List<SetConfigData>>>({}, (acc, entry) {
+      acc.putIfAbsent(entry.exercise, () => []).add(entry);
+      return acc;
+    });
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      key: ValueKey('slot-card-$number'),
+      margin: EdgeInsets.fromLTRB(framed ? 12 : 0, 0, framed ? 12 : 0, 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: atlas.surface2,
+        color: framed ? atlas.surface2 : atlas.card,
         borderRadius: BorderRadius.circular(AtlasRadius.card),
-        border: Border.all(color: atlas.line),
+        border: Border.all(color: slotData.isSuperset ? brand.withAlpha(90) : atlas.line),
       ),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (slotData.comment.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: MutedText(slotData.comment),
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: atlas.surface3,
+              borderRadius: BorderRadius.circular(12),
             ),
-
-          // If there's a single exercise with different sets, group them all into
-          // the one exercise and don't show separate rows for each one.
-          ...slotData.setConfigs
-              .fold<Map<Exercise, List<String>>>({}, (acc, entry) {
-                acc.putIfAbsent(entry.exercise, () => []).add(entry.textReprWithType);
-                return acc;
-              })
-              .entries
-              .map((entry) {
-                return SetConfigDataWidget(
-                  exercise: entry.key,
-                  number: number,
-                  textRepetitionsWidget: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: entry.value.map((text) => Text(text)).toList(),
+            child: MonoText('$number', size: 15),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (slotData.comment.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      slotData.comment,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                    ),
                   ),
-                );
-              }),
+                for (final (i, e) in groups.entries.indexed) ...[
+                  if (i > 0) const SizedBox(height: 14),
+                  SetConfigDataWidget(exercise: e.key, configs: e.value),
+                ],
+              ],
+            ),
+          ),
+          if (slotData.isSuperset)
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(color: atlas.brandSoft, shape: BoxShape.circle),
+              child: Icon(Icons.link, size: 18, color: brand),
+            ),
         ],
       ),
     );
@@ -159,6 +228,30 @@ class RoutineDayWidget extends StatelessWidget {
     final configs = _dayData.slots.expand((slot) => slot.setConfigs);
     final stats = dayStats(configs);
 
+    final summary = _dayData.slots.isEmpty
+        ? null
+        : Padding(
+            padding: EdgeInsets.fromLTRB(framed ? 16 : 4, 10, 16, 12),
+            child: Text(
+              i18n.routineDaySummary(stats.sets, estimatedMinutesFor(configs)),
+              key: ValueKey('day-summary-${_dayData.day?.id}'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: atlas.ink3),
+            ),
+          );
+
+    if (!framed) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ?summary,
+            ..._dayData.slots.indexed.map((e) => getSlotDataRow(e.$2, e.$1 + 1, context)),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
       child: AtlasCard(
@@ -167,15 +260,7 @@ class RoutineDayWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DayHeader(day: _dayData, routineId: _routineId, viewMode: _viewMode),
-            if (_dayData.slots.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-                child: Text(
-                  i18n.routineDaySummary(stats.sets, estimatedMinutesFor(configs)),
-                  key: ValueKey('day-summary-${_dayData.day?.id}'),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: atlas.ink3),
-                ),
-              ),
+            ?summary,
             ..._dayData.slots.indexed.map((e) => getSlotDataRow(e.$2, e.$1 + 1, context)),
           ],
         ),

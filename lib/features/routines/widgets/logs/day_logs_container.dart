@@ -16,14 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'dart:math';
+
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/date.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/account/providers/user_profile_notifier.dart';
+import 'package:wger/features/routines/models/log.dart';
 import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/models/session.dart';
 import 'package:wger/features/trophies/providers/trophy_notifier.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 import '../gym_mode/summary.dart';
 import 'exercise_log_chart.dart';
@@ -75,6 +82,7 @@ class SessionLogWidget extends ConsumerWidget {
     return Column(
       spacing: 10,
       children: [
+        SessionSummaryCard(_session, _routine, ref.watch(ownerTimeZoneProvider)),
         Card(child: SessionInfo(_session, ref.watch(ownerTimeZoneProvider))),
         if (prTrophies.isNotEmpty)
           SizedBox(
@@ -158,6 +166,111 @@ class SessionLogWidget extends ConsumerWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// The day of a session at a glance: the date, the training day and how long
+/// it took, and the sets of every exercise in one line.
+class SessionSummaryCard extends StatelessWidget {
+  final WorkoutSession _session;
+  final Routine _routine;
+  final String? _ownerZone;
+
+  const SessionSummaryCard(this._session, this._routine, this._ownerZone, {super.key});
+
+  /// `4 × 8-10 · 82.5 kg` for the logged sets of an exercise
+  String _line(List<Log> logs, NumberFormat nf) {
+    final reps = logs.map((l) => l.repetitions).whereType<num>().toList();
+    final weights = logs.map((l) => l.weight).whereType<num>().toList();
+    final parts = <String>[];
+
+    if (reps.isEmpty) {
+      parts.add('${logs.length} ×');
+    } else {
+      final lo = reps.reduce(min);
+      final hi = reps.reduce(max);
+      parts.add(
+        '${logs.length} × ${lo == hi ? nf.format(lo) : '${nf.format(lo)}-${nf.format(hi)}'}',
+      );
+    }
+    if (weights.isNotEmpty) {
+      final top = weights.reduce(max);
+      if (top > 0) {
+        parts.add('${nf.format(top)} ${logs.first.weightUnitObj?.name ?? ''}'.trim());
+      }
+    }
+    return parts.join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context).toString();
+    final nf = NumberFormat.decimalPattern(locale);
+    final languageCode = Localizations.localeOf(context).languageCode;
+
+    final day = _routine.days.firstWhereOrNull((d) => d.id == _session.dayId);
+    final minutes = _session.duration?.inMinutes;
+
+    return AtlasCard(
+      key: ValueKey('session-summary-${_session.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DateFormat.MMMMd(locale).format(_session.localDayIn(_ownerZone)),
+                      style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink3),
+                    ),
+                    Text(day?.name ?? i18n.workoutSession, style: theme.textTheme.titleLarge),
+                  ],
+                ),
+              ),
+              if (minutes != null)
+                PillChip(
+                  i18n.minutesShort(minutes),
+                  key: const ValueKey('session-duration'),
+                  mono: true,
+                  height: 32,
+                  fontSize: 13,
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final exercise in _session.exercises)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: atlas.line)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      exercise.getTranslation(languageCode).name,
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  MonoText(
+                    _line(_session.logs.where((l) => l.exerciseId == exercise.id).toList(), nf),
+                    size: 13,
+                    weight: FontWeight.w500,
+                    color: atlas.ink3,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

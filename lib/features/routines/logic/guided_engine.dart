@@ -71,6 +71,39 @@ class GuidedStep {
   });
 
   Exercise get exercise => config.exercise;
+
+  /// This step with [work] seconds added to a timed work (never below 5 s) and
+  /// [rest] seconds added to the rest (never below 0)
+  GuidedStep adjusted({int work = 0, int rest = 0}) {
+    if (work == 0 && rest == 0) {
+      return this;
+    }
+    return GuidedStep(
+      slotIndex: slotIndex,
+      round: round,
+      totalRounds: totalRounds,
+      config: config,
+      kind: kind,
+      workSeconds: workSeconds == null ? null : (workSeconds! + work).clamp(5, 3600),
+      restSeconds: (restSeconds + rest).clamp(0, 1800),
+    );
+  }
+}
+
+/// Seconds a set without a timer is assumed to take, for the estimate
+const GUIDED_ASSUMED_WORK_SECONDS = 45;
+
+/// Estimated duration of running [steps]: the countdown, the work and the rest
+/// of every set. The rest after the last set is not taken.
+int estimateGuidedSeconds(List<GuidedStep> steps) {
+  var total = 0;
+  for (final (i, s) in steps.indexed) {
+    total += GUIDED_COUNTDOWN_SECONDS + (s.workSeconds ?? GUIDED_ASSUMED_WORK_SECONDS);
+    if (i < steps.length - 1) {
+      total += s.restSeconds;
+    }
+  }
+  return total;
 }
 
 /// Kind and work duration of a planned set. The units are the ones of the

@@ -79,6 +79,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify the title is correct
-    expect(find.text('3 day workout'), findsNWidgets(2));
+    expect(find.text('Edit 3 day workout'), findsOne, reason: 'app bar');
+    expect(find.text('3 day workout'), findsOne, reason: 'name field');
+    expect(find.text('2 days'), findsOne);
   });
 }

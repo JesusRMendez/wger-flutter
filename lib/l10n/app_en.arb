@@ -3211,5 +3211,306 @@
   "coachSuggestDeload": "How do I deload?",
   "@coachSuggestDeload": {
     "description": "Quick question chip of the coach chat"
+  },
+  "progression": "Progression",
+  "@progression": {
+    "description": "Label above the progression rule chips of an exercise"
+  },
+  "progressionLinear": "Linear",
+  "@progressionLinear": {
+    "description": "Progression rule: add a fixed weight each week"
+  },
+  "progressionDouble": "Double progression",
+  "@progressionDouble": {
+    "description": "Progression rule: reps first, then weight"
+  },
+  "progressionManual": "Manual",
+  "@progressionManual": {
+    "description": "Progression rule: no automatic progression"
+  },
+  "changeExercise": "Change exercise",
+  "@changeExercise": {
+    "description": "Button that swaps the exercise of a slot"
+  },
+  "superset": "Superset",
+  "@superset": {
+    "description": "Button and label for a superset"
+  },
+  "removeSet": "Remove set",
+  "@removeSet": {
+    "description": "Tooltip of the minus button of the sets stepper"
+  },
+  "editDayTitle": "Edit {name}",
+  "@editDayTitle": {
+    "description": "Title of the routine edit screen",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dragToReorderHint": "Drag to reorder · tap to set up the sets",
+  "@dragToReorderHint": {
+    "description": "Hint above the exercises of a day in the editor"
+  },
+  "deleteDay": "Delete day",
+  "@deleteDay": {
+    "description": "Button that deletes the day in the editor"
+  },
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "description": "Number of days of a routine",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "restShort": "Rest",
+  "@restShort": {
+    "description": "Short label of the rest time field"
+  },
+  "slotChipRest": "Rest {time}",
+  "@slotChipRest": {
+    "description": "Rest time chip on an exercise card of the routine",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "slotChipRir": "RIR {rir}",
+  "@slotChipRir": {
+    "description": "Reps in reserve chip on an exercise card",
+    "placeholders": {
+      "rir": {
+        "type": "String"
+      }
+    }
+  },
+  "routineStartDay": "Start {day}",
+  "@routineStartDay": {
+    "description": "Button that starts the selected training day",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "routineWeekChip": "W{week}",
+  "@routineWeekChip": {
+    "description": "Short label of a week chip in the routine",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "newRecords": "{count, plural, =1{1 new record (PR)} other{{count} new records (PR)}}",
+  "@newRecords": {
+    "description": "Heading of the personal records card of the workout summary",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "estimatedOneRepMax": "1RM est. {value}",
+  "@estimatedOneRepMax": {
+    "description": "Estimated one rep max under a personal record",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedSetupSubtitle": "Time, reps or weight per exercise",
+  "@guidedSetupSubtitle": {
+    "description": "Subtitle of the guided routine setup"
+  },
+  "guidedAdjustWork": "Work",
+  "@guidedAdjustWork": {
+    "description": "Setup of the guided routine: adjusts the time of timed sets"
+  },
+  "guidedAdjustWorkHint": "added to the timed sets",
+  "@guidedAdjustWorkHint": {
+    "description": "Hint under the work adjustment"
+  },
+  "guidedAdjustRest": "Rest",
+  "@guidedAdjustRest": {
+    "description": "Setup of the guided routine: adjusts the rests"
+  },
+  "guidedAdjustRestHint": "added to every rest",
+  "@guidedAdjustRestHint": {
+    "description": "Hint under the rest adjustment"
+  },
+  "guidedEstimatedDuration": "Estimated duration",
+  "@guidedEstimatedDuration": {
+    "description": "Setup of the guided routine"
+  },
+  "guidedStart": "Start",
+  "@guidedStart": {
+    "description": "Button that starts the guided routine"
+  },
+  "guidedRestShort": "rest {time}",
+  "@guidedRestShort": {
+    "description": "Rest after an exercise in the guided setup list",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedSetsLine": "{count, plural, =1{1 set} other{{count} sets}}",
+  "@guidedSetsLine": {
+    "description": "Number of sets of an exercise in the guided setup list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "guidedSeconds": "{value} s",
+  "@guidedSeconds": {
+    "description": "Seconds, e.g. in the guided setup adjustment",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedProgressLine": "Step {current} of {total}",
+  "@guidedProgressLine": {
+    "description": "Position in the guided routine, in the header",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "guidedTimeLeft": "{left} left",
+  "@guidedTimeLeft": {
+    "description": "Estimated time left in the guided routine",
+    "placeholders": {
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedPrevious": "Previous",
+  "@guidedPrevious": {
+    "description": "Tooltip of the previous set button"
+  },
+  "historySessionsIn": "sessions {month}",
+  "@historySessionsIn": {
+    "description": "Label under the number of sessions of the month in the training history",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTraining": "training",
+  "@historyTraining": {
+    "description": "Label under the hours trained in the month, training history"
+  },
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "description": "A duration in minutes, e.g. on the session card of the history",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "video": "Video",
+  "@video": {
+    "description": "Label of the video chip on an exercise"
+  },
+  "filterAll": "All",
+  "@filterAll": {
+    "description": "First chip of a filter row, selects everything"
+  },
+  "exercisesSearchHint": "Search among {count} exercises",
+  "@exercisesSearchHint": {
+    "description": "Hint of the search field of the exercise list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exercisesCount": "{count, plural, =1{1 exercise} other{{count} exercises}}",
+  "@exercisesCount": {
+    "description": "Number of exercises shown in the list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exerciseTabTechnique": "Technique",
+  "@exerciseTabTechnique": {
+    "description": "Tab of the exercise page with the description and muscles"
+  },
+  "exerciseTabHistory": "History",
+  "@exerciseTabHistory": {
+    "description": "Tab of the exercise page with your logged sets"
+  },
+  "exerciseTabAlternatives": "Alternatives",
+  "@exerciseTabAlternatives": {
+    "description": "Tab of the exercise page with variations of the exercise"
+  },
+  "exerciseHistoryEmpty": "You have not logged this exercise yet.",
+  "@exerciseHistoryEmpty": {
+    "description": "Empty state of the history tab of the exercise page"
+  },
+  "exerciseHistorySessions": "Sessions",
+  "@exerciseHistorySessions": {
+    "description": "Label of the number of sessions that include the exercise"
+  },
+  "exerciseHistoryBest": "Best 1RM est.",
+  "@exerciseHistoryBest": {
+    "description": "Label of the best estimated one rep max of the exercise"
+  },
+  "exerciseAlternativesEmpty": "No variations of this exercise.",
+  "@exerciseAlternativesEmpty": {
+    "description": "Empty state of the alternatives tab"
+  },
+  "musicOpen": "Open",
+  "@musicOpen": {
+    "description": "Button that opens a music service search"
+  },
+  "musicServiceHint": "Search playlists for {range} BPM",
+  "@musicServiceHint": {
+    "description": "Hint under a music service on the music card",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "locationsSubtitle": "Used to suggest weights and exercises",
+  "@locationsSubtitle": {
+    "description": "Subtitle of the equipment screen"
+  },
+  "locationsCountOf": "{selected} of {total}",
+  "@locationsCountOf": {
+    "description": "How many pieces of equipment are available of all that exist",
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "locationsNoCatalog": "The equipment list is not available yet.",
+  "@locationsNoCatalog": {
+    "description": "Shown on the equipment screen while the equipment catalogue is empty"
   }
 }
