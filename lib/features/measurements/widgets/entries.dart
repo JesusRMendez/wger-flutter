@@ -18,10 +18,12 @@
 
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/form_screen.dart';
 import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/snackbar.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/error.dart';
 import 'package:wger/features/measurements/charts/data.dart';
 import 'package:wger/features/measurements/charts/range.dart';
@@ -33,9 +35,11 @@ import 'package:wger/features/measurements/providers/measurement_notifier.dart';
 import 'package:wger/features/measurements/widgets/calculation_mark.dart';
 import 'package:wger/features/measurements/widgets/chart_range_selector.dart';
 import 'package:wger/features/measurements/widgets/helpers.dart';
+import 'package:wger/features/measurements/widgets/measurement_hero.dart';
 import 'package:wger/features/nutrition/models/nutritional_plan.dart';
 import 'package:wger/features/nutrition/providers/nutrition_notifier.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 import 'forms/entry.dart';
 
@@ -64,6 +68,14 @@ class EntriesList extends ConsumerWidget {
   /// weight has one of its own, with quick steppers and a unit dropdown.
   final Widget Function(MeasurementEntry entry)? editFormBuilder;
 
+  /// Opens the chart with the newest value large and how much it moved over the
+  /// range. The weight screen asks for it, where that number is the point.
+  final bool showHero;
+
+  /// Weight (in [displayUnit]) the user is heading for; the weight screen
+  /// derives from it when it will be reached at the current pace
+  final num? projectionTarget;
+
   const EntriesList(
     this.category, {
     required this.range,
@@ -72,6 +84,8 @@ class EntriesList extends ConsumerWidget {
     this.displayUnit,
     this.displayUnitLabel,
     this.editFormBuilder,
+    this.showHero = false,
+    this.projectionTarget,
   });
 
   @override
@@ -112,10 +126,11 @@ class EntriesList extends ConsumerWidget {
               child: CalculationMark(category),
             ),
           ),
-        ChartRangeSelector(
-          value: range,
-          onChanged: onRangeChanged,
-        ),
+        if (!showHero)
+          ChartRangeSelector(
+            value: range,
+            onChanged: onRangeChanged,
+          ),
         MeasurementChartArea<List<MeasurementChartEntry>>(
           identity: category.id!,
           // Values are read through the unit helper; for plain categories
@@ -147,7 +162,7 @@ class EntriesList extends ConsumerWidget {
     final settings = category.chartSettings;
     final (:entries, :average) = chartSeriesFor(allPoints, range, settings);
 
-    return buildSeriesChartSection(
+    final section = buildSeriesChartSection(
       context,
       name: name,
       entriesAll: entries,
@@ -164,6 +179,26 @@ class EntriesList extends ConsumerWidget {
         targetUnit: unit,
       ),
     );
+
+    if (!showHero) {
+      return section;
+    }
+    // The weight screen: the value, the range, the chart in a card and what the
+    // pace means for the goal
+    return [
+      if (entries.isNotEmpty)
+        MeasurementHero(first: entries.first, last: entries.last, unit: unitLabel),
+      ChartRangeSelector(value: range, onChanged: onRangeChanged),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+        child: AtlasCard(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(children: section),
+        ),
+      ),
+      if (projectionTarget != null && allPoints.length > 1)
+        _ProjectionCard(points: allPoints, target: projectionTarget!, unit: unitLabel),
+    ];
   }
 
   /// Detail view of a multi-value group: one chart over all components, a
@@ -254,66 +289,84 @@ class _EntryListState extends ConsumerState<_EntryList> with _GrowsWhileScrolled
         final currentEntry = entries[index];
         final isCalculated = currentEntry.source == measurementSourceCalculated;
 
-        return Card(
-          child: ListTile(
-            title: Text(
-              unitSuffixed(
-                measurementValue(
-                  context,
-                  currentEntry.valueIn(widget.unit, categoryUnit: category.unit),
-                  widget.unit,
-                ),
-                widget.unitLabel,
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          leading: IconBadge(
+            currentEntry.source == measurementSourceUser ? Icons.edit_outlined : Icons.sync,
+            color: context.atlas.ink2,
+          ),
+          title: MonoText(
+            unitSuffixed(
+              measurementValue(
+                context,
+                currentEntry.valueIn(widget.unit, categoryUnit: category.unit),
+                widget.unit,
               ),
+              widget.unitLabel,
             ),
-            subtitle: Text(datetimeFormat.format(currentEntry.date)),
-            // Entries the user did not write are read-only, for two
-            // different reasons: an import belongs to the app it came from,
-            // a calculated value to the data it is computed from
-            trailing: currentEntry.source != measurementSourceUser
-                ? Tooltip(
-                    message: isCalculated
-                        ? AppLocalizations.of(context).calculationEntryInfo
-                        : AppLocalizations.of(context).importedEntry,
-                    child: Icon(
-                      isCalculated ? Icons.calculate_outlined : Icons.monitor_heart_outlined,
-                    ),
-                  )
-                : PopupMenuButton(
-                    itemBuilder: (BuildContext context) {
-                      return [
-                        PopupMenuItem(
-                          child: Text(AppLocalizations.of(context).edit),
-                          onTap: () => Navigator.pushNamed(
-                            context,
-                            FormScreen.routeName,
-                            arguments: FormScreenArguments(
-                              AppLocalizations.of(context).edit,
-                              widget.editFormBuilder?.call(currentEntry) ??
-                                  MeasurementEntryForm(category.id!, currentEntry),
-                            ),
+            size: 16,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          subtitle: Row(
+            children: [
+              Text(datetimeFormat.format(currentEntry.date)),
+              Text(
+                ' · ${isCalculated
+                    ? AppLocalizations.of(context).measurementSourceCalculated
+                    : currentEntry.source == measurementSourceUser
+                    ? AppLocalizations.of(context).measurementSourceManual
+                    : AppLocalizations.of(context).measurementSourceImported}',
+              ),
+            ],
+          ),
+          // Entries the user did not write are read-only, for two
+          // different reasons: an import belongs to the app it came from,
+          // a calculated value to the data it is computed from
+          trailing: currentEntry.source != measurementSourceUser
+              ? Tooltip(
+                  message: isCalculated
+                      ? AppLocalizations.of(context).calculationEntryInfo
+                      : AppLocalizations.of(context).importedEntry,
+                  child: Icon(
+                    isCalculated ? Icons.calculate_outlined : Icons.monitor_heart_outlined,
+                    size: 18,
+                    color: context.atlas.ink3,
+                  ),
+                )
+              : PopupMenuButton(
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      PopupMenuItem(
+                        child: Text(AppLocalizations.of(context).edit),
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          FormScreen.routeName,
+                          arguments: FormScreenArguments(
+                            AppLocalizations.of(context).edit,
+                            widget.editFormBuilder?.call(currentEntry) ??
+                                MeasurementEntryForm(category.id!, currentEntry),
                           ),
                         ),
-                        PopupMenuItem(
-                          child: Text(AppLocalizations.of(context).delete),
-                          onTap: () async {
-                            await ref
-                                .read(measurementProvider.notifier)
-                                .deleteEntry(currentEntry.id!);
+                      ),
+                      PopupMenuItem(
+                        child: Text(AppLocalizations.of(context).delete),
+                        onTap: () async {
+                          await ref
+                              .read(measurementProvider.notifier)
+                              .deleteEntry(currentEntry.id!);
 
-                            if (context.mounted) {
-                              showSnackbar(
-                                context,
-                                AppLocalizations.of(context).successfullyDeleted,
-                                center: true,
-                              );
-                            }
-                          },
-                        ),
-                      ];
-                    },
-                  ),
-          ),
+                          if (context.mounted) {
+                            showSnackbar(
+                              context,
+                              AppLocalizations.of(context).successfullyDeleted,
+                              center: true,
+                            );
+                          }
+                        },
+                      ),
+                    ];
+                  },
+                ),
         );
       },
     );
@@ -366,15 +419,13 @@ class _GroupReadingsListState extends ConsumerState<_GroupReadingsList> with _Gr
             if (id != total) '${componentsById[id]!.displayName(context)} ${formatted(value)}',
         ];
 
-        return Card(
-          child: ListTile(
-            title: Text(headline),
-            subtitle: Text(
-              [
-                datetimeFormat.format(date),
-                if (parts.isNotEmpty) parts.join(', '),
-              ].join(' · '),
-            ),
+        return ListTile(
+          title: Text(headline),
+          subtitle: Text(
+            [
+              datetimeFormat.format(date),
+              if (parts.isNotEmpty) parts.join(', '),
+            ].join(' · '),
           ),
         );
       },
@@ -403,21 +454,110 @@ mixin _GrowsWhileScrolled<T extends ConsumerStatefulWidget> on ConsumerState<T> 
     // until the next build.
     final asked = limit;
 
-    return SizedBox(
-      height: 300,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          // Grown before the end is reached, so the next page is there by the
-          // time the user gets to it
-          if (notification.metrics.extentAfter < 200 && hasMore && limit == asked) {
-            setState(() => limit += _pageSize);
-          }
-          return false;
-        },
-        child: ListView.builder(
-          padding: const EdgeInsets.all(10.0),
-          itemCount: itemCount,
-          itemBuilder: itemBuilder,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+      child: AtlasCard(
+        padding: EdgeInsets.zero,
+        child: SizedBox(
+          height: 300,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              // Grown before the end is reached, so the next page is there by the
+              // time the user gets to it
+              if (notification.metrics.extentAfter < 200 && hasMore && limit == asked) {
+                setState(() => limit += _pageSize);
+              }
+              return false;
+            },
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              itemCount: itemCount,
+              separatorBuilder: (_, _) =>
+                  Divider(height: 1, indent: 16, endIndent: 16, color: context.atlas.line),
+              itemBuilder: itemBuilder,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "At your current pace you reach 77 kg around 10 Dec": a straight line
+/// through the last four weeks of readings, followed to the weight the user is
+/// heading for.
+class _ProjectionCard extends StatelessWidget {
+  const _ProjectionCard({required this.points, required this.target, required this.unit});
+
+  final List<MeasurementChartEntry> points;
+  final num target;
+  final String unit;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+
+    final last = points.last;
+    final from = last.date.subtract(const Duration(days: 28));
+    final window = points.where((p) => !p.date.isBefore(from)).toList();
+    if (window.length < 2) {
+      return const SizedBox.shrink();
+    }
+
+    // Least squares slope in unit per day
+    final t0 = window.first.date;
+    final xs = [for (final p in window) p.date.difference(t0).inHours / 24];
+    final ys = [for (final p in window) p.value.toDouble()];
+    final n = xs.length;
+    final mx = xs.reduce((a, b) => a + b) / n;
+    final my = ys.reduce((a, b) => a + b) / n;
+    var num_ = 0.0;
+    var den = 0.0;
+    for (var i = 0; i < n; i++) {
+      num_ += (xs[i] - mx) * (ys[i] - my);
+      den += (xs[i] - mx) * (xs[i] - mx);
+    }
+    if (den == 0) {
+      return const SizedBox.shrink();
+    }
+    final slope = num_ / den;
+    final remaining = target - last.value;
+
+    final String text;
+    if (remaining.abs() < 0.05) {
+      return const SizedBox.shrink();
+    } else if (slope.abs() < 0.005 || slope.sign != remaining.sign) {
+      text = i18n.weightProjectionAway(target.toStringAsFixed(1), unit);
+    } else {
+      final days = (remaining / slope).ceil();
+      final date = last.date.add(Duration(days: days));
+      text = i18n.weightProjectionReach(
+        (slope * 7).toStringAsFixed(2),
+        unit,
+        target.toStringAsFixed(1),
+        DateFormat.MMMMd(Localizations.localeOf(context).toString()).format(date),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: AtlasCard(
+        borderColor: atlas.ok.withValues(alpha: 0.4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.track_changes, size: 20, color: atlas.ok),
+                const SizedBox(width: 10),
+                Text(i18n.weightProjection, style: theme.textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(text, style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink2)),
+          ],
         ),
       ),
     );

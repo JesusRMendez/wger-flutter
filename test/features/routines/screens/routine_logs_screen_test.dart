@@ -34,6 +34,7 @@ import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/providers/workout_logs_repository.dart';
 import 'package:wger/features/routines/screens/routine_logs_screen.dart';
 import 'package:wger/features/routines/screens/routine_screen.dart';
+import 'package:wger/features/routines/widgets/logs/day_logs_container.dart';
 import 'package:wger/features/routines/widgets/logs/log_overview_routine.dart';
 import 'package:wger/features/routines/widgets/logs/session_info.dart';
 import 'package:wger/features/trophies/providers/trophy_repository.dart';
@@ -150,7 +151,14 @@ void main() {
 
         expect(find.text('Training logs'), findsOneWidget);
         expect(find.byType(WorkoutLogCalendar), findsOneWidget);
-        expect(find.text('Bench press'), findsOneWidget);
+        expect(find.text('Bench press'), findsNWidgets(2), reason: 'summary row and log card');
+
+        // Month totals, the day legend and the session summary
+        expect(find.byKey(const ValueKey('history-sessions')), findsOneWidget);
+        expect(find.byKey(const ValueKey('history-hours')), findsOneWidget);
+        expect(find.byKey(const ValueKey('history-volume')), findsOneWidget);
+        expect(find.byKey(const ValueKey('history-legend')), findsOneWidget);
+        expect(find.byType(SessionSummaryCard), findsOneWidget);
         expect(find.byKey(const ValueKey('delete-log-1')), findsOneWidget);
         expect(find.byKey(const ValueKey('delete-log-2')), findsOneWidget);
         expect(find.byKey(const ValueKey('delete-log-3')), findsNothing);

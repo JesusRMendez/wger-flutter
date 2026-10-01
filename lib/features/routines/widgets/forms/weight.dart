@@ -25,10 +25,12 @@ import 'package:wger/core/form_validators.dart';
 import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/i18n.dart';
 import 'package:wger/core/number_input.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/routines/models/log.dart';
 import 'package:wger/features/routines/models/weight_unit.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 /// Input widget for workout weight units
 ///
@@ -88,6 +90,9 @@ class WeightInputWidget extends ConsumerStatefulWidget {
   final num valueChange;
   final TextEditingController? controller;
 
+  /// Large centered number between round buttons, as on the gym mode log page
+  final bool stepper;
+
   const WeightInputWidget({
     super.key,
     required this.value,
@@ -95,6 +100,7 @@ class WeightInputWidget extends ConsumerStatefulWidget {
     this.unit,
     this.onUnitChanged,
     this.controller,
+    this.stepper = false,
     num? valueChange,
   }) : valueChange = valueChange ?? 1.25;
 
@@ -191,70 +197,118 @@ class _WeightInputWidgetState extends ConsumerState<WeightInputWidget> {
     return Row(
       children: [
         // "Quick-remove" button
-        IconButton(
-          icon: const Icon(Icons.remove),
-          iconSize: 25,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          visualDensity: VisualDensity.compact,
-          tooltip: i18n.decrease,
-          onPressed: () {
-            final base = widget.value ?? 0;
-            final newValue = base - widget.valueChange;
-            if (newValue >= 0) {
-              widget.onChanged(newValue);
-            }
-          },
-        ),
+        if (widget.stepper)
+          StepButton(
+            icon: Icons.remove,
+            size: 44,
+            tooltip: i18n.decrease,
+            onPressed: () {
+              final base = widget.value ?? 0;
+              final newValue = base - widget.valueChange;
+              if (newValue >= 0) {
+                widget.onChanged(newValue);
+              }
+            },
+          )
+        else
+          IconButton(
+            icon: const Icon(Icons.remove),
+            iconSize: 25,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
+            tooltip: i18n.decrease,
+            onPressed: () {
+              final base = widget.value ?? 0;
+              final newValue = base - widget.valueChange;
+              if (newValue >= 0) {
+                widget.onChanged(newValue);
+              }
+            },
+          ),
 
         // Text field
         Expanded(
-          child: TextFormField(
-            controller: _controller,
-            decoration: InputDecoration(
-              labelText: labelText,
-              suffixIcon: suffixIcon,
-              suffixIconConstraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-              isDense: true,
-            ),
-            keyboardType: textInputTypeDecimal,
-            inputFormatters: [LocalizedDecimalInputFormatter(_numberFormat.symbols.DECIMAL_SEP)],
-            onChanged: (text) {
-              if (text.isEmpty) {
-                widget.onChanged(null);
-                return;
-              }
-              try {
-                widget.onChanged(_numberFormat.parse(text));
-              } on FormatException catch (error) {
-                _logger.finer('Error parsing weight: $error');
-              }
-            },
-            onSaved: (text) {
-              if (text == null || text.isEmpty) {
-                return;
-              }
-              widget.onChanged(_numberFormat.parse(text));
-            },
-            validator: (text) =>
-                validateOptionalDecimal(text, _numberFormat, context, max: Log.MAX_VALUE),
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: [
+              TextFormField(
+                controller: _controller,
+                decoration: InputDecoration(
+                  labelText: labelText,
+                  suffixIcon: widget.stepper ? null : suffixIcon,
+                  suffixIconConstraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                  isDense: true,
+                  // The stepper has no box: the number is the control
+                  border: widget.stepper ? InputBorder.none : null,
+                  enabledBorder: widget.stepper ? InputBorder.none : null,
+                  focusedBorder: widget.stepper ? InputBorder.none : null,
+                  errorBorder: widget.stepper ? InputBorder.none : null,
+                  filled: widget.stepper ? false : null,
+                  floatingLabelBehavior: widget.stepper ? FloatingLabelBehavior.always : null,
+                  floatingLabelAlignment: widget.stepper ? FloatingLabelAlignment.center : null,
+                  contentPadding: widget.stepper ? const EdgeInsets.only(top: 14, bottom: 4) : null,
+                ),
+                textAlign: widget.stepper ? TextAlign.center : TextAlign.start,
+                style: widget.stepper
+                    ? AtlasText.mono(Theme.of(context).textTheme.titleLarge, size: 34)
+                    : null,
+                keyboardType: textInputTypeDecimal,
+                inputFormatters: [
+                  LocalizedDecimalInputFormatter(_numberFormat.symbols.DECIMAL_SEP),
+                ],
+                onChanged: (text) {
+                  if (text.isEmpty) {
+                    widget.onChanged(null);
+                    return;
+                  }
+                  try {
+                    widget.onChanged(_numberFormat.parse(text));
+                  } on FormatException catch (error) {
+                    _logger.finer('Error parsing weight: $error');
+                  }
+                },
+                onSaved: (text) {
+                  if (text == null || text.isEmpty) {
+                    return;
+                  }
+                  widget.onChanged(_numberFormat.parse(text));
+                },
+                validator: (text) =>
+                    validateOptionalDecimal(text, _numberFormat, context, max: Log.MAX_VALUE),
+              ),
+              if (widget.stepper && suffixIcon != null)
+                SizedBox(width: 28, height: 28, child: suffixIcon),
+            ],
           ),
         ),
 
         // "Quick-add" button
-        IconButton(
-          icon: const Icon(Icons.add),
-          iconSize: 25,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          visualDensity: VisualDensity.compact,
-          tooltip: i18n.increase,
-          onPressed: () {
-            final base = widget.value ?? 0;
-            final newValue = base + widget.valueChange;
-            widget.onChanged(newValue);
-          },
-        ),
+        if (widget.stepper)
+          StepButton(
+            icon: Icons.add,
+            size: 44,
+            tooltip: i18n.increase,
+            onPressed: () {
+              final base = widget.value ?? 0;
+              final newValue = base + widget.valueChange;
+              widget.onChanged(newValue);
+            },
+          )
+        else
+          IconButton(
+            icon: const Icon(Icons.add),
+            iconSize: 25,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
+            tooltip: i18n.increase,
+            onPressed: () {
+              final base = widget.value ?? 0;
+              final newValue = base + widget.valueChange;
+              widget.onChanged(newValue);
+            },
+          ),
       ],
     );
   }

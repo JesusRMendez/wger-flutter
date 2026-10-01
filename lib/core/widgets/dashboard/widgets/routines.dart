@@ -16,12 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/date.dart';
 import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/network/network_provider.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/core.dart';
 import 'package:wger/core/widgets/dashboard/widgets/nothing_found.dart';
 import 'package:wger/core/widgets/error.dart';
@@ -33,6 +35,7 @@ import 'package:wger/features/routines/screens/gym_mode.dart';
 import 'package:wger/features/routines/screens/routine_screen.dart';
 import 'package:wger/features/routines/widgets/forms/routine.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class DashboardRoutineWidget extends ConsumerStatefulWidget {
   const DashboardRoutineWidget();
@@ -54,16 +57,14 @@ class _DashboardRoutineWidgetState extends ConsumerState<DashboardRoutineWidget>
     required Widget trailing,
     Widget? child,
   }) {
-    return Card(
+    return AtlasCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            title: Text(title, style: Theme.of(context).textTheme.headlineSmall),
-            subtitle: Text(subtitle),
-            leading: Icon(
-              Icons.fitness_center,
-              color: Theme.of(context).textTheme.headlineSmall!.color,
-            ),
+          CardHeader(
+            icon: Icons.fitness_center,
+            title: title,
+            subtitle: subtitle,
             trailing: trailing,
           ),
           ?child,
@@ -109,7 +110,7 @@ class _DashboardRoutineWidgetState extends ConsumerState<DashboardRoutineWidget>
         context,
         title: i18n.labelWorkoutPlan,
         subtitle: i18n.anErrorOccurred,
-        trailing: const Icon(Icons.error_outline, color: Colors.red),
+        trailing: Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
         child: StreamErrorIndicator(e, stacktrace: st),
       ),
       data: (state) {
@@ -135,18 +136,19 @@ class _DashboardRoutineWidgetState extends ConsumerState<DashboardRoutineWidget>
 
         final isHydrating = hydration?.isLoading ?? false;
 
-        return Card(
+        final days = routine.dayDataCurrentIterationFiltered;
+        final today = days.firstWhereOrNull(
+          (d) => !d.day!.isRest && d.date.isSameDayAs(DateTime.now()),
+        );
+
+        final card = AtlasCard(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ListTile(
-                title: Text(routine.name, style: Theme.of(context).textTheme.headlineSmall),
-                subtitle: Text(
-                  '${dateFormat.format(routine.start)} - ${dateFormat.format(routine.end)}',
-                ),
-                leading: Icon(
-                  Icons.fitness_center,
-                  color: Theme.of(context).textTheme.headlineSmall!.color,
-                ),
+              CardHeader(
+                icon: Icons.fitness_center,
+                title: routine.name,
+                subtitle: '${dateFormat.format(routine.start)} - ${dateFormat.format(routine.end)}',
                 trailing: isHydrating
                     ? const SizedBox(
                         height: 20,
@@ -155,55 +157,133 @@ class _DashboardRoutineWidgetState extends ConsumerState<DashboardRoutineWidget>
                       )
                     : detailsLocked
                     ? Icon(Icons.cloud_off, color: Theme.of(context).colorScheme.outline)
-                    : Tooltip(
-                        message: i18n.toggleDetails,
-                        child: _showDetail
-                            ? const Icon(Icons.info)
-                            : const Icon(Icons.info_outline),
+                    : IconButton(
+                        // The toggle is meaningless while the day data is still
+                        // loading or unavailable offline, so it is not shown then.
+                        tooltip: i18n.toggleDetails,
+                        icon: _showDetail ? const Icon(Icons.info) : const Icon(Icons.info_outline),
+                        onPressed: () => setState(() => _showDetail = !_showDetail),
                       ),
-                // The toggle is meaningless while the day data is still
-                // loading or unavailable offline, so disable the tap then.
-                onTap: isHydrating || detailsLocked
-                    ? null
-                    : () {
-                        setState(() {
-                          _showDetail = !_showDetail;
-                        });
-                      },
               ),
+              const SizedBox(height: 12),
               if (isHydrating)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (!detailsLocked)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: DetailContentWidget(
-                    routine.dayDataCurrentIterationFiltered,
-                    _showDetail,
-                  ),
-                ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  TextButton(
-                    onPressed: detailsLocked
-                        ? null
-                        : () {
-                            Navigator.of(context).pushNamed(
-                              RoutineScreen.routeName,
-                              arguments: routine.id,
-                            );
-                          },
-                    child: Text(i18n.goToDetailPage),
-                  ),
-                ],
+                DetailContentWidget(days, _showDetail),
+              TextButton(
+                onPressed: detailsLocked
+                    ? null
+                    : () {
+                        Navigator.of(context).pushNamed(
+                          RoutineScreen.routeName,
+                          arguments: routine.id,
+                        );
+                      },
+                child: Text(i18n.goToDetailPage),
               ),
             ],
           ),
         );
+
+        // The workout of today leads, the whole plan follows below it
+        if (today == null || isHydrating || detailsLocked) {
+          return card;
+        }
+        return Column(
+          children: [
+            TodayHero(today),
+            const SizedBox(height: 12),
+            card,
+          ],
+        );
       },
+    );
+  }
+}
+
+/// The workout of today as the loud call-to-action card of the dashboard
+class TodayHero extends StatelessWidget {
+  final DayData dayData;
+
+  const TodayHero(this.dayData, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+    final day = dayData.day!;
+
+    final exercises = dayData.slots.length;
+    final sets = dayData.slots.fold<int>(
+      0,
+      (sum, slot) => sum + slot.setConfigs.fold<int>(0, (s, c) => s + (c.nrOfSets ?? 1).toInt()),
+    );
+    final args = GymModeArguments(day.routineId, day.id!, dayData.iteration);
+
+    return AtlasCard(
+      hero: true,
+      radius: AtlasRadius.dialog,
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionEyebrow(i18n.todaysWorkout, color: atlas.onHero.withValues(alpha: 0.6)),
+          const SizedBox(height: 8),
+          Text(
+            day.nameWithType,
+            style: theme.textTheme.headlineMedium?.copyWith(color: atlas.onHero),
+          ),
+          if (day.description.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              day.description,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: atlas.onHero.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            '$exercises ${i18n.exercises} · $sets ${i18n.sets}',
+            style: theme.textTheme.bodySmall?.copyWith(color: atlas.onHero.withValues(alpha: 0.66)),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  key: const ValueKey('dashboard-start-today'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: atlas.onHero,
+                    foregroundColor: theme.colorScheme.onSurface,
+                    minimumSize: const Size(0, 48),
+                  ),
+                  icon: const Icon(Icons.play_arrow, size: 20),
+                  label: Text(i18n.start),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(GymModeScreen.routeName, arguments: args),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                tooltip: i18n.guidedMode,
+                style: IconButton.styleFrom(
+                  backgroundColor: atlas.onHero.withValues(alpha: 0.1),
+                  foregroundColor: atlas.onHero,
+                  fixedSize: const Size(48, 48),
+                ),
+                icon: const Icon(Icons.timer_outlined),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(GuidedModeScreen.routeName, arguments: args),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -225,7 +305,15 @@ class DetailContentWidget extends StatelessWidget {
                 width: double.infinity,
                 child: Row(
                   children: [
-                    if (dayData.date.isSameDayAs(DateTime.now())) const Icon(Icons.today),
+                    if (dayData.date.isSameDayAs(DateTime.now())) ...[
+                      PillChip(
+                        AppLocalizations.of(context).today,
+                        tone: ChipTone.brand,
+                        height: 22,
+                        fontSize: 11,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     Expanded(
                       child: Text(
                         dayData.day == null || dayData.day!.isRest

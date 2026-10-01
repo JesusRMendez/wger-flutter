@@ -18,22 +18,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
+import 'package:wger/core/widgets/atlas.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/core/widgets/confirm_delete_dialog.dart';
 import 'package:wger/features/coach/models/coach_goal.dart';
-import 'package:wger/features/coach/models/indicators.dart';
-import 'package:wger/features/coach/models/recommendations.dart';
 import 'package:wger/features/coach/providers/coach_providers.dart';
+import 'package:wger/features/coach/screens/data_quality_screen.dart';
+import 'package:wger/features/coach/screens/follow_up_screen.dart';
 import 'package:wger/features/coach/widgets/coach_error_view.dart';
 import 'package:wger/features/coach/widgets/coach_labels.dart';
+import 'package:wger/features/coach/widgets/data_quality_view.dart';
 import 'package:wger/features/coach/widgets/goal_form.dart';
-import 'package:wger/features/measurements/screens/weight_screen.dart';
-import 'package:wger/features/nutrition/screens/nutritional_plans_screen.dart';
-import 'package:wger/features/routines/screens/routine_list_screen.dart';
+import 'package:wger/features/coach/widgets/indicator_tile.dart';
+import 'package:wger/features/coach/widgets/phase_timeline.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 const indicatorWindows = [7, 28, 90];
-
-String _num(num v) => v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 
 class GoalsScreen extends ConsumerStatefulWidget {
   const GoalsScreen({super.key});
@@ -44,27 +45,15 @@ class GoalsScreen extends ConsumerStatefulWidget {
   ConsumerState<GoalsScreen> createState() => _GoalsScreenState();
 }
 
-class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProviderStateMixin {
-  late final _tabs = TabController(length: goalPeriods.length, vsync: this);
+class _GoalsScreenState extends ConsumerState<GoalsScreen> {
+  int _period = 0;
   int _window = 28;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabs.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
-  }
 
   Future<void> _edit(CoachGoal? goal) async {
     final saved = await showGoalDialog(
       context,
       goal: goal,
-      defaultPeriod: goalPeriods[_tabs.index],
+      defaultPeriod: goalPeriods[_period],
     );
     if (saved == null) {
       return;
@@ -94,24 +83,14 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
-    final period = goalPeriods[_tabs.index];
+    final period = goalPeriods[_period];
     final goals = ref.watch(coachGoalsProvider);
     final indicators = ref.watch(coachIndicatorsProvider(_window));
     final recommendations = ref.watch(planRecommendationsProvider);
     final theme = Theme.of(context);
+    final atlas = context.atlas;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.coachGoalsAndIndicators),
-        bottom: TabBar(
-          controller: _tabs,
-          // The app bar uses the primary colour, keep the labels readable on it
-          labelColor: theme.colorScheme.onPrimary,
-          unselectedLabelColor: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
-          indicatorColor: theme.colorScheme.onPrimary,
-          tabs: [for (final p in goalPeriods) Tab(text: i18n.periodLabel(p))],
-        ),
-      ),
       floatingActionButton: FloatingActionButton(
         key: const ValueKey('goal-add'),
         tooltip: i18n.coachAddGoal,
@@ -120,9 +99,32 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
       ),
       body: WidescreenWrapper(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
           children: [
-            Text(i18n.coachGoals, style: theme.textTheme.titleLarge),
+            AtlasHeader(
+              title: i18n.coachGoalsAndIndicators,
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+              actions: [
+                RoundIconButton(
+                  icon: Icons.insights,
+                  tooltip: i18n.coachFollowUp,
+                  onPressed: () => Navigator.of(context).pushNamed(FollowUpScreen.routeName),
+                ),
+              ],
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<int>(
+                showSelectedIcon: false,
+                segments: [
+                  for (var i = 0; i < goalPeriods.length; i++)
+                    ButtonSegment(value: i, label: Text(i18n.periodLabel(goalPeriods[i]))),
+                ],
+                selected: {_period},
+                onSelectionChanged: (s) => setState(() => _period = s.first),
+              ),
+            ),
+            const SizedBox(height: 16),
             goals.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(16),
@@ -131,14 +133,31 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
               error: (e, _) => CoachErrorView(e, onRetry: () => ref.invalidate(coachGoalsProvider)),
               data: (all) {
                 final list = all.where((g) => g.period == period).toList();
-                if (list.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Text(i18n.coachNoGoals),
-                  );
-                }
+                final finalGoal = all
+                    .where((g) => g.period == 'plan' && g.status == 'active')
+                    .firstOrNull;
                 return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (finalGoal != null) _FinalGoalCard(finalGoal),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(i18n.coachGoals, style: theme.textTheme.titleLarge),
+                          Text(
+                            i18n.periodLabel(period),
+                            style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink3),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (list.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(i18n.coachNoGoals),
+                      ),
                     for (final g in list)
                       _GoalCard(
                         g,
@@ -154,7 +173,10 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
               },
             ),
             const SizedBox(height: 24),
-            Text(i18n.coachIndicators, style: theme.textTheme.titleLarge),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(i18n.coachIndicators, style: theme.textTheme.titleLarge),
+            ),
             const SizedBox(height: 8),
             SegmentedButton<int>(
               key: const ValueKey('indicator-window'),
@@ -162,6 +184,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
                 for (final w in indicatorWindows)
                   ButtonSegment(value: w, label: Text(i18n.coachWindowDays(w))),
               ],
+              showSelectedIcon: false,
               selected: {_window},
               onSelectionChanged: (s) => setState(() => _window = s.first),
             ),
@@ -183,13 +206,34 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(i18n.coachNoIndicators),
                     ),
-                  for (final i in data.indicators) _IndicatorTile(i),
-                  if (data.dataQuality != null) _DataQualityCard(data.dataQuality!),
+                  for (final i in data.indicators) IndicatorTile(i),
+                  if (data.dataQuality != null) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(i18n.coachDataTitle, style: theme.textTheme.titleLarge),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(context).pushNamed(DataQualityScreen.routeName),
+                          child: Text(i18n.coachDataSeeAll),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    DataQualityView(data.dataQuality!, limit: 2),
+                  ],
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            Text(i18n.coachPlanPhase, style: theme.textTheme.titleLarge),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(i18n.coachPlanPhase, style: theme.textTheme.titleLarge),
+            ),
             const SizedBox(height: 8),
             recommendations.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -197,10 +241,91 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> with SingleTickerProv
                 e,
                 onRetry: () => ref.invalidate(planRecommendationsProvider),
               ),
-              data: (r) => _PlanPhaseSection(r),
+              data: (r) => PhaseTimeline(r),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// How a goal is doing: achieved, or active ahead of (on track) or behind
+/// (watch) the share of its period that has gone by.
+enum GoalHealth { achieved, onTrack, watch, missed, paused }
+
+GoalHealth goalHealth(CoachGoal g) {
+  switch (g.status) {
+    case 'achieved' || 'done' || 'completed':
+      return GoalHealth.achieved;
+    case 'missed':
+      return GoalHealth.missed;
+    case 'paused':
+      return GoalHealth.paused;
+  }
+  final pct = (g.progressPct ?? 0).toDouble();
+  final start = DateTime.tryParse(g.startDate ?? '');
+  final end = DateTime.tryParse(g.endDate ?? '');
+  if (start != null && end != null && end.isAfter(start)) {
+    final elapsed = (DateTime.now().difference(start).inHours / end.difference(start).inHours)
+        .clamp(0.0, 1.0);
+    return pct >= elapsed * 100 * 0.8 ? GoalHealth.onTrack : GoalHealth.watch;
+  }
+  return pct >= 40 ? GoalHealth.onTrack : GoalHealth.watch;
+}
+
+class _FinalGoalCard extends StatelessWidget {
+  final CoachGoal goal;
+
+  const _FinalGoalCard(this.goal);
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+    final pct = (goal.progressPct ?? 0).round();
+
+    return AtlasCard(
+      hero: true,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SectionEyebrow(i18n.coachFinalGoal, color: atlas.onHero.withValues(alpha: 0.65)),
+              MonoText(i18n.coachGoalPercent(pct), size: 14, color: atlas.onHero),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(goal.title, style: theme.textTheme.headlineMedium?.copyWith(color: atlas.onHero)),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AtlasRadius.pill),
+            child: LinearProgressIndicator(
+              value: goal.progressFraction,
+              minHeight: 8,
+              color: atlas.onHero,
+              backgroundColor: atlas.onHero.withValues(alpha: 0.2),
+            ),
+          ),
+          if (goal.targetValue != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              i18n.coachGoalValues(
+                goal.currentValue == null ? '-' : formatNum(goal.currentValue!),
+                formatNum(goal.targetValue!),
+                goal.unit,
+              ),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: atlas.onHero.withValues(alpha: 0.75),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -217,228 +342,79 @@ class _GoalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final atlas = context.atlas;
     final pct = (goal.progressPct ?? 0).round();
+    final health = goalHealth(goal);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(child: Text(goal.title, style: theme.textTheme.titleMedium)),
-                Chip(label: Text(i18n.statusLabel(goal.status))),
-                IconButton(
-                  tooltip: i18n.edit,
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: onEdit,
-                ),
-                IconButton(
-                  tooltip: i18n.delete,
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: onDelete,
-                ),
-              ],
-            ),
-            Text(i18n.kindLabel(goal.kind), style: theme.textTheme.bodySmall),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Row(
-                children: [
-                  Expanded(child: LinearProgressIndicator(value: goal.progressFraction)),
-                  const SizedBox(width: 8),
-                  Text(i18n.coachGoalPercent(pct)),
-                ],
-              ),
-            ),
-            if (goal.targetValue != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  i18n.coachGoalValues(
-                    goal.currentValue == null ? '-' : _num(goal.currentValue!),
-                    _num(goal.targetValue!),
-                    goal.unit,
-                  ),
-                  style: theme.textTheme.bodySmall,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _IndicatorTile extends StatelessWidget {
-  final Indicator indicator;
-
-  const _IndicatorTile(this.indicator);
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-
-    final trend = switch (indicator.trend) {
-      'up' => Icon(Icons.trending_up, color: scheme.primary, semanticLabel: 'up'),
-      'down' => Icon(Icons.trending_down, color: scheme.error, semanticLabel: 'down'),
-      'flat' => Icon(Icons.trending_flat, color: scheme.outline, semanticLabel: 'flat'),
-      _ => null,
-    };
-    final unit = indicator.unit.isEmpty ? '' : ' ${indicator.unit}';
-
-    return Card(
-      child: ListTile(
-        title: Text(i18n.indicatorLabel(indicator.key, fallback: indicator.label)),
-        subtitle: indicator.target == null
-            ? null
-            : Text(i18n.coachIndicatorTarget('${_num(indicator.target!)}$unit')),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${_num(indicator.value)}$unit', style: Theme.of(context).textTheme.titleMedium),
-            if (trend != null) ...[const SizedBox(width: 8), trend],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DataQualityCard extends StatelessWidget {
-  final DataQuality quality;
-
-  const _DataQualityCard(this.quality);
-
-  void _open(BuildContext context, String? action) {
-    final route = switch (action) {
-      'log_weight' => WeightScreen.routeName,
-      'log_nutrition' => NutritionalPlansScreen.routeName,
-      'log_rir' => RoutineListScreen.routeName,
-      _ => null,
-    };
-    if (route != null) {
-      Navigator.of(context).pushNamed(route);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-
-    String? actionLabel(String? a) => switch (a) {
-      'log_weight' => i18n.coachActionLogWeight,
-      'log_nutrition' => i18n.coachActionLogNutrition,
-      'log_rir' => i18n.coachActionLogRir,
-      _ => null,
+    final (label, tone, color) = switch (health) {
+      GoalHealth.achieved => (i18n.coachStatusAchieved, ChipTone.ok, atlas.ok),
+      GoalHealth.onTrack => (i18n.coachGoalOnTrack, ChipTone.ok, atlas.ok),
+      GoalHealth.watch => (i18n.coachGoalWatch, ChipTone.warn, atlas.warn),
+      GoalHealth.missed => (i18n.coachStatusMissed, ChipTone.accent, atlas.accent),
+      GoalHealth.paused => (i18n.coachStatusPaused, ChipTone.neutral, atlas.ink3),
     };
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(child: Text(i18n.coachDataQuality, style: theme.textTheme.titleMedium)),
-                Text(i18n.coachDataQualityScore(quality.score)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(value: (quality.score / 100).clamp(0.0, 1.0)),
-            const SizedBox(height: 4),
-            Text(i18n.coachDataQualityHelp, style: theme.textTheme.bodySmall),
-            for (final m in quality.missing)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(m.title),
-                subtitle: Text(m.detail),
-                trailing: actionLabel(m.action) == null
-                    ? null
-                    : TextButton(
-                        onPressed: () => _open(context, m.action),
-                        child: Text(actionLabel(m.action)!),
-                      ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PlanPhaseSection extends StatelessWidget {
-  final PlanRecommendations data;
-
-  const _PlanPhaseSection(this.data);
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final current = data.phase?.key;
-
-    Color color(String severity) => switch (severity) {
-      'warning' => theme.colorScheme.errorContainer,
-      'success' => theme.colorScheme.primaryContainer,
-      _ => theme.colorScheme.surfaceContainerHighest,
-    };
-
-    IconData icon(String severity) => switch (severity) {
-      'warning' => Icons.warning_amber,
-      'success' => Icons.check_circle_outline,
-      _ => Icons.info_outline,
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (data.week != null) Text(i18n.coachPlanWeek(data.week!)),
-        const SizedBox(height: 8),
-        Row(
-          key: const ValueKey('phase-timeline'),
-          children: [
-            for (final p in planPhaseOrder)
+    return AtlasCard(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                  decoration: BoxDecoration(
-                    color: p == current
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    i18n.phaseLabel(p),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: p == current
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurfaceVariant,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(goal.title, style: theme.textTheme.titleMedium),
+                    Text(
+                      i18n.kindLabel(goal.kind),
+                      style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
                     ),
-                  ),
+                  ],
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        if (data.recommendations.isEmpty) Text(i18n.coachNoRecommendations),
-        for (final r in data.recommendations)
-          Card(
-            color: color(r.severity),
-            child: ListTile(
-              leading: Icon(icon(r.severity)),
-              title: Text(r.title),
-              subtitle: Text(r.detail),
+              PillChip(label, tone: tone, height: 26),
+              IconButton(
+                tooltip: i18n.edit,
+                icon: const Icon(Icons.edit_outlined, size: 20),
+                onPressed: onEdit,
+              ),
+              IconButton(
+                tooltip: i18n.delete,
+                icon: const Icon(Icons.delete_outline, size: 20),
+                onPressed: onDelete,
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8, top: 4),
+            child: AtlasBar(value: goal.progressFraction, color: color, height: 7),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8, top: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (goal.targetValue != null)
+                  MonoText(
+                    i18n.coachGoalValues(
+                      goal.currentValue == null ? '-' : formatNum(goal.currentValue!),
+                      formatNum(goal.targetValue!),
+                      goal.unit,
+                    ),
+                    size: 12.5,
+                    weight: FontWeight.w500,
+                    color: atlas.ink3,
+                  )
+                else
+                  const SizedBox.shrink(),
+                MonoText(i18n.coachGoalPercent(pct), size: 12.5, color: atlas.ink2),
+              ],
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

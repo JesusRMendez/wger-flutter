@@ -27,6 +27,7 @@ import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/screens/routine_edit_screen.dart';
 import 'package:wger/features/routines/screens/routine_logs_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 enum _RoutineAppBarOptions {
   list,
@@ -48,7 +49,9 @@ class RoutineListAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final isOnline = ref.watch(networkStatusProvider);
 
     return AppBar(
-      title: Text(i18n.routines),
+      toolbarHeight: preferredSize.height,
+      titleSpacing: 16,
+      title: Text(i18n.routines, style: Theme.of(context).textTheme.headlineLarge),
       actions: [
         PopupMenuButton(
           itemBuilder: (context) {
@@ -88,12 +91,13 @@ class RoutineListAppBar extends ConsumerWidget implements PreferredSizeWidget {
             }
           },
         ),
+        const SizedBox(width: 8),
       ],
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(68);
 }
 
 class RoutineDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
@@ -107,8 +111,24 @@ class RoutineDetailAppBar extends ConsumerWidget implements PreferredSizeWidget 
     final provider = ref.read(routinesRiverpodProvider.notifier);
     final isOnline = ref.watch(networkStatusProvider);
 
+    final iterations = routine.iterations;
+    final current = routine.getIteration();
+
     return AppBar(
-      title: Text(routine.name),
+      centerTitle: true,
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(routine.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (current != null && iterations.length > 1)
+            Text(
+              i18n.routinesWeekOf(current, iterations.length),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.atlas.ink3),
+            ),
+        ],
+      ),
       actions: [
         const GlossaryHelpButton(),
         PopupMenuButton(
@@ -152,6 +172,43 @@ class RoutineDetailAppBar extends ConsumerWidget implements PreferredSizeWidget 
           },
         ),
       ],
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+/// App bar of the routine editor: the routine and its size under a centered
+/// title, with the glossary help button.
+class RoutineEditAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final Routine routine;
+
+  const RoutineEditAppBar(this.routine, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return AppBar(
+      centerTitle: true,
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            i18n.editDayTitle(routine.name),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium,
+          ),
+          Text(
+            i18n.daysCount(routine.days.length),
+            style: theme.textTheme.bodySmall?.copyWith(color: context.atlas.ink3),
+          ),
+        ],
+      ),
+      actions: const [GlossaryHelpButton(), SizedBox(width: 8)],
     );
   }
 

@@ -17,10 +17,12 @@
  */
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/coach/models/coach_access.dart';
 import 'package:wger/features/coach/providers/coach_providers.dart';
 import 'package:wger/features/coach/screens/my_ai_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 /// Badge showing which AI backs the coach. When none is available it links to
 /// the My AI settings.
@@ -38,11 +40,13 @@ class CoachModeBadge extends ConsumerWidget {
       CoachMode.none => (i18n.coachModeNone, Icons.block),
     };
 
-    return ActionChip(
+    return PillChip(
+      label,
       key: const ValueKey('coach-mode-badge'),
-      avatar: Icon(icon, size: 18),
-      label: Text(label),
-      onPressed: mode == CoachMode.none
+      icon: icon,
+      tone: mode == CoachMode.none ? ChipTone.warn : ChipTone.ok,
+      height: 30,
+      onTap: mode == CoachMode.none
           ? () => Navigator.of(context).pushNamed(MyAiScreen.routeName)
           : null,
     );
@@ -66,21 +70,21 @@ class CoachUsageCard extends ConsumerWidget {
         ? i18n.coachUsageUnlimited(used)
         : i18n.coachUsageWithLimit(used, usage.limit.toString());
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(i18n.coachUsageTitle, style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 4),
-            Text(text),
-            if (usage.usedFraction != null) ...[
-              const SizedBox(height: 8),
-              LinearProgressIndicator(value: usage.usedFraction),
-            ],
+    return AtlasCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(i18n.coachUsageTitle, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.atlas.ink2),
+          ),
+          if (usage.usedFraction != null) ...[
+            const SizedBox(height: 10),
+            AtlasBar(value: usage.usedFraction!),
           ],
-        ),
+        ],
       ),
     );
   }

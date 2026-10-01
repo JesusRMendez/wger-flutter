@@ -30,7 +30,7 @@ void main() {
   });
 
   testWidgets('the store scene has its cards before the settings arrive', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2424);
+    tester.view.physicalSize = const Size(1080, 4200);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.reset);
 

@@ -21,9 +21,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/consts.dart';
 import 'package:wger/core/form_screen.dart';
 import 'package:wger/core/snackbar.dart';
-import 'package:wger/core/widgets/core.dart';
+import 'package:wger/core/widgets/atlas.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/core/widgets/progress_indicator.dart';
-import 'package:wger/core/widgets/svg_icon.dart';
 import 'package:wger/features/nutrition/models/meal.dart';
 import 'package:wger/features/nutrition/models/meal_item.dart';
 import 'package:wger/features/nutrition/providers/nutrition_notifier.dart';
@@ -31,10 +31,10 @@ import 'package:wger/features/nutrition/screens/log_meal_screen.dart';
 import 'package:wger/features/nutrition/widgets/charts.dart';
 import 'package:wger/features/nutrition/widgets/forms.dart';
 import 'package:wger/features/nutrition/widgets/helpers.dart';
-import 'package:wger/features/nutrition/widgets/nutrition_tile.dart';
 import 'package:wger/features/nutrition/widgets/nutrition_tiles.dart';
 import 'package:wger/features/nutrition/widgets/widgets.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 enum ViewMode {
   base, // just highlevel meal info (name, time)
@@ -88,9 +88,10 @@ class _MealWidgetState extends ConsumerState<MealWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      child: Card(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: AtlasCard(
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -109,29 +110,24 @@ class _MealWidgetState extends ConsumerState<MealWidget> {
               viewMode: _viewMode,
             ),
             if (_viewMode == ViewMode.withAllDetails)
-              Column(
-                children: [
-                  const Divider(),
-                  Center(
-                    child: Text(
-                      AppLocalizations.of(context).loggedToday,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                  if (widget._meal.plannedNutritionalValues.energy != 0)
-                    MealDiaryBarChartWidget(
-                      planned: widget._meal.plannedNutritionalValues,
-                      logged: widget._meal.loggedNutritionalValuesToday,
-                    ),
-                  ...widget._meal.diaryEntriesToday.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [DiaryEntryTile(diaryEntry: item)],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Divider(height: 1, color: context.atlas.line),
+                    const SizedBox(height: 12),
+                    SectionEyebrow(AppLocalizations.of(context).loggedToday),
+                    if (widget._meal.plannedNutritionalValues.energy != 0)
+                      MealDiaryBarChartWidget(
+                        planned: widget._meal.plannedNutritionalValues,
+                        logged: widget._meal.loggedNutritionalValuesToday,
                       ),
+                    ...widget._meal.diaryEntriesToday.map(
+                      (item) => DiaryEntryTile(diaryEntry: item),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
           ],
         ),
@@ -140,18 +136,25 @@ class _MealWidgetState extends ConsumerState<MealWidget> {
   }
 }
 
-/// An editable NutritionTile showing the avatar, name, nutritional values
+/// A row of a meal: name, "amount · kcal" in mono and a check button that logs
+/// the item to the diary (and takes the entry back out when pressed again).
+/// While [_editing] the check is replaced by a delete button.
 class MealItemEditableFullTile extends ConsumerWidget {
   final bool _editing;
   final ViewMode _viewMode;
   final MealItem _item;
 
-  const MealItemEditableFullTile(this._item, this._viewMode, this._editing);
+  /// Set to show the check button: the meal the item belongs to
+  final Meal? meal;
+
+  const MealItemEditableFullTile(this._item, this._viewMode, this._editing, {this.meal});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final values = _item.nutritionalValues;
     final i18n = AppLocalizations.of(context);
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
 
     final String amountText = _item.weightUnitObj != null
         ? '${_item.amount.toStringAsFixed(0)} × ${_item.weightUnitObj!.name}'
@@ -160,32 +163,97 @@ class MealItemEditableFullTile extends ConsumerWidget {
     // ingredient is null briefly between local insert and PowerSync
     // downloading the row, show a placeholder rather than crashing.
     final ingredient = _item.ingredient;
-    return NutritionTile(
-      leading: ingredient != null
-          ? IngredientAvatar(ingredient: ingredient)
-          : const CircleIconAvatar(Icon(Icons.hourglass_empty, color: Colors.grey)),
-      title: Text(
-        '$amountText ${ingredient?.name ?? '…'}',
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.left,
-      ),
-      subtitle: (_viewMode != ViewMode.withAllDetails && !_editing)
-          ? null
-          : getNutritionRow(context, muted(getNutritionalValues(values, context))),
-      trailing: _editing
-          ? IconButton(
-              icon: const Icon(Icons.delete, size: ICON_SIZE_SMALL),
-              tooltip: i18n.delete,
-              iconSize: ICON_SIZE_SMALL,
-              onPressed: () {
-                // Delete the meal item, goes through PowerSync, so offline is fine.
-                ref.read(nutritionProvider.notifier).deleteMealItem(_item);
 
-                // and inform the user
-                showSnackbar(context, i18n.successfullyDeleted, center: true);
-              },
-            )
-          : null,
+    final logged = meal?.loggedEntryFor(_item);
+
+    Widget? trailing;
+    if (_editing) {
+      trailing = IconButton(
+        icon: const Icon(Icons.delete_outline, size: ICON_SIZE_SMALL),
+        tooltip: i18n.delete,
+        iconSize: ICON_SIZE_SMALL,
+        onPressed: () {
+          // Delete the meal item, goes through PowerSync, so offline is fine.
+          ref.read(nutritionProvider.notifier).deleteMealItem(_item);
+
+          // and inform the user
+          showSnackbar(context, i18n.successfullyDeleted, center: true);
+        },
+      );
+    } else if (meal != null) {
+      trailing = CheckCircle(
+        checked: logged != null,
+        semanticLabel: i18n.logMeal,
+        onTap: () {
+          final notifier = ref.read(nutritionProvider.notifier);
+          if (logged != null) {
+            notifier.deleteLog(logged.id!);
+          } else {
+            notifier.logIngredientToDiary(_item, meal!.planId, DateTime.now(), meal!.id);
+          }
+        },
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: Row(
+        children: [
+          if (_viewMode == ViewMode.withAllDetails && ingredient != null) ...[
+            IngredientAvatar(ingredient: ingredient),
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ingredient?.name ?? '…',
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                MonoText(
+                  '$amountText · ${i18n.kcalValue(values.energy.toStringAsFixed(0))}',
+                  size: 12.5,
+                  weight: FontWeight.w500,
+                  color: atlas.ink3,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (_viewMode != ViewMode.base)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Wrap(
+                      spacing: 10,
+                      children: [
+                        _macro('P', values.protein, atlas.protein),
+                        _macro('C', values.carbohydrates, atlas.carbs),
+                        _macro('F', values.fat, atlas.fat),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          ?trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget _macro(String letter, double grams, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        MonoText('$letter ${grams.toStringAsFixed(0)}', size: 11.5, weight: FontWeight.w500),
+      ],
     );
   }
 }
@@ -215,66 +283,71 @@ class MealHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitleTime = _meal.time != null ? '${_meal.time!.format(context)} / ' : '';
+    final i18n = AppLocalizations.of(context);
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    final subtitleTime = _meal.time != null ? '${_meal.time!.format(context)} · ' : '';
     final subtitleCalories = _meal.isRealMeal
         ? getKcalConsumedVsPlanned(_meal, context)
         : getKcalConsumed(_meal, context);
-    final subtitle = '$subtitleTime $subtitleCalories';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          title: Text(
-            _meal.name,
-            style: Theme.of(context).textTheme.titleLarge,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            subtitle,
-            style: Theme.of(context).textTheme.titleSmall,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: switch (_viewMode) {
-                  ViewMode.base => const Icon(Icons.info_outline),
-                  ViewMode.withIngredients => const Icon(Icons.info),
-                  ViewMode.withAllDetails => const Icon(Icons.info),
-                },
-                onPressed: () {
-                  _toggleViewMode();
-                },
-                tooltip: AppLocalizations.of(context).toggleDetails,
-              ),
-              if (_meal.isRealMeal && !readOnly) const SizedBox(width: 5),
-              if (_meal.isRealMeal && !readOnly)
-                IconButton(
-                  icon: _editing ? const Icon(Icons.done) : const Icon(Icons.edit),
-                  tooltip: _editing
-                      ? AppLocalizations.of(context).done
-                      : AppLocalizations.of(context).edit,
-                  onPressed: () {
-                    _toggleEditing();
-                  },
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _meal.name,
+                  style: theme.textTheme.titleMedium,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              if (_meal.isRealMeal) const SizedBox(width: 5),
-              if (_meal.isRealMeal) const SvgIcon('assets/icons/meal-diary.svg'),
-            ],
+                const SizedBox(height: 2),
+                MonoText(
+                  '$subtitleTime$subtitleCalories',
+                  size: 13,
+                  weight: FontWeight.w500,
+                  color: atlas.ink3,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-          onTap: _meal.isRealMeal
-              ? () {
+          IconButton(
+            icon: Icon(
+              _viewMode == ViewMode.base ? Icons.info_outline : Icons.info,
+              size: 20,
+              color: atlas.ink3,
+            ),
+            onPressed: _toggleViewMode,
+            tooltip: i18n.toggleDetails,
+          ),
+          if (_meal.isRealMeal && !readOnly)
+            IconButton(
+              icon: Icon(_editing ? Icons.done : Icons.edit, size: 20, color: atlas.ink3),
+              tooltip: _editing ? i18n.done : i18n.edit,
+              onPressed: _toggleEditing,
+            ),
+          if (_meal.isRealMeal)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, right: 8),
+              child: RoundIconButton(
+                icon: Icons.add,
+                size: 38,
+                tooltip: i18n.logMeal,
+                onPressed: () {
                   Navigator.of(context).pushNamed(
                     LogMealScreen.routeName,
                     arguments: LogMealArguments(_meal, popTwice),
                   );
-                }
-              : null,
-        ),
-      ],
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -290,58 +363,36 @@ class MealIngredientsSection extends ConsumerWidget {
   final bool editing;
   final ViewMode viewMode;
 
-  bool showIngredientsDetails(ViewMode viewMode) {
-    return viewMode == ViewMode.withIngredients || viewMode == ViewMode.withAllDetails;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final atlas = context.atlas;
+    if (!meal.isRealMeal) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       children: [
         if (editing)
           MealEditingToolbar(
             meal: meal,
           ),
-        if (showIngredientsDetails(viewMode)) ...[
-          const Divider(),
-          const DiaryheaderTile(),
-          _buildIngredientList(context),
-          const Divider(),
-          _buildTotalRow(context),
-        ],
+        if (meal.mealItems.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                AppLocalizations.of(context).noIngredientsDefined,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: atlas.ink3),
+              ),
+            ),
+          )
+        else
+          for (final item in meal.mealItems) ...[
+            Divider(height: 1, indent: 16, endIndent: 16, color: atlas.line),
+            MealItemEditableFullTile(item, viewMode, editing, meal: meal),
+          ],
       ],
-    );
-  }
-
-  Widget _buildIngredientList(BuildContext context) {
-    if (meal.mealItems.isEmpty && meal.isRealMeal) {
-      return NutritionTile(
-        title: Text(
-          AppLocalizations.of(context).noIngredientsDefined,
-          textAlign: TextAlign.left,
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        ...meal.mealItems.map(
-          (item) => MealItemEditableFullTile(item, viewMode, editing),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTotalRow(BuildContext context) {
-    final i18n = AppLocalizations.of(context);
-
-    return NutritionTile(
-      vPadding: 0,
-      leading: Text(i18n.total),
-      title: getNutritionRow(
-        context,
-        muted(getNutritionalValues(meal.plannedNutritionalValues, context)),
-      ),
     );
   }
 }

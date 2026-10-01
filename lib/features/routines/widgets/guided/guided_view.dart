@@ -22,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/i18n.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/exercises/widgets/images.dart';
 import 'package:wger/features/glossary/widgets/glossary_widgets.dart';
 import 'package:wger/features/routines/logic/guided_engine.dart';
@@ -31,6 +32,7 @@ import 'package:wger/features/routines/widgets/gym_mode/countdown_alert.dart';
 import 'package:wger/features/routines/widgets/gym_mode/next_exercise_preview.dart';
 import 'package:wger/features/routines/widgets/music_bpm_card.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 String formatGuidedTime(int seconds) {
   final m = seconds ~/ 60;
@@ -63,20 +65,46 @@ class GuidedRoutineView extends ConsumerStatefulWidget {
   /// Called when the user leaves with the close button
   final VoidCallback? onClose;
 
-  const GuidedRoutineView(this.steps, {super.key, this.onClose});
+  /// Name of the day, shown on the setup page
+  final String? title;
+
+  /// Starts with the setup page (the exercises, work and rest adjustments and
+  /// the estimated time). Off, the routine starts right away.
+  final bool showSetup;
+
+  const GuidedRoutineView(this.steps, {super.key, this.onClose, this.title, this.showSetup = true});
 
   @override
   ConsumerState<GuidedRoutineView> createState() => _GuidedRoutineViewState();
 }
 
 class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
-  late final GuidedEngine _engine = GuidedEngine(widget.steps);
+  late GuidedEngine _engine = GuidedEngine(widget.steps);
   Timer? _timer;
   final _repsController = TextEditingController();
+
+  late bool _started = !widget.showSetup;
+  int _workDelta = 0;
+  int _restDelta = 0;
 
   @override
   void initState() {
     super.initState();
+    if (_started) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+    }
+  }
+
+  List<GuidedStep> get _adjustedSteps => [
+    for (final s in widget.steps) s.adjusted(work: _workDelta, rest: _restDelta),
+  ];
+
+  void _start() {
+    setState(() {
+      _engine = GuidedEngine(_adjustedSteps);
+      _started = true;
+    });
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
   }
 
@@ -192,27 +220,57 @@ class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
     final step = _engine.currentStep;
     final phase = _engine.phase;
 
-    final header = Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: widget.onClose ?? () => Navigator.of(context).maybePop(),
-        ),
-        Expanded(
-          child: Text(
-            i18n.guidedMode,
-            style: theme.textTheme.headlineSmall,
-            textAlign: TextAlign.center,
+    final atlas = context.atlas;
+
+    if (!_started) {
+      return _GuidedSetup(
+        steps: widget.steps,
+        title: widget.title,
+        workDelta: _workDelta,
+        restDelta: _restDelta,
+        nameOf: _name,
+        summaryOf: _summary,
+        onWork: (v) => setState(() => _workDelta = v),
+        onRest: (v) => setState(() => _restDelta = v),
+        onStart: _start,
+        onClose: widget.onClose,
+      );
+    }
+
+    final circle = IconButton.styleFrom(
+      backgroundColor: atlas.card,
+      side: BorderSide(color: atlas.line),
+      fixedSize: const Size(40, 40),
+      minimumSize: const Size(40, 40),
+      padding: EdgeInsets.zero,
+    );
+    final header = Padding(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+      child: Row(
+        children: [
+          IconButton(
+            style: circle,
+            icon: const Icon(Icons.close, size: 20),
+            onPressed: widget.onClose ?? () => Navigator.of(context).maybePop(),
           ),
-        ),
-        const GlossaryHelpButton(),
-        IconButton(
-          key: const ValueKey('guided-overview-button'),
-          icon: const Icon(Icons.menu),
-          tooltip: i18n.jumpTo,
-          onPressed: _openOverview,
-        ),
-      ],
+          Expanded(
+            child: Text(
+              i18n.guidedMode,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const GlossaryHelpButton(),
+          const SizedBox(width: 6),
+          IconButton(
+            style: circle,
+            key: const ValueKey('guided-overview-button'),
+            icon: const Icon(Icons.menu, size: 20),
+            tooltip: i18n.jumpTo,
+            onPressed: _openOverview,
+          ),
+        ],
+      ),
     );
 
     if (phase == GuidedPhase.done || step == null) {
@@ -234,56 +292,177 @@ class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
     };
 
     final shown = phase == GuidedPhase.rest ? _engine.nextStep ?? step : step;
+    final steps = _engine.steps;
+    final left = (estimateGuidedSeconds(steps) - _engine.elapsedSeconds).clamp(0, 1 << 30);
+
+    final ringColor = switch (phase) {
+      GuidedPhase.rest => atlas.ok,
+      GuidedPhase.countdown => atlas.warn,
+      _ => theme.colorScheme.primary,
+    };
+    final phaseChip = PillChip(
+      phaseLabel,
+      key: const ValueKey('guided-phase-chip'),
+      tone: switch (phase) {
+        GuidedPhase.rest => ChipTone.ok,
+        GuidedPhase.countdown => ChipTone.warn,
+        _ => ChipTone.brand,
+      },
+      height: 32,
+      fontSize: 13,
+    );
+
+    // The ring: the time left of a timed phase, otherwise the set within the
+    // sets of the exercise, so a reps set has a progress visual as well
+    Widget ring() {
+      if (timed) {
+        return ProgressRing(
+          size: 232,
+          strokeWidth: 14,
+          value: _engine.phaseTotalSeconds == 0
+              ? 0
+              : _engine.remainingSeconds! / _engine.phaseTotalSeconds,
+          color: ringColor,
+          duration: const Duration(milliseconds: 240),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MonoText(
+                formatGuidedTime(_engine.remainingSeconds!),
+                key: const ValueKey('guided-time'),
+                size: 56,
+                color: theme.colorScheme.onSurface,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                phaseLabel,
+                key: const ValueKey('guided-phase'),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: ringColor,
+                  letterSpacing: 0.9,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+      return ProgressRing(
+        key: const ValueKey('guided-reps-ring'),
+        size: 232,
+        strokeWidth: 14,
+        value: step.totalRounds == 0 ? 0 : step.round / step.totalRounds,
+        color: ringColor,
+        duration: const Duration(milliseconds: 240),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MonoText(
+              _summary(step),
+              size: 30,
+              textAlign: TextAlign.center,
+              color: theme.colorScheme.onSurface,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              phaseLabel,
+              key: const ValueKey('guided-phase'),
+              style: theme.textTheme.labelMedium?.copyWith(color: ringColor, letterSpacing: 0.9),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Column(
       children: [
         header,
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: Row(
+            key: const ValueKey('guided-segments'),
+            spacing: 4,
             children: [
-              LinearProgressIndicator(
-                value: widget.steps.isEmpty ? 0 : _engine.completedCount / widget.steps.length,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                phaseLabel,
-                key: const ValueKey('guided-phase'),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.primary),
-              ),
-              if (timed)
-                Text(
-                  formatGuidedTime(_engine.remainingSeconds!),
-                  key: const ValueKey('guided-time'),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.displayLarge?.copyWith(color: theme.colorScheme.primary),
-                ),
-              const SizedBox(height: 8),
-              if (phase != GuidedPhase.rest) ...[
-                Center(
-                  child: SizedBox(
-                    width: 120,
-                    height: 120,
-                    child: ExerciseImageWidget(image: step.exercise.getMainImage, height: 120),
+              for (final (i, s) in steps.indexed)
+                Expanded(
+                  child: AnimatedContainer(
+                    duration: AtlasMotion.of(context),
+                    curve: AtlasMotion.curve,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AtlasRadius.pill),
+                      color: _engine.isCompleted(s)
+                          ? atlas.ok
+                          : i == _engine.stepIndex
+                          ? theme.colorScheme.primary
+                          : atlas.surface3,
+                    ),
                   ),
                 ),
-                Text(
-                  _name(step),
-                  key: const ValueKey('guided-exercise'),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall,
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(
+            children: [
+              SectionEyebrow(i18n.guidedProgressLine(_engine.stepIndex + 1, steps.length)),
+              const Spacer(),
+              MonoText(
+                '${formatGuidedTime(_engine.elapsedSeconds)} · ${i18n.guidedTimeLeft('≈ ${formatGuidedTime(left)}')}',
+                key: const ValueKey('guided-elapsed'),
+                size: 12,
+                weight: FontWeight.w500,
+                color: atlas.ink3,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            children: [
+              if (phase != GuidedPhase.rest) ...[
+                Row(
+                  spacing: 8,
+                  children: [
+                    phaseChip,
+                    PillChip(
+                      i18n.guidedSetOf(step.round, step.totalRounds),
+                      key: const ValueKey('guided-round'),
+                      height: 32,
+                      fontSize: 13,
+                    ),
+                  ],
                 ),
-                Text(
-                  _summary(step),
-                  key: const ValueKey('guided-summary'),
-                  textAlign: TextAlign.center,
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _name(step),
+                        key: const ValueKey('guided-exercise'),
+                        style: theme.textTheme.headlineMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: SizedBox(
+                        width: 56,
+                        height: 56,
+                        child: ExerciseImageWidget(image: step.exercise.getMainImage, height: 56),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  i18n.guidedSetOf(step.round, step.totalRounds),
-                  key: const ValueKey('guided-round'),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall,
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    _summary(step),
+                    key: const ValueKey('guided-summary'),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink2),
+                  ),
                 ),
               ] else
                 _NextIntro(
@@ -293,7 +472,9 @@ class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
                   summary: _summary(shown),
                   isLast: _engine.nextStep == null,
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
+              Center(child: ring()),
+              const SizedBox(height: 20),
               if (phase == GuidedPhase.askReps)
                 Row(
                   children: [
@@ -321,32 +502,308 @@ class _GuidedRoutineViewState extends ConsumerState<GuidedRoutineView> {
                   ],
                 ),
               if (phase == GuidedPhase.work)
-                FilledButton(
-                  key: const ValueKey('guided-done-button'),
-                  onPressed: () => setState(_engine.done),
-                  child: Text(i18n.done),
+                SizedBox(
+                  height: 56,
+                  child: FilledButton.icon(
+                    key: const ValueKey('guided-done-button'),
+                    icon: const Icon(Icons.check),
+                    style: FilledButton.styleFrom(
+                      textStyle: theme.textTheme.titleMedium,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    ),
+                    onPressed: () => setState(_engine.done),
+                    label: Text(i18n.done),
+                  ),
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 24,
                 children: [
-                  OutlinedButton.icon(
+                  IconButton(
+                    key: const ValueKey('guided-previous-button'),
+                    style: circle.copyWith(fixedSize: const WidgetStatePropertyAll(Size(52, 52))),
+                    icon: const Icon(Icons.chevron_left),
+                    tooltip: i18n.guidedPrevious,
+                    onPressed: _engine.stepIndex > 0 ? () => _jump(_engine.stepIndex - 1) : null,
+                  ),
+                  IconButton(
                     key: const ValueKey('guided-pause-button'),
+                    style: IconButton.styleFrom(
+                      backgroundColor: theme.colorScheme.onSurface,
+                      foregroundColor: theme.colorScheme.surface,
+                      fixedSize: const Size(72, 72),
+                      minimumSize: const Size(72, 72),
+                    ),
+                    iconSize: 32,
                     icon: Icon(_engine.isPaused ? Icons.play_arrow : Icons.pause),
-                    label: Text(_engine.isPaused ? i18n.guidedResume : i18n.pause),
+                    tooltip: _engine.isPaused ? i18n.guidedResume : i18n.pause,
                     onPressed: () => setState(_engine.isPaused ? _engine.resume : _engine.pause),
                   ),
-                  const SizedBox(width: 12),
-                  OutlinedButton.icon(
+                  IconButton(
                     key: const ValueKey('guided-skip-button'),
-                    icon: const Icon(Icons.skip_next),
-                    label: Text(i18n.guidedSkip),
+                    style: circle.copyWith(fixedSize: const WidgetStatePropertyAll(Size(52, 52))),
+                    icon: const Icon(Icons.chevron_right),
+                    tooltip: i18n.guidedSkip,
                     onPressed: () => setState(_engine.skip),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               MusicBpmCard(initialPhase: _musicPhase),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The page before the routine runs: the exercises of the day, how much time
+/// to add to the work and the rests, the estimated time and the start button.
+class _GuidedSetup extends StatelessWidget {
+  final List<GuidedStep> steps;
+  final String? title;
+  final int workDelta;
+  final int restDelta;
+  final String Function(GuidedStep) nameOf;
+  final String Function(GuidedStep) summaryOf;
+  final ValueChanged<int> onWork;
+  final ValueChanged<int> onRest;
+  final VoidCallback onStart;
+  final VoidCallback? onClose;
+
+  const _GuidedSetup({
+    required this.steps,
+    required this.title,
+    required this.workDelta,
+    required this.restDelta,
+    required this.nameOf,
+    required this.summaryOf,
+    required this.onWork,
+    required this.onRest,
+    required this.onStart,
+    required this.onClose,
+  });
+
+  static const _step = 5;
+
+  String _delta(BuildContext context, int v) =>
+      AppLocalizations.of(context).guidedSeconds('${v >= 0 ? '+' : '-'}${v.abs()}');
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+    final circle = IconButton.styleFrom(
+      backgroundColor: atlas.card,
+      side: BorderSide(color: atlas.line),
+      fixedSize: const Size(40, 40),
+      minimumSize: const Size(40, 40),
+      padding: EdgeInsets.zero,
+    );
+
+    // One row per exercise: the first set stands for all of its sets
+    final slots = <int, List<GuidedStep>>{};
+    for (final s in steps) {
+      slots.putIfAbsent(s.slotIndex, () => []).add(s);
+    }
+    final adjusted = [for (final s in steps) s.adjusted(work: workDelta, rest: restDelta)];
+    final estimate = estimateGuidedSeconds(adjusted);
+
+    Widget adjustRow(
+      String label,
+      String hint,
+      int value,
+      ValueChanged<int> onChanged,
+      String id,
+    ) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: theme.textTheme.bodyLarge),
+                  Text(hint, style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3)),
+                ],
+              ),
+            ),
+            StepButton(
+              key: ValueKey('$id-minus'),
+              icon: Icons.remove,
+              size: 40,
+              onPressed: value > -30 ? () => onChanged(value - _step) : null,
+            ),
+            SizedBox(
+              width: 64,
+              child: MonoText(
+                _delta(context, value),
+                key: ValueKey(id),
+                size: 16,
+                textAlign: TextAlign.center,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            StepButton(
+              key: ValueKey('$id-plus'),
+              icon: Icons.add,
+              size: 40,
+              onPressed: value < 60 ? () => onChanged(value + _step) : null,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+          child: Row(
+            children: [
+              IconButton(
+                style: circle,
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: onClose ?? () => Navigator.of(context).maybePop(),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(i18n.guidedMode, style: theme.textTheme.titleMedium),
+                    Text(
+                      i18n.guidedSetupSubtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                    ),
+                  ],
+                ),
+              ),
+              const GlossaryHelpButton(),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            key: const ValueKey('guided-setup'),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            children: [
+              AtlasCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (title != null && title!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(title!, style: theme.textTheme.titleLarge),
+                      ),
+                    for (final (i, e) in slots.entries.indexed)
+                      Container(
+                        key: ValueKey('guided-setup-row-$i'),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border(top: BorderSide(color: atlas.line)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: atlas.surface3,
+                                shape: BoxShape.circle,
+                              ),
+                              child: MonoText('${i + 1}', size: 13),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(nameOf(e.value.first), style: theme.textTheme.bodyLarge),
+                                  Text(
+                                    '${i18n.guidedSetsLine(e.value.length)} · ${summaryOf(e.value.first)}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: atlas.ink3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            MonoText(
+                              i18n.guidedRestShort(
+                                formatGuidedTime(
+                                  e.value.first.adjusted(rest: restDelta).restSeconds,
+                                ),
+                              ),
+                              size: 12.5,
+                              weight: FontWeight.w500,
+                              color: atlas.ink3,
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              AtlasCard(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Column(
+                  children: [
+                    adjustRow(
+                      i18n.guidedAdjustWork,
+                      i18n.guidedAdjustWorkHint,
+                      workDelta,
+                      onWork,
+                      'guided-work-delta',
+                    ),
+                    Divider(height: 1, color: atlas.line),
+                    adjustRow(
+                      i18n.guidedAdjustRest,
+                      i18n.guidedAdjustRestHint,
+                      restDelta,
+                      onRest,
+                      'guided-rest-delta',
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 16, 4, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        i18n.guidedEstimatedDuration,
+                        style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink3),
+                      ),
+                    ),
+                    MonoText(
+                      formatGuidedTime(estimate),
+                      key: const ValueKey('guided-estimate'),
+                      size: 32,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 56,
+                child: FilledButton.icon(
+                  key: const ValueKey('guided-start-button'),
+                  icon: const Icon(Icons.play_arrow),
+                  style: FilledButton.styleFrom(
+                    textStyle: theme.textTheme.titleMedium,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  ),
+                  onPressed: steps.isEmpty ? null : onStart,
+                  label: Text(i18n.guidedStart),
+                ),
+              ),
             ],
           ),
         ),
@@ -424,27 +881,68 @@ class _DoneSummary extends StatelessWidget {
         if (engine.repsFor(s) != null) s,
     ];
 
+    final atlas = context.atlas;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Icon(Icons.check_circle_outline, size: 64),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(color: atlas.ok, shape: BoxShape.circle),
+            child: Icon(Icons.check, size: 44, color: theme.colorScheme.surface),
+          ),
+        ),
+        const SizedBox(height: 18),
         Text(
           i18n.guidedDone,
           key: const ValueKey('guided-finished'),
           textAlign: TextAlign.center,
-          style: theme.textTheme.headlineMedium,
+          style: theme.textTheme.headlineLarge,
         ),
         const SizedBox(height: 8),
         Text(
           i18n.guidedSummary(engine.completedCount, formatGuidedTime(engine.elapsedSeconds)),
           textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink3),
         ),
-        for (final s in withReps)
-          ListTile(
-            dense: true,
-            title: Text(nameOf(s)),
-            trailing: Text('${engine.repsFor(s)} ${i18n.reps}'),
+        const SizedBox(height: 20),
+        Row(
+          spacing: 12,
+          children: [
+            Expanded(
+              child: StatTile(
+                label: i18n.duration,
+                value: formatGuidedTime(engine.elapsedSeconds),
+                valueSize: 30,
+              ),
+            ),
+            Expanded(
+              child: StatTile(
+                label: i18n.sets,
+                value: '${engine.completedCount}/${engine.steps.length}',
+                valueSize: 30,
+              ),
+            ),
+          ],
+        ),
+        if (withReps.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          AtlasCard(
+            child: Column(
+              children: [
+                for (final s in withReps)
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(nameOf(s)),
+                    trailing: MonoText('${engine.repsFor(s)} ${i18n.reps}', size: 13),
+                  ),
+              ],
+            ),
           ),
+        ],
       ],
     );
   }

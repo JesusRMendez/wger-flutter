@@ -22,9 +22,13 @@ import 'package:wger/core/wide_screen_wrapper.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
 import 'package:wger/core/widgets/error.dart';
 import 'package:wger/core/widgets/object_gone_redirect.dart';
+import 'package:wger/features/routines/models/day_data.dart';
+import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
+import 'package:wger/features/routines/screens/gym_mode.dart';
 import 'package:wger/features/routines/widgets/app_bar.dart';
 import 'package:wger/features/routines/widgets/routine_detail.dart';
+import 'package:wger/l10n/generated/app_localizations.dart';
 
 class RoutineScreen extends ConsumerWidget {
   const RoutineScreen({super.key});
@@ -47,15 +51,68 @@ class RoutineScreen extends ConsumerWidget {
         if (routine == null) {
           return objectGoneRedirect(context);
         }
-        return Scaffold(
-          appBar: RoutineDetailAppBar(routine),
-          body: WidescreenWrapper(
-            child: SingleChildScrollView(
-              child: RoutineDetail(routine),
-            ),
-          ),
-        );
+        return _RoutineBody(routine);
       },
+    );
+  }
+}
+
+/// The routine with a bottom button that starts the day that is shown
+class _RoutineBody extends StatefulWidget {
+  final Routine routine;
+
+  const _RoutineBody(this.routine);
+
+  @override
+  State<_RoutineBody> createState() => _RoutineBodyState();
+}
+
+class _RoutineBodyState extends State<_RoutineBody> {
+  final _selected = ValueNotifier<DayData?>(null);
+
+  @override
+  void dispose() {
+    _selected.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final routine = widget.routine;
+
+    return Scaffold(
+      appBar: RoutineDetailAppBar(routine),
+      body: WidescreenWrapper(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: RoutineDetail(routine, selectedDay: _selected),
+        ),
+      ),
+      bottomNavigationBar: ValueListenableBuilder<DayData?>(
+        valueListenable: _selected,
+        builder: (context, day, _) {
+          if (day == null || day.day == null || day.day!.isRest || day.slots.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          return SafeArea(
+            minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: FilledButton.icon(
+                key: const ValueKey('routine-start-day'),
+                icon: const Icon(Icons.play_arrow),
+                label: Text(i18n.routineStartDay(day.day!.name)),
+                onPressed: () => Navigator.of(context).pushNamed(
+                  GymModeScreen.routeName,
+                  arguments: GymModeArguments(routine.id!, day.day!.id!, day.iteration),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

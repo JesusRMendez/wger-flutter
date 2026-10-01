@@ -39,6 +39,7 @@ import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/providers/workout_logs_repository.dart';
+import 'package:wger/features/routines/widgets/gym_mode/exercise_overview.dart';
 import 'package:wger/features/routines/widgets/gym_mode/log_page.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/l10n/localizations_delegates.dart';
@@ -182,6 +183,102 @@ void main() {
       expect(find.byType(LogPage), findsOneWidget);
     });
 
+    testWidgets('the header says where the set is and how long is left', (tester) async {
+      seedLogPage(testdata.getTestRoutine());
+      await pumpLogPage(tester);
+
+      expect(find.textContaining('EXERCISE 1/'), findsOneWidget);
+      expect(find.textContaining(' · SET 1/'), findsOneWidget);
+      expect(find.byKey(const ValueKey('gym-minutes-left')), findsOneWidget);
+      expect(find.textContaining('min left'), findsOneWidget);
+      // The order sheet and the settings are one tap away
+      expect(find.byKey(const ValueKey('gym-order-button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('gym-settings-button')), findsOneWidget);
+    });
+
+    testWidgets('the card switches from the load to how the exercise is done', (tester) async {
+      // Tall enough for the card, a short window drops the visual and the tabs
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      seedLogPage(testdata.getTestRoutine());
+      await pumpLogPage(tester);
+
+      // The fixture exercise has a description, so there is a steps tab
+      expect(find.byKey(const ValueKey('gym-tab-weight')), findsOneWidget);
+      expect(find.byKey(const ValueKey('visual-barbell')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('gym-tab-steps')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('visual-barbell')), findsNothing);
+      expect(find.textContaining('add clever text'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('gym-tab-weight')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('visual-barbell')), findsOneWidget);
+    });
+
+    testWidgets('Use applies the planned weight and repetitions', (tester) async {
+      seedLogPage(testdata.getTestRoutine());
+      await pumpLogPage(tester);
+
+      final config = container.read(gymStateProvider).getSlotEntryPageByIndex()!.setConfigData!;
+      final log = container.read(gymLogProvider.notifier);
+      log.setWeight(1);
+      log.setRepetitions(1);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('use-suggestion')));
+      await tester.pumpAndSettle();
+
+      expect(container.read(gymLogProvider)!.weight, config.weight);
+      expect(container.read(gymLogProvider)!.repetitions, config.repetitions);
+    });
+
+    testWidgets('the exercise introduction shows the plan and starts the first set', (
+      tester,
+    ) async {
+      final routine = testdata.getTestRoutine();
+      final notifier = container.read(gymStateProvider.notifier);
+      notifier.initData(routine, routine.days.first.id!, 1);
+      notifier.setCurrentPage(1);
+      final slot = container.read(gymStateProvider).getSlotEntryPageByIndex(1)!;
+      expect(slot.type, SlotPageType.exerciseOverview);
+
+      final controller = PageController();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: appLocalizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: PageView(
+                controller: controller,
+                children: [
+                  const SizedBox(),
+                  ExerciseOverview(controller, slot.uuid),
+                  const Text('log'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      controller.jumpToPage(1);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('NEXT · 1 OF'), findsOneWidget);
+      expect(find.byKey(const ValueKey('intro-sets')), findsOneWidget);
+      expect(find.byKey(const ValueKey('intro-suggested')), findsOneWidget);
+      expect(find.text('Start set 1'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('intro-start')));
+      await tester.pumpAndSettle();
+      expect(controller.page, 2);
+    });
+
     testWidgets('copy from past log updates form fields and shows a SnackBar', (tester) async {
       seedLogPage(testdata.getTestRoutine());
       await pumpLogPage(tester);
@@ -193,10 +290,17 @@ void main() {
       await tester.tap(pastLogTile.first);
       await tester.pumpAndSettle();
 
-      final editableFields = find.byType(EditableText);
-      expect(editableFields, findsWidgets);
-      final repText = tester.widget<EditableText>(editableFields.at(0)).controller.text;
-      final weightText = tester.widget<EditableText>(editableFields.at(1)).controller.text;
+      String textOf(String key) => tester
+          .widget<EditableText>(
+            find.descendant(
+              of: find.byKey(ValueKey(key)),
+              matching: find.byType(EditableText),
+            ),
+          )
+          .controller
+          .text;
+      final repText = textOf('logs-reps-widget');
+      final weightText = textOf('logs-weight-widget');
       // `contains` would also pass on the prefilled weight of 100
       expect(repText, '10');
       expect(weightText, '10');
@@ -232,9 +336,20 @@ void main() {
 
       // Overwrite the pre-filled values so the assertion proves the user's
       // edits flow through, not just the set-config defaults.
-      final fields = find.byType(TextFormField);
-      await tester.enterText(fields.at(0), '12'); // reps
-      await tester.enterText(fields.at(1), '34'); // weight
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('logs-reps-widget')),
+          matching: find.byType(TextFormField),
+        ),
+        '12',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('logs-weight-widget')),
+          matching: find.byType(TextFormField),
+        ),
+        '34',
+      );
       await tester.pump();
 
       await tester.tap(find.byKey(const ValueKey('save-log-button')));
@@ -307,7 +422,7 @@ void main() {
           expect(log.repetitionsUnitId, repUnit.id);
 
           // The header shows the set as planned
-          expect(find.text(header), findsOneWidget);
+          expect(find.text('Planned $header'), findsOneWidget);
 
           // The form labels the fields with the units, not with kg / repetitions
           final weightLabel = find.descendant(

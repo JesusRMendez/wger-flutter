@@ -20,13 +20,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/dashboard.dart';
 import 'package:wger/core/material.dart';
+import 'package:wger/core/progress_screen.dart';
+import 'package:wger/core/widgets/quick_add_sheet.dart';
 import 'package:wger/features/account/providers/timezone_sync.dart';
-import 'package:wger/features/gallery/screens/gallery_screen.dart';
 import 'package:wger/features/health/providers/health_sync.dart';
-import 'package:wger/features/measurements/screens/measurement_categories_screen.dart';
 import 'package:wger/features/nutrition/screens/nutritional_plans_screen.dart';
 import 'package:wger/features/routines/screens/routine_list_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class HomeTabsScreen extends ConsumerStatefulWidget {
   const HomeTabsScreen({super.key});
@@ -79,8 +80,7 @@ class _HomeTabsScreenState extends ConsumerState<HomeTabsScreen>
     const DashboardScreen(),
     const RoutineListScreen(),
     const NutritionalPlansScreen(),
-    const MeasurementCategoriesScreen(),
-    const GalleryScreen(),
+    const ProgressScreen(),
   ];
 
   @override
@@ -100,21 +100,50 @@ class _HomeTabsScreenState extends ConsumerState<HomeTabsScreen>
       ),
       NavigationDestination(
         icon: const Icon(Icons.area_chart),
-        label: AppLocalizations.of(context).labelBottomNavBody,
-      ),
-      NavigationDestination(
-        icon: const Icon(Icons.photo_library),
-        label: AppLocalizations.of(context).gallery,
+        label: AppLocalizations.of(context).labelBottomNavProgress,
       ),
     ];
 
+    void openQuickAdd() => showQuickAddSheet(context, onSelectTab: _onItemTapped);
+
     /// Navigation bar for narrow screens
     Widget getNavigationBar() {
-      return NavigationBar(
-        destinations: destinations,
-        onDestinationSelected: _onItemTapped,
-        selectedIndex: _selectedIndex,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+      // A floating pill, as in the design: rounded, outlined, no elevation
+      final atlas = context.atlas;
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: atlas.card,
+              borderRadius: BorderRadius.circular(AtlasRadius.dialog),
+              border: Border.all(color: atlas.line2),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AtlasRadius.dialog),
+              child: NavigationBar(
+                // The plus sits between the second and third tab and opens the
+                // quick-add sheet instead of selecting a destination
+                destinations: [
+                  ...destinations.take(2),
+                  NavigationDestination(
+                    icon: _QuickAddIcon(),
+                    label: '',
+                    tooltip: AppLocalizations.of(context).quickAddTitle,
+                  ),
+                  ...destinations.skip(2),
+                ],
+                onDestinationSelected: (i) =>
+                    i == 2 ? openQuickAdd() : _onItemTapped(i < 2 ? i : i - 1),
+                selectedIndex: _selectedIndex < 2 ? _selectedIndex : _selectedIndex + 1,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                animationDuration: AtlasMotion.of(context, AtlasMotion.base),
+                labelPadding: const EdgeInsets.only(top: 2),
+              ),
+            ),
+          ),
+        ),
       );
     }
 
@@ -125,6 +154,15 @@ class _HomeTabsScreenState extends ConsumerState<HomeTabsScreen>
         onDestinationSelected: _onItemTapped,
         labelType: NavigationRailLabelType.all,
         scrollable: true,
+        leading: Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: FloatingActionButton(
+            key: const ValueKey('quick-add-fab'),
+            tooltip: AppLocalizations.of(context).quickAddTitle,
+            onPressed: openQuickAdd,
+            child: const Icon(Icons.add),
+          ),
+        ),
         destinations: destinations
             .map(
               (d) => NavigationRailDestination(
@@ -144,6 +182,25 @@ class _HomeTabsScreenState extends ConsumerState<HomeTabsScreen>
         ],
       ),
       bottomNavigationBar: _isWideScreen ? null : getNavigationBar(),
+    );
+  }
+}
+
+/// The plus of the navigation bar: a filled brand square, taller than the
+/// plain destinations' icons
+class _QuickAddIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: const ValueKey('quick-add-button'),
+      width: 52,
+      height: 40,
+      decoration: BoxDecoration(
+        color: scheme.primary,
+        borderRadius: BorderRadius.circular(AtlasRadius.control),
+      ),
+      child: Icon(Icons.add, color: scheme.onPrimary, size: 26),
     );
   }
 }

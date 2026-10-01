@@ -17,50 +17,89 @@
  */
 
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/nutrition/models/ingredient.dart';
+import 'package:wger/features/nutrition/models/ingredient_weight_unit.dart';
 import 'package:wger/features/nutrition/screens/ingredient_detail_screen.dart';
-import 'package:wger/features/nutrition/widgets/ingredient_images.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class IngredientListTile extends StatelessWidget {
-  const IngredientListTile({super.key, required this.ingredient});
+  const IngredientListTile({super.key, required this.ingredient, this.amount, this.weightUnit});
 
   final Ingredient ingredient;
+
+  /// Amount the ingredient was last eaten at (in grams, or in [weightUnit]),
+  /// the values are then shown for it instead of for 100 g
+  final num? amount;
+  final IngredientWeightUnit? weightUnit;
 
   @override
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
-    const double IMG_SIZE = 60;
-    final String macros =
-        'P: ${ingredient.protein}g / C: ${ingredient.carbohydrates}g / F: ${ingredient.fat}g';
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
 
-    return ListTile(
-      leading: SizedBox(
-        height: IMG_SIZE,
-        width: IMG_SIZE,
-        child: CircleAvatar(
-          backgroundColor: const Color(0x00ffffff),
-          child: ClipOval(
-            child: SizedBox(
-              height: IMG_SIZE,
-              width: IMG_SIZE,
-              child: IngredientImageWidget(image: ingredient.image),
+    final grams = amount == null
+        ? 100.0
+        : (weightUnit == null ? amount! : amount! * weightUnit!.grams).toDouble();
+    final values = ingredient.nutritionalValues / (grams > 0 ? 100 / grams : double.infinity);
+    final amountText = amount == null
+        ? i18n.gValue('100')
+        : weightUnit == null
+        ? i18n.gValue(amount!.toStringAsFixed(0))
+        : '${amount!.toStringAsFixed(0)} × ${weightUnit!.name} · ${i18n.gValue(grams.toStringAsFixed(0))}';
+
+    void open() => Navigator.pushNamed(
+      context,
+      IngredientDetailScreen.routeName,
+      arguments: ingredient.id,
+    );
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: open,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ingredient.name,
+                    style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 2),
+                  MonoText(
+                    '$amountText · ${i18n.kcalValue(values.energy.toStringAsFixed(0))} · '
+                    '${values.protein.toStringAsFixed(0)} ${i18n.g} ${i18n.proteinAbbr}',
+                    size: 12.5,
+                    weight: FontWeight.w500,
+                    color: atlas.ink3,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: atlas.surface2,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: atlas.line),
+              ),
+              child: const Icon(Icons.add, size: 18),
+            ),
+          ],
         ),
       ),
-      title: Text(ingredient.name, overflow: TextOverflow.ellipsis, maxLines: 2),
-      subtitle: Text(
-        '${i18n.kcalValue(ingredient.energy.toString())} • $macros',
-        overflow: TextOverflow.ellipsis,
-      ),
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          IngredientDetailScreen.routeName,
-          arguments: ingredient.id,
-        );
-      },
     );
   }
 }

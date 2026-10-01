@@ -20,6 +20,21 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+// Identity of the app. The upstream values stay the default; custom builds (see
+// docs/ci-publishing.md) override them with `-PappId=... -PappName=...` or the
+// WGER_APP_ID / WGER_APP_NAME environment variables. Blank values are ignored,
+// so an unset CI variable cannot produce an empty id. Only the applicationId
+// changes: the namespace (and with it the Kotlin package) stays as it is.
+def firstNonBlank = { List candidates ->
+    def found = candidates.find { it != null && !it.toString().trim().isEmpty() }
+    return found == null ? null : found.toString().trim()
+}
+def appId = firstNonBlank([project.findProperty('appId'), System.getenv('WGER_APP_ID')]) ?: 'de.wger.flutter'
+def appName = firstNonBlank([project.findProperty('appName'), System.getenv('WGER_APP_NAME')]) ?: 'wger'
+// The name ends up in a generated values.xml, where quotes and backslashes
+// would break aapt
+def appNameResource = appName.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
+
 
 android {
     namespace = "de.wger.flutter"
@@ -39,7 +54,7 @@ android {
 
     defaultConfig {
         // Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "de.wger.flutter"
+        applicationId appId
         minSdkVersion 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -47,7 +62,7 @@ android {
 
         // Overridden by the debug build type. Set here rather than per build
         // type so the profile variant has it as well
-        resValue "string", "app_name", "wger"
+        resValue "string", "app_name", appNameResource
     }
 
     signingConfigs {
@@ -67,7 +82,7 @@ android {
             // installed release one on the same device. The launcher icon keeps
             // the wger logo on a different background, see src/debug/res
             applicationIdSuffix ".debug"
-            resValue "string", "app_name", "wger - debug"
+            resValue "string", "app_name", "${appNameResource} - debug"
         }
     }
 }

@@ -18,6 +18,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/routines/logic/zone_order_logic.dart';
 import 'package:wger/features/routines/providers/gym_state.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
@@ -47,34 +48,27 @@ class ZoneChip extends ConsumerWidget {
     }
 
     final i18n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
 
     return Wrap(
       spacing: 6,
+      runSpacing: 4,
       children: [
         if (zoneName != null)
-          Chip(
+          PillChip(
+            zoneName,
             key: ValueKey('zone-chip-${page.uuid}'),
-            visualDensity: VisualDensity.compact,
-            avatar: const Icon(Icons.place_outlined, size: 16),
-            label: Text(zoneName),
+            icon: Icons.place_outlined,
+            height: 26,
           ),
         if (missing.isNotEmpty)
           Tooltip(
             message: i18n.gymModeMissingEquipmentShort,
-            child: Chip(
+            child: PillChip(
+              i18n.gymModeMissingEquipmentShort,
               key: ValueKey('missing-equipment-chip-${page.uuid}'),
-              visualDensity: VisualDensity.compact,
-              backgroundColor: theme.colorScheme.errorContainer,
-              avatar: Icon(
-                Icons.warning_amber,
-                size: 16,
-                color: theme.colorScheme.onErrorContainer,
-              ),
-              label: Text(
-                i18n.gymModeMissingEquipmentShort,
-                style: TextStyle(color: theme.colorScheme.onErrorContainer),
-              ),
+              icon: Icons.warning_amber,
+              tone: ChipTone.accent,
+              height: 26,
             ),
           ),
       ],

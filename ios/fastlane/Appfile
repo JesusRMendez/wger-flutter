@@ -1,4 +1,6 @@
-app_identifier("de.wger.flutter.community") # The bundle identifier of your app
+# The bundle identifier of your app. Custom builds publish under their own
+# identifier (APP_ID_IOS, see docs/ci-publishing.md); upstream stays the default
+app_identifier(ENV["APP_ID_IOS"].to_s.strip.empty? ? "de.wger.flutter.community" : ENV["APP_ID_IOS"].strip)
 apple_id(ENV["APPLE_ID"]) # Your Apple Developer Portal username
 
 itc_team_id(ENV["ITC_TEAM_ID"]) # App Store Connect Team ID

@@ -19,6 +19,7 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/theme/atlas.dart';
 import 'package:wger/theme/theme.dart';
 
 void main() {
@@ -79,10 +80,49 @@ void main() {
       }
     });
 
-    test('keeps the wger typography', () {
+    test('uses Geist for the UI and keeps the Atlas tokens', () {
       final theme = wgerThemeFromSeed(seed, Brightness.light);
 
-      expect(theme.textTheme.headlineLarge?.fontFamily, wgerDisplayFont);
+      expect(theme.textTheme.headlineLarge?.fontFamily, 'Geist');
+    });
+  });
+  group('Atlas themes', () {
+    test('dark theme uses the app tokens', () {
+      expect(wgerDarkTheme.scaffoldBackgroundColor, const Color(0xFF0A0F1C));
+      expect(wgerDarkTheme.colorScheme.primary, const Color(0xFF8DB2F0));
+      expect(wgerDarkTheme.extension<AtlasColors>(), AtlasColors.dark);
+    });
+
+    test('light theme uses the web tokens', () {
+      expect(wgerLightTheme.scaffoldBackgroundColor, const Color(0xFFF3F4F6));
+      expect(wgerLightTheme.colorScheme.primary, const Color(0xFF2A4C7D));
+      expect(wgerLightTheme.extension<AtlasColors>(), AtlasColors.light);
+    });
+
+    test('cards are flat, 16 radius and outlined with the line color', () {
+      final card = wgerDarkTheme.cardTheme;
+      final shape = card.shape! as RoundedRectangleBorder;
+
+      expect(card.elevation, 0);
+      expect(shape.borderRadius, BorderRadius.circular(16));
+      expect(shape.side.color, AtlasColors.dark.line);
+    });
+
+    test('figures use tabular Geist Mono', () {
+      final style = AtlasText.mono(const TextStyle(fontSize: 20));
+
+      expect(style.fontFamily, 'GeistMono');
+      expect(style.fontFeatures, contains(const FontFeature.tabularFigures()));
+    });
+
+    test('seeded themes keep the Atlas shapes', () {
+      final theme = wgerThemeFromSeed(const Color(0xFF6750A4), Brightness.dark);
+
+      expect(theme.extension<AtlasColors>(), isNotNull);
+      expect(
+        (theme.cardTheme.shape! as RoundedRectangleBorder).borderRadius,
+        BorderRadius.circular(16),
+      );
     });
   });
 }

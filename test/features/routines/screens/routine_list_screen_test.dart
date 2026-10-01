@@ -93,10 +93,23 @@ void main() {
 
     //debugDumpApp();
     expect(find.text('Routines'), findsOneWidget);
-    expect(find.text('test 1'), findsOneWidget);
-    expect(find.text('test 2'), findsOneWidget);
+    expect(find.text('test 1'), findsWidgets);
+    expect(find.text('test 2'), findsWidgets);
     expect(find.byType(Card), findsNWidgets(2));
     expect(find.byType(ListTile), findsNWidgets(2));
+  });
+
+  testWidgets('offers the coach generator, and the guided mode only with a day to run', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(renderWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('routines-generate')), findsOneWidget);
+    expect(find.text('Generate with a goal'), findsOneWidget);
+    expect(find.text('MY ROUTINES'), findsOneWidget);
+    // Neither routine is running, so there is no day to guide through
+    expect(find.byKey(const ValueKey('routines-guided')), findsNothing);
   });
 
   testWidgets('Test deleting an item using the Delete button', (WidgetTester tester) async {
@@ -178,15 +191,15 @@ void main() {
     await tester.pumpWidget(renderWidget());
     await tester.pumpAndSettle();
 
-    expect(find.text('11/1/2024 - 12/1/2024'), findsOneWidget);
-    expect(find.text('5/5/2024 - 6/6/2024'), findsOneWidget);
+    expect(find.text('11/1/2024 - 12/1/2024'), findsWidgets);
+    expect(find.text('5/5/2024 - 6/6/2024'), findsWidgets);
   });
 
   testWidgets('Tests the localization of dates - DE', (WidgetTester tester) async {
     await tester.pumpWidget(renderWidget(locale: 'de'));
     await tester.pumpAndSettle();
 
-    expect(find.text('1.11.2024 - 1.12.2024'), findsOneWidget);
-    expect(find.text('5.5.2024 - 6.6.2024'), findsOneWidget);
+    expect(find.text('1.11.2024 - 1.12.2024'), findsWidgets);
+    expect(find.text('5.5.2024 - 6.6.2024'), findsWidgets);
   });
 }

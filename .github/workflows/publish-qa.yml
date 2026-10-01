@@ -1,0 +1,48 @@
+name: Publish QA
+# Customized build for testers: Google Play internal testing track and TestFlight.
+# Runs on every push to master (and on demand), after the tests passed.
+# Secrets and variables live in the GitHub Environment "qa", see
+# docs/ci-publishing.md.
+on:
+  push:
+    branches: [ master, ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time, a newer push waits for the running one instead of
+# cancelling an upload half way
+concurrency:
+  group: publish-qa
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  android:
+    name: Android
+    needs: ci
+    uses: ./.github/workflows/publish-android.yml
+    with:
+      environment: qa
+      ref: ${{ github.sha }}
+      lane: internal
+      server_url_var: QA_SERVER_URL
+    secrets: inherit
+
+  ios:
+    name: iOS
+    needs: ci
+    uses: ./.github/workflows/publish-ios.yml
+    with:
+      environment: qa
+      ref: ${{ github.sha }}
+      lane: qa
+      server_url_var: QA_SERVER_URL
+    secrets: inherit

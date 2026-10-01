@@ -172,4 +172,76 @@ void main() {
     expect(repo.calls, ['edit-goal:2']);
     expect(find.text('Walk more'), findsOneWidget);
   });
+
+  group('goal health', () {
+    CoachGoal goal(Map<String, dynamic> json) => CoachGoal.fromJson({'title': 't', ...json});
+
+    test('achieved, missed and paused follow the status', () {
+      expect(goalHealth(goal({'status': 'achieved'})), GoalHealth.achieved);
+      expect(goalHealth(goal({'status': 'missed'})), GoalHealth.missed);
+      expect(goalHealth(goal({'status': 'paused'})), GoalHealth.paused);
+    });
+
+    test('without dates an active goal is on track from 40 %', () {
+      expect(goalHealth(goal({'status': 'active', 'progress_pct': 40})), GoalHealth.onTrack);
+      expect(goalHealth(goal({'status': 'active', 'progress_pct': 10})), GoalHealth.watch);
+    });
+
+    test('with dates it is compared with the share of the period that has passed', () {
+      final now = DateTime.now();
+      String d(DateTime t) => t.toIso8601String().substring(0, 10);
+      final dates = {
+        'start_date': d(now.subtract(const Duration(days: 10))),
+        'end_date': d(now.add(const Duration(days: 10))),
+      };
+      // Half of the period is over: 50 % is on track, 20 % is behind
+      expect(
+        goalHealth(goal({'status': 'active', 'progress_pct': 50, ...dates})),
+        GoalHealth.onTrack,
+      );
+      expect(
+        goalHealth(goal({'status': 'active', 'progress_pct': 20, ...dates})),
+        GoalHealth.watch,
+      );
+    });
+  });
+
+  testWidgets('shows the goal of the plan as the final goal and the status chips', (
+    tester,
+  ) async {
+    final repo = _repo()
+      ..goals = [
+        CoachGoal.fromJson({
+          'id': 9,
+          'title': 'Lose 4 kg without losing strength',
+          'kind': 'body_weight',
+          'period': 'plan',
+          'target_value': '74.40',
+          'unit': 'kg',
+          'current_value': '77.00',
+          'progress_pct': 33,
+          'status': 'active',
+        }),
+        CoachGoal.fromJson({
+          'id': 1,
+          'title': 'Bench 100 kg',
+          'kind': 'strength',
+          'period': 'weekly',
+          'progress_pct': 80,
+          'status': 'active',
+        }),
+      ];
+    await pumpCoach(tester, const GoalsScreen(), repo);
+
+    // The hero repeats nothing from the weekly tab, the plan goal is only there
+    expect(find.text('FINAL GOAL'), findsOneWidget);
+    expect(find.text('Lose 4 kg without losing strength'), findsOneWidget);
+    expect(find.text('33%'), findsOneWidget);
+    expect(find.text('On track'), findsOneWidget);
+
+    await tester.tap(find.text('Plan'));
+    await tester.pumpAndSettle();
+    // Now also in the list of the tab
+    expect(find.text('Lose 4 kg without losing strength'), findsNWidgets(2));
+  });
 }

@@ -129,7 +129,7 @@ class _MeasurementEntriesScreenState extends ConsumerState<MeasurementEntriesScr
       floatingActionButton: category == null || category.isCalculated
           ? null
           : FloatingActionButton(
-              child: const Icon(Icons.add, color: Colors.white),
+              child: const Icon(Icons.add),
               onPressed: () {
                 Navigator.pushNamed(
                   context,

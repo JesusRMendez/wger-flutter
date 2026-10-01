@@ -37,12 +37,14 @@ part 'app_settings_notifier.g.dart';
 const PREFS_DASHBOARD_CONFIG = 'dashboardConfig';
 
 enum DashboardWidget {
-  trophies('trophies'),
+  activity('activity'),
   routines('routines'),
   nutrition('nutrition'),
+  water('water'),
   weight('weight'),
   measurements('measurements'),
   calendar('calendar'),
+  trophies('trophies'),
   coach('coach');
 
   final String value;

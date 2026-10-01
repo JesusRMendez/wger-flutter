@@ -38,6 +38,13 @@ import '../../../../helpers/fake_connectivity.dart';
 import '../../helpers/routine_form_test_overrides.dart';
 import './slot_entry_form_test.mocks.dart';
 
+/// The form is taller than the default 800x600 test surface
+void tall(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 2400);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+}
+
 @GenerateMocks([RoutinesRepository])
 void main() {
   // The widget tree reaches networkStatusProvider; without the fake the
@@ -81,11 +88,13 @@ void main() {
   }
 
   testWidgets('Checks correct widgets are rendered in simple mode', (WidgetTester tester) async {
+    tall(tester);
     await tester.pumpWidget(renderWidget());
     await tester.pumpAndSettle();
 
-    expect(find.byType(TextFormField), findsNWidgets(2));
-    expect(find.byType(Slider), findsOne);
+    expect(find.byType(TextFormField), findsNWidgets(3));
+    expect(find.byKey(const ValueKey('sets-plus')), findsOne);
+    expect(find.byType(Slider), findsNothing);
     expect(find.byType(DropdownButtonFormField), findsNothing);
     expect(find.byType(WeightUnitInputWidget), findsNothing);
     expect(find.byType(RepetitionUnitInputWidget), findsNothing);
@@ -93,11 +102,12 @@ void main() {
   });
 
   testWidgets('Checks correct widgets are rendered in expanded mode', (WidgetTester tester) async {
+    tall(tester);
     await tester.pumpWidget(renderWidget(simpleMode: false));
     await tester.pumpAndSettle();
 
     expect(find.byType(TextFormField), findsNWidgets(6));
-    expect(find.byType(Slider), findsNWidgets(2));
+    expect(find.byType(Slider), findsOne);
     expect(find.byType(DropdownButtonFormField), findsNothing);
     expect(find.byType(WeightUnitInputWidget), findsOne);
     expect(find.byType(RepetitionUnitInputWidget), findsOne);
@@ -105,6 +115,7 @@ void main() {
   });
 
   testWidgets('Correctly updates the values on the server', (WidgetTester tester) async {
+    tall(tester);
     await tester.pumpWidget(renderWidget(simpleMode: false));
     await tester.pumpAndSettle();
 
@@ -186,7 +197,42 @@ void main() {
     expect(capturedArgs[(6 * 3) + 2], ConfigType.maxRest);
   });
 
+  testWidgets('The sets stepper changes the number of sets that is saved', (
+    WidgetTester tester,
+  ) async {
+    tall(tester);
+    await tester.pumpWidget(renderWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.text('4'), findsOne);
+    await tester.tap(find.byKey(const ValueKey('sets-plus')));
+    await tester.tap(find.byKey(const ValueKey('sets-plus')));
+    await tester.tap(find.byKey(const ValueKey('sets-minus')));
+    await tester.pumpAndSettle();
+    expect(find.text('5'), findsOne);
+
+    await tester.tap(find.byKey(const ValueKey(SUBMIT_BUTTON_KEY_NAME)));
+    await tester.pumpAndSettle();
+
+    final captured = verify(
+      mockRoutinesRepository.handleConfigServer(captureAny, captureAny, captureAny),
+    ).captured;
+    expect(captured[1], 5);
+    expect(captured[2], ConfigType.sets);
+  });
+
+  testWidgets('Shows the progression of the entry as selected chip', (WidgetTester tester) async {
+    tall(tester);
+    await tester.pumpWidget(renderWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Linear'), findsOne);
+    expect(find.text('Double progression'), findsOne);
+    expect(find.text('Manual'), findsOne);
+  });
+
   testWidgets('rejects a weight value above the backend cap', (WidgetTester tester) async {
+    tall(tester);
     await tester.pumpWidget(renderWidget(simpleMode: false));
     await tester.pumpAndSettle();
 
@@ -204,6 +250,7 @@ void main() {
   });
 
   testWidgets('rejects a rest value above the backend cap', (WidgetTester tester) async {
+    tall(tester);
     await tester.pumpWidget(renderWidget(simpleMode: false));
     await tester.pumpAndSettle();
 
@@ -222,6 +269,7 @@ void main() {
   testWidgets('Fractional weight survives a no-op save in a comma-decimal locale', (
     WidgetTester tester,
   ) async {
+    tall(tester);
     final entry = getTestRoutine().days[0].slots[0].entries[0];
     entry.weightConfigs.first.value = 2.5;
 
@@ -244,6 +292,7 @@ void main() {
   });
 
   testWidgets('Fractional RiR survives a no-op save', (WidgetTester tester) async {
+    tall(tester);
     final entry = getTestRoutine().days[0].slots[0].entries[0];
     entry.rirConfigs = [BaseConfig.firstIteration(2.5, 1)];
 

@@ -20,7 +20,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/error_dialogs.dart';
 import 'package:wger/core/exceptions/http_exception.dart';
+import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/network/network_provider.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/progress_indicator.dart';
 import 'package:wger/features/exercises/widgets/autocompleter.dart';
 import 'package:wger/features/routines/models/day.dart';
@@ -28,8 +30,10 @@ import 'package:wger/features/routines/models/slot.dart';
 import 'package:wger/features/routines/models/slot_entry.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/widgets/forms/slot_entry.dart';
+import 'package:wger/features/routines/widgets/forms/slot_summary.dart';
 import 'package:wger/features/routines/widgets/slot.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 typedef SlotGroupInfo = ({int groupSize, int indexInGroup, String? exerciseName});
 
@@ -81,54 +85,58 @@ class _SlotDetailWidgetState extends ConsumerState<SlotDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppLocalizations.of(context);
     final provider = ref.read(routinesRiverpodProvider.notifier);
     final isOnline = ref.watch(networkStatusProvider);
+    final multiple = widget.slot.entries.length > 1;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         errorMessage,
-        ...widget.slot.entries.map(
-          (entry) => entry.hasProgressionRules
-              ? ProgressionRulesInfoBox(entry.exerciseObj)
-              : SlotEntryForm(entry, widget.routineId, simpleMode: widget.simpleMode),
+        ...widget.slot.entries.indexed.map(
+          (e) => Padding(
+            padding: EdgeInsets.only(bottom: e.$1 == widget.slot.entries.length - 1 ? 0 : 16),
+            child: e.$2.hasProgressionRules
+                ? ProgressionRulesInfoBox(e.$2.exerciseObj)
+                : SlotEntryForm(
+                    e.$2,
+                    widget.routineId,
+                    simpleMode: widget.simpleMode,
+                    showHeader: multiple,
+                    onAddSuperset: e.$1 == widget.slot.entries.length - 1
+                        ? () => setState(() => _showExerciseSearchBox = !_showExerciseSearchBox)
+                        : null,
+                  ),
+          ),
         ),
-        const SizedBox(height: 10),
         if (isOnline && (_showExerciseSearchBox || widget.slot.entries.isEmpty))
-          ExerciseAutocompleter(
-            onExerciseSelected: (exercise) async {
-              setState(() => _showExerciseSearchBox = false);
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: ExerciseAutocompleter(
+              onExerciseSelected: (exercise) async {
+                setState(() => _showExerciseSearchBox = false);
 
-              final SlotEntry entry = SlotEntry.withData(
-                slotId: widget.slot.id!,
-                order: widget.slot.entries.length + 1,
-                exercise: exercise,
-              );
+                final SlotEntry entry = SlotEntry.withData(
+                  slotId: widget.slot.id!,
+                  order: widget.slot.entries.length + 1,
+                  exercise: exercise,
+                );
 
-              try {
-                await provider.addSlotEntry(entry, widget.routineId);
-                if (context.mounted) {
-                  setState(() => errorMessage = const SizedBox.shrink());
-                }
-              } on WgerHttpException catch (error) {
-                if (context.mounted) {
-                  setState(() {
-                    errorMessage = FormHttpErrorsWidget(error);
-                  });
-                }
-              }
-            },
-          ),
-        if (widget.slot.entries.isNotEmpty)
-          FilledButton(
-            onPressed: isOnline
-                ? () {
-                    setState(() => _showExerciseSearchBox = !_showExerciseSearchBox);
+                try {
+                  await provider.addSlotEntry(entry, widget.routineId);
+                  if (context.mounted) {
+                    setState(() => errorMessage = const SizedBox.shrink());
                   }
-                : null,
-            child: Text(i18n.addSuperset),
+                } on WgerHttpException catch (error) {
+                  if (context.mounted) {
+                    setState(() {
+                      errorMessage = FormHttpErrorsWidget(error);
+                    });
+                  }
+                }
+              },
+            ),
           ),
-        const SizedBox(height: 5),
       ],
     );
   }
@@ -212,153 +220,244 @@ class _SlotFormWidgetStateNg extends ConsumerState<ReorderableSlotList> {
     final isOnline = ref.watch(networkStatusProvider);
     final languageCode = Localizations.localeOf(context).languageCode;
     final groupInfo = computeSlotGroups(widget.slots, languageCode);
+    final atlas = context.atlas;
+    final nf = localizedNumberFormat(context);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         errorMessage,
-        if (!widget.day.isRest)
+        if (!widget.day.isRest) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
+            child: Row(
+              spacing: 8,
+              children: [
+                Icon(Icons.drag_indicator, size: 16, color: atlas.ink3),
+                Expanded(
+                  child: Text(
+                    i18n.dragToReorderHint,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                  ),
+                ),
+              ],
+            ),
+          ),
           SwitchListTile(
             value: simpleMode,
             title: Text(i18n.simpleMode),
             subtitle: Text(i18n.simpleModeHelp),
-            contentPadding: const EdgeInsets.all(4),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
             onChanged: (value) {
               setState(() => simpleMode = value);
             },
           ),
+        ],
         ReorderableListView.builder(
           buildDefaultDragHandles: false,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: widget.slots.length,
+          proxyDecorator: (child, index, animation) => Material(
+            color: Colors.transparent,
+            child: child,
+          ),
           itemBuilder: (context, index) {
             final slot = widget.slots[index];
-            final isCurrentSlotSelected = slot.id == selectedSlotId;
+            final isOpen = slot.id == selectedSlotId;
             final info = groupInfo[index]!;
             final isGrouped = info.groupSize > 1;
+            final isLast = info.indexInGroup == info.groupSize - 1;
+            final isSuperset = slot.entries.length > 1;
 
-            // Title: "Set N" for grouped, "Superset N" or "Exercise N" otherwise
-            final String titleText;
-            if (isGrouped) {
-              titleText = i18n.setNr((info.indexInGroup + 1).toString());
-            } else if (slot.isSuperset) {
-              titleText = i18n.supersetNr((index + 1).toString());
-            } else {
-              titleText = i18n.exerciseNr((index + 1).toString());
-            }
+            // Title: the exercise (or all exercises of a superset)
+            final names = slot.entries.map((e) => e.exerciseObj.getTranslation(languageCode).name);
+            final title = slot.entries.isEmpty ? i18n.setHasNoExercises : names.join(' + ');
+            final subtitle = slot.entries.isEmpty
+                ? null
+                : isSuperset
+                ? i18n.supersetNr('${index + 1}')
+                : slotEntrySummary(slot.entries.first, nf);
 
-            // Subtitle: exercise name(s), or group header for first in group
-            Widget? subtitleWidget;
-            if (slot.entries.isEmpty) {
-              subtitleWidget = Text(i18n.setHasNoExercises);
-            } else if (isGrouped && info.indexInGroup == 0 && info.exerciseName != null) {
-              subtitleWidget = Text(info.exerciseName!);
-            } else if (!isGrouped) {
-              subtitleWidget = Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: slot.entries
-                    .map((e) => Text(e.exerciseObj.getTranslation(languageCode).name))
-                    .toList(),
-              );
-            }
+            final animate = !MediaQuery.of(context).disableAnimations;
 
-            // Group visual: flush cards with rounded outer corners only
-            const double cardRadius = 12;
-            final bool isFirst = info.indexInGroup == 0;
-            final bool isLast = info.indexInGroup == info.groupSize - 1;
-            final borderRadius = isGrouped
-                ? BorderRadius.only(
-                    topLeft: isFirst ? const Radius.circular(cardRadius) : Radius.zero,
-                    topRight: isFirst ? const Radius.circular(cardRadius) : Radius.zero,
-                    bottomLeft: isLast ? const Radius.circular(cardRadius) : Radius.zero,
-                    bottomRight: isLast ? const Radius.circular(cardRadius) : Radius.zero,
-                  )
-                : BorderRadius.circular(cardRadius);
-
-            // Remove vertical gap between consecutive grouped cards
-            final cardMargin = isGrouped
-                ? EdgeInsets.only(
-                    left: 4,
-                    right: 4,
-                    top: isFirst ? 4 : 0,
-                    bottom: isLast ? 4 : 0,
-                  )
-                : const EdgeInsets.all(4);
-
-            final cardChild = Column(
-              children: [
-                ListTile(
-                  title: Text(titleText),
-                  tileColor: isCurrentSlotSelected ? Theme.of(context).highlightColor : null,
-                  leading: selectedSlotId == null && isOnline
-                      ? ReorderableDragStartListener(
-                          index: index,
-                          child: const Icon(Icons.drag_handle),
-                        )
-                      : Icon(
-                          selectedSlotId == null ? Icons.drag_handle : Icons.block,
-                          color: isOnline ? null : Colors.grey,
-                        ),
-                  subtitle: subtitleWidget,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (slot.entries.length == 1 && isLast)
-                        IconButton(
-                          tooltip: i18n.addSet,
-                          icon: isAddingSlot
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.content_copy),
-                          onPressed: isAddingSlot || !isOnline
-                              ? null
-                              : () => _handleAddSet(slot, index),
-                        ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            if (selectedSlotId == slot.id) {
-                              selectedSlotId = null;
-                            } else {
-                              selectedSlotId = slot.id;
-                            }
-                          });
-                        },
-                        icon: isCurrentSlotSelected
-                            ? const Icon(Icons.edit_off)
-                            : const Icon(Icons.edit),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: isDeletingSlot == index || !isOnline
-                            ? null
-                            : () async {
-                                selectedSlotId = null;
-                                setState(() => isDeletingSlot = index);
-                                await provider.deleteSlot(slot.id!, widget.day.routineId);
-                                if (mounted) {
-                                  setState(() => isDeletingSlot = null);
-                                }
-                              },
-                      ),
-                    ],
-                  ),
-                ),
-                if (isCurrentSlotSelected)
-                  SlotDetailWidget(slot, widget.day.routineId, simpleMode: simpleMode),
-              ],
-            );
-
-            return Card(
+            return Padding(
               key: ValueKey(slot.id),
-              margin: cardMargin,
-              color: slot.entries.isEmpty ? Theme.of(context).colorScheme.inversePrimary : null,
-              shape: RoundedRectangleBorder(borderRadius: borderRadius),
-              clipBehavior: Clip.antiAlias,
-              child: cardChild,
+              padding: const EdgeInsets.only(bottom: 12),
+              child: AtlasCard(
+                padding: EdgeInsets.zero,
+                color: slot.entries.isEmpty ? atlas.brandSoft : null,
+                borderColor: isSuperset
+                    ? Theme.of(context).colorScheme.primary.withAlpha(90)
+                    : null,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: selectedSlotId == null && isOnline
+                              ? ReorderableDragStartListener(
+                                  index: index,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Icon(Icons.drag_indicator, size: 20, color: atlas.ink3),
+                                  ),
+                                )
+                              : Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(
+                                    Icons.drag_indicator,
+                                    size: 20,
+                                    color: atlas.ink3.withAlpha(90),
+                                  ),
+                                ),
+                        ),
+                        Expanded(
+                          child: InkWell(
+                            key: ValueKey('slot-toggle-${slot.id}'),
+                            onTap: () {
+                              setState(() => selectedSlotId = isOpen ? null : slot.id);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context).textTheme.titleSmall,
+                                        ),
+                                      ),
+                                      if (isGrouped) ...[
+                                        const SizedBox(width: 8),
+                                        PillChip(
+                                          i18n.setNr('${info.indexInGroup + 1}'),
+                                          height: 20,
+                                          fontSize: 10.5,
+                                        ),
+                                      ],
+                                      if (isSuperset) ...[
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          Icons.link,
+                                          size: 16,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  if (subtitle != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: MonoText(
+                                        subtitle,
+                                        size: 12.5,
+                                        weight: FontWeight.w500,
+                                        color: atlas.ink3,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          key: ValueKey('slot-chevron-${slot.id}'),
+                          onPressed: () {
+                            setState(() => selectedSlotId = isOpen ? null : slot.id);
+                          },
+                          icon: AnimatedRotation(
+                            turns: isOpen ? 0.5 : 0,
+                            duration: animate ? AtlasMotion.slow : Duration.zero,
+                            curve: AtlasMotion.curve,
+                            child: Icon(Icons.expand_more, color: atlas.ink2),
+                          ),
+                        ),
+                      ],
+                    ),
+                    AnimatedSize(
+                      duration: animate ? AtlasMotion.slow : Duration.zero,
+                      curve: AtlasMotion.curve,
+                      alignment: Alignment.topCenter,
+                      child: !isOpen
+                          ? const SizedBox(width: double.infinity)
+                          : Container(
+                              decoration: BoxDecoration(
+                                border: Border(top: BorderSide(color: atlas.line)),
+                              ),
+                              padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  SlotDetailWidget(
+                                    slot,
+                                    widget.day.routineId,
+                                    simpleMode: simpleMode,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    spacing: 8,
+                                    children: [
+                                      if (slot.entries.length == 1 && isLast)
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            key: ValueKey('add-set-${slot.id}'),
+                                            onPressed: isAddingSlot || !isOnline
+                                                ? null
+                                                : () => _handleAddSet(slot, index),
+                                            icon: isAddingSlot
+                                                ? const SizedBox(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                                  )
+                                                : const Icon(Icons.content_copy, size: 16),
+                                            label: Text(i18n.addSet),
+                                          ),
+                                        ),
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          key: ValueKey('delete-slot-${slot.id}'),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: atlas.accent,
+                                          ),
+                                          onPressed: isDeletingSlot == index || !isOnline
+                                              ? null
+                                              : () async {
+                                                  selectedSlotId = null;
+                                                  setState(() => isDeletingSlot = index);
+                                                  await provider.deleteSlot(
+                                                    slot.id!,
+                                                    widget.day.routineId,
+                                                  );
+                                                  if (mounted) {
+                                                    setState(() => isDeletingSlot = null);
+                                                  }
+                                                },
+                                          icon: const Icon(Icons.delete_outline, size: 18),
+                                          label: Text(i18n.delete),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
             );
           },
           onReorderItem: (int oldIndex, int newIndex) {
@@ -387,31 +486,38 @@ class _SlotFormWidgetStateNg extends ConsumerState<ReorderableSlotList> {
           },
         ),
         if (!widget.day.isRest)
-          Card(
-            child: ListTile(
-              enabled: isOnline,
-              leading: isAddingSlot ? const FormProgressIndicator() : const Icon(Icons.add),
-              title: Text(
-                i18n.addExercise,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              onTap: isAddingSlot || !isOnline
-                  ? null
-                  : () async {
-                      setState(() => isAddingSlot = true);
+          AtlasCard(
+            key: const ValueKey('add-exercise'),
+            dashed: true,
+            color: Colors.transparent,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            onTap: isAddingSlot || !isOnline
+                ? null
+                : () async {
+                    setState(() => isAddingSlot = true);
 
-                      final newSlot = await provider.addSlot(
-                        Slot.withData(
-                          day: widget.day.id,
-                          order: widget.slots.length + 1,
-                        ),
-                        widget.day.routineId,
-                      );
-                      if (mounted) {
-                        setState(() => isAddingSlot = false);
-                        setState(() => selectedSlotId = newSlot.id);
-                      }
-                    },
+                    final newSlot = await provider.addSlot(
+                      Slot.withData(
+                        day: widget.day.id,
+                        order: widget.slots.length + 1,
+                      ),
+                      widget.day.routineId,
+                    );
+                    if (mounted) {
+                      setState(() => isAddingSlot = false);
+                      setState(() => selectedSlotId = newSlot.id);
+                    }
+                  },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 8,
+              children: [
+                if (isAddingSlot)
+                  const FormProgressIndicator()
+                else
+                  const Icon(Icons.add, size: 20),
+                Text(i18n.addExercise, style: Theme.of(context).textTheme.titleMedium),
+              ],
             ),
           ),
       ],

@@ -20,14 +20,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/form_screen.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/features/nutrition/screens/ingredients_screen.dart';
 import 'package:wger/features/nutrition/widgets/forms.dart';
 import 'package:wger/features/nutrition/widgets/nutritional_plans_list.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
-
-enum _NutritionalPlansAppBarOptions {
-  list,
-}
 
 class NutritionalPlansScreen extends ConsumerWidget {
   const NutritionalPlansScreen();
@@ -38,26 +35,20 @@ class NutritionalPlansScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final i18n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.nutritionalPlans),
-        actions: [
-          PopupMenuButton<_NutritionalPlansAppBarOptions>(
-            itemBuilder: (context) {
-              return [
-                PopupMenuItem<_NutritionalPlansAppBarOptions>(
-                  value: _NutritionalPlansAppBarOptions.list,
-                  child: Text(i18n.ingredients),
-                ),
-              ];
-            },
-            onSelected: (value) {
-              switch (value) {
-                case _NutritionalPlansAppBarOptions.list:
-                  Navigator.of(context).pushNamed(IngredientsScreen.routeName);
-                  break;
-              }
-            },
+      body: Column(
+        children: [
+          AtlasHeader(
+            title: i18n.nutritionalPlans,
+            showBack: false,
+            actions: [
+              RoundIconButton(
+                icon: Icons.restaurant_menu,
+                tooltip: i18n.ingredients,
+                onPressed: () => Navigator.of(context).pushNamed(IngredientsScreen.routeName),
+              ),
+            ],
           ),
+          const Expanded(child: WidescreenWrapper(child: NutritionalPlansList())),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -72,9 +63,8 @@ class NutritionalPlansScreen extends ConsumerWidget {
             ),
           );
         },
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add),
       ),
-      body: const WidescreenWrapper(child: NutritionalPlansList()),
     );
   }
 }
