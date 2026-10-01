@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod;
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/confirm_delete_dialog.dart';
 import 'package:wger/core/widgets/text_prompt.dart';
 import 'package:wger/features/account/providers/user_profile_notifier.dart';
@@ -33,6 +34,7 @@ import 'package:wger/features/measurements/providers/measurement_notifier.dart';
 import 'package:wger/features/nutrition/providers/nutrition_notifier.dart';
 import 'package:wger/features/nutrition/screens/nutritional_plan_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class NutritionalPlansList extends riverpod.ConsumerWidget {
   const NutritionalPlansList({super.key});
@@ -139,12 +141,15 @@ class NutritionalPlansList extends riverpod.ConsumerWidget {
           return const TextPrompt();
         }
         return ListView.builder(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           itemCount: plans.length,
           itemBuilder: (context, index) {
             final currentPlan = plans[index];
             return Card(
+              margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
+                contentPadding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+                leading: const IconBadge(Icons.restaurant, size: 44),
                 onTap: () {
                   Navigator.of(context).pushNamed(
                     NutritionalPlanScreen.routeName,
@@ -171,9 +176,9 @@ class NutritionalPlansList extends riverpod.ConsumerWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const VerticalDivider(),
                     IconButton(
                       icon: const Icon(Icons.delete),
+                      color: context.atlas.ink3,
                       tooltip: AppLocalizations.of(context).delete,
                       onPressed: () => showConfirmDeleteDialog(
                         context,
