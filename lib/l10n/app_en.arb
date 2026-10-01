@@ -954,6 +954,116 @@
   "@registerWeight": {
     "description": "Button that opens the form of a new weight entry"
   },
+  "galleryTitle": "Progress photos",
+  "@galleryTitle": {
+    "description": "Title of the photo gallery"
+  },
+  "galleryCompare": "Compare",
+  "@galleryCompare": {
+    "description": "Tab of the gallery with the before and after slider"
+  },
+  "galleryAllCount": "All · {count}",
+  "@galleryAllCount": {
+    "description": "Tab of the gallery with all photos and their number",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryNeedTwo": "Add at least two photos to compare them.",
+  "@galleryNeedTwo": {
+    "description": "Shown in the gallery compare tab with fewer than two photos"
+  },
+  "galleryPickPhoto": "Pick a photo",
+  "@galleryPickPhoto": {
+    "description": "Title of the dialog to choose a photo to compare"
+  },
+  "trophyNext": "Next trophy",
+  "@trophyNext": {
+    "description": "Eyebrow of the card of the trophy closest to being earned"
+  },
+  "authHero1": "Your training.",
+  "@authHero1": {
+    "description": "First line of the welcome headline"
+  },
+  "authHero2": "Your data.",
+  "@authHero2": {
+    "description": "Second line of the welcome headline"
+  },
+  "authHero3": "Your server.",
+  "@authHero3": {
+    "description": "Third line of the welcome headline, in the accent colour"
+  },
+  "authSubtitle": "Routines, nutrition and progress in a free app that syncs with wger.",
+  "@authSubtitle": {
+    "description": "Subtitle of the welcome screen"
+  },
+  "authServerHeading": "Server",
+  "@authServerHeading": {
+    "description": "Heading above the choice of the server on the welcome screen"
+  },
+  "authServerOfficial": "Official server",
+  "@authServerOfficial": {
+    "description": "Name of the official wger server in the server choice"
+  },
+  "authServerOfficialSub": "wger.de · official server",
+  "@authServerOfficialSub": {
+    "description": "Subtitle of the official wger server in the server choice"
+  },
+  "authServerCustom": "My server",
+  "@authServerCustom": {
+    "description": "Name of the own server in the server choice"
+  },
+  "authServerCustomSub": "Your own wger instance",
+  "@authServerCustomSub": {
+    "description": "Subtitle of the own server in the server choice when no address is set"
+  },
+  "authFooter": "Open source · AGPL-3.0 · No ads or tracking",
+  "@authFooter": {
+    "description": "Line at the bottom of the welcome screen"
+  },
+  "glossarySubtitle": "Terms and abbreviations of wger",
+  "@glossarySubtitle": {
+    "description": "Subtitle of the glossary"
+  },
+  "glossarySearchHint": "Search: RIR, 1RM, kcal…",
+  "@glossarySearchHint": {
+    "description": "Hint of the glossary search field"
+  },
+  "glossaryCategoryAll": "All",
+  "@glossaryCategoryAll": {
+    "description": "Glossary filter chip showing every term"
+  },
+  "glossaryCategoryTraining": "Training",
+  "@glossaryCategoryTraining": {
+    "description": "Glossary filter chip for training terms"
+  },
+  "glossaryCategoryNutrition": "Nutrition",
+  "@glossaryCategoryNutrition": {
+    "description": "Glossary filter chip for nutrition terms"
+  },
+  "glossaryCategoryProgress": "Progress",
+  "@glossaryCategoryProgress": {
+    "description": "Glossary filter chip for progress terms"
+  },
+  "glossaryCategoryHealth": "Health",
+  "@glossaryCategoryHealth": {
+    "description": "Glossary filter chip for health terms"
+  },
+  "glossaryTermCount": "{count} terms",
+  "@glossaryTermCount": {
+    "description": "Number of glossary terms shown",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "glossaryFooter": "On any screen, tap an underlined word or the help button to see its explanation.",
+  "@glossaryFooter": {
+    "description": "Hint at the bottom of the glossary"
+  },
   "searchIngredient": "Search ingredient",
   "@searchIngredient": {
     "description": "Label (or Hint text) on ingredient search form"

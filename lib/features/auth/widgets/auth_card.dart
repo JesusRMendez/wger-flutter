@@ -29,10 +29,12 @@ import 'package:wger/core/exceptions/http_exception.dart';
 import 'package:wger/core/exceptions/mfa_required_exception.dart';
 import 'package:wger/core/network/auth_notifier.dart';
 import 'package:wger/core/network/auth_state.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/server_config_warning_dialog.dart';
 import 'package:wger/features/auth/screens/mfa_challenge_screen.dart';
 import 'package:wger/features/auth/widgets/advanced_sheet.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 import 'advanced_footer.dart';
 import 'auth_mode_switch_link.dart';
@@ -277,7 +279,6 @@ class _AuthCardState extends ConsumerState<AuthCard> {
   @override
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
-    final deviceSize = MediaQuery.sizeOf(context);
     final allowSelfSignedCerts = ref.watch(
       appSettingsProvider.select(
         (s) => s.value?.allowSelfSignedCerts ?? ALLOW_SELF_SIGNED_CERTS_DEFAULT,
@@ -306,17 +307,10 @@ class _AuthCardState extends ConsumerState<AuthCard> {
       );
     }
 
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0),
-      ),
-      elevation: 8.0,
-      child: Container(
-        width: deviceSize.width * 0.9,
-        padding: EdgeInsets.symmetric(
-          horizontal: 15.0,
-          vertical: 0.025 * deviceSize.height,
-        ),
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: EdgeInsets.zero,
         child: Form(
           key: _formKey,
           autovalidateMode: _autoValidate
@@ -358,7 +352,7 @@ class _AuthCardState extends ConsumerState<AuthCard> {
                       onTap: _isLoading ? null : _launchWebHandoff,
                     ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   // Bespoke submit:  the shared FormSubmitButton only surfaces
                   // WgerHttpException and has no style override, so it is
                   // intentionally not used here.
@@ -369,29 +363,37 @@ class _AuthCardState extends ConsumerState<AuthCard> {
                   // above.
                   SizedBox(
                     width: double.infinity,
-                    height: 45,
+                    height: 56,
                     child: ElevatedButton(
                       key: const Key('actionButton'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AtlasRadius.control),
+                        ),
+                        textStyle: Theme.of(context).textTheme.titleMedium,
+                      ),
                       onPressed: () {
                         if (!_isLoading) {
                           _submit(context);
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                      ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ? SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation(
+                                  Theme.of(context).colorScheme.onPrimary,
+                                ),
+                              ),
                             )
                           : Text(
                               _authMode == AuthMode.register
                                   ? i18n.register
                                   : (_useUsernameAndPassword ? i18n.login : i18n.signInWithToken),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
                             ),
                     ),
                   ),
@@ -401,6 +403,19 @@ class _AuthCardState extends ConsumerState<AuthCard> {
                     isLogin: _authMode == AuthMode.login,
                     onTap: _switchAuthMode,
                   ),
+                  const SizedBox(height: 20),
+                  _ServerChoice(
+                    custom: !_hideCustomServer,
+                    host: _serverUrlController.text.trim().replaceFirst(RegExp(r'^https?://'), ''),
+                    onOfficial: () => setState(() {
+                      _hideCustomServer = true;
+                      _serverUrlController.text = DEFAULT_SERVER_PROD;
+                    }),
+                    onCustom: () {
+                      setState(() => _hideCustomServer = false);
+                      _showAdvancedSheet(allowSelfSignedCerts);
+                    },
+                  ),
                   const SizedBox(height: 4),
                   AdvancedFooter(
                     isCustomServer: !_hideCustomServer,
@@ -408,12 +423,134 @@ class _AuthCardState extends ConsumerState<AuthCard> {
                     serverUrl: _serverUrlController.text,
                     onTap: () => _showAdvancedSheet(allowSelfSignedCerts),
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    i18n.authFooter,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.atlas.ink3,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The two servers one can sign in to as selectable cards: the official one
+/// and a self-hosted instance (whose address is entered in the advanced sheet).
+class _ServerChoice extends StatelessWidget {
+  const _ServerChoice({
+    required this.custom,
+    required this.host,
+    required this.onOfficial,
+    required this.onCustom,
+  });
+
+  final bool custom;
+  final String host;
+  final VoidCallback onOfficial;
+  final VoidCallback onCustom;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+
+    Widget card(
+      Key key,
+      IconData icon,
+      String title,
+      String subtitle,
+      bool selected,
+      VoidCallback onTap,
+    ) {
+      return AtlasCard(
+        key: key,
+        onTap: onTap,
+        borderColor: selected ? theme.colorScheme.primary : null,
+        color: selected ? atlas.surface2 : null,
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            IconBadge(icon, size: 40),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.titleSmall),
+                  MonoText(
+                    subtitle,
+                    size: 12.5,
+                    weight: FontWeight.w500,
+                    color: atlas.ink3,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            AnimatedContainer(
+              duration: AtlasMotion.of(context),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? theme.colorScheme.primary : atlas.line2,
+                  width: 2,
+                ),
+              ),
+              child: selected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionEyebrow(i18n.authServerHeading),
+        const SizedBox(height: 10),
+        card(
+          const ValueKey('server-official'),
+          Icons.public_outlined,
+          i18n.authServerOfficial,
+          i18n.authServerOfficialSub,
+          !custom,
+          onOfficial,
+        ),
+        const SizedBox(height: 10),
+        card(
+          const ValueKey('server-custom'),
+          Icons.dns_outlined,
+          i18n.authServerCustom,
+          custom && host.isNotEmpty && host != Uri.parse(DEFAULT_SERVER_PROD).host
+              ? host
+              : i18n.authServerCustomSub,
+          custom,
+          onCustom,
+        ),
+      ],
     );
   }
 }

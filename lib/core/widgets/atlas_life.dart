@@ -240,6 +240,7 @@ class SplitBar extends StatelessWidget {
         height: height,
         child: Row(
           spacing: 3,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (var i = 0; i < values.length; i++)
               if (values[i] > 0)

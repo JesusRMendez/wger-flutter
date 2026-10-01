@@ -23,6 +23,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:network_image_mock/network_image_mock.dart';
 import 'package:wger/core/network/network_provider.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/features/gallery/providers/gallery_repository.dart';
 import 'package:wger/features/gallery/screens/gallery_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
@@ -64,7 +65,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final fab = tester.widget<FloatingActionButton>(find.byType(FloatingActionButton));
-    expect(fab.onPressed, isNull);
+    final button = tester.widget<RoundIconButton>(find.byType(RoundIconButton));
+    expect(button.onPressed, isNull);
   });
 }

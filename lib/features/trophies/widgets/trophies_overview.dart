@@ -37,7 +37,7 @@ class TrophiesOverview extends ConsumerWidget {
     final width = MediaQuery.widthOf(context);
     int crossAxisCount = 1;
     if (width <= MATERIAL_XS_BREAKPOINT) {
-      crossAxisCount = 2;
+      crossAxisCount = 3;
     } else if (width > MATERIAL_XS_BREAKPOINT && width < MATERIAL_MD_BREAKPOINT) {
       crossAxisCount = 3;
     } else if (width >= MATERIAL_MD_BREAKPOINT && width < MATERIAL_LG_BREAKPOINT) {
@@ -60,6 +60,13 @@ class TrophiesOverview extends ConsumerWidget {
       );
     }
 
+    // The unearned progressive trophy that is closest to done
+    final next =
+        (trophyState.trophyProgression
+                .where((t) => !t.isEarned && t.trophy.isProgressive && t.progress > 0)
+                .toList()
+              ..sort((a, b) => b.progress.compareTo(a.progress)))
+            .firstOrNull;
     final earned = trophyState.trophyProgression.where((t) => t.isEarned).length;
     final total = trophyState.trophyProgression.length;
 
@@ -86,38 +93,108 @@ class TrophiesOverview extends ConsumerWidget {
     return RepaintBoundary(
       child: CustomScrollView(
         slivers: [
+          if (next != null)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              sliver: SliverToBoxAdapter(child: _NextTrophyCard(next)),
+            ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
             sliver: SliverToBoxAdapter(
-              child: Row(
-                children: [
-                  stat('trophy-stat-earned', earned, i18n.trophiesEarned),
-                  const SizedBox(width: 8),
-                  stat('trophy-stat-to-earn', total - earned, i18n.trophiesToEarn),
-                  const SizedBox(width: 8),
-                  stat(
-                    'trophy-stat-prs',
-                    trophyState.prTrophies.length,
-                    i18n.trophiesPersonalRecords,
-                  ),
-                ],
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    stat('trophy-stat-earned', earned, i18n.trophiesEarned),
+                    const SizedBox(width: 10),
+                    stat('trophy-stat-to-earn', total - earned, i18n.trophiesToEarn),
+                    const SizedBox(width: 10),
+                    stat(
+                      'trophy-stat-prs',
+                      trophyState.prTrophies.length,
+                      i18n.trophiesPersonalRecords,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             sliver: SliverGrid.builder(
               key: const ValueKey('trophy-grid'),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 0.66,
               ),
               itemCount: total,
               itemBuilder: (context, index) {
                 return _TrophyCardImage(userProgression: trophyState.trophyProgression[index]);
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NextTrophyCard extends StatelessWidget {
+  final UserTrophyProgression progression;
+
+  const _NextTrophyCard(this.progression);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+    final i18n = AppLocalizations.of(context);
+    final progress = (progression.progress.toDouble() / 100.0).clamp(0.0, 1.0);
+    final display = progression.progressDisplay ?? '${progression.progress.round()}%';
+
+    return AtlasCard(
+      key: const ValueKey('trophy-next'),
+      color: Color.alphaBlend(atlas.accent.withValues(alpha: 0.10), atlas.card),
+      borderColor: atlas.accent.withValues(alpha: 0.4),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionEyebrow(i18n.trophyNext, color: atlas.accent),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              ProgressRing(
+                size: 84,
+                strokeWidth: 9,
+                value: progress,
+                color: atlas.accent,
+                child: MonoText(display, size: 15, color: theme.colorScheme.onSurface),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      progression.trophy.name,
+                      style: theme.textTheme.titleLarge,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      progression.trophy.description,
+                      style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink3),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -136,75 +213,64 @@ class _TrophyCardImage extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final atlas = context.atlas;
 
-    final double progress = (userProgression.progress.toDouble() / 100.0).clamp(0.0, 1.0);
+    final double progress = userProgression.isEarned
+        ? 1.0
+        : (userProgression.progress.toDouble() / 100.0).clamp(0.0, 1.0);
+    final earned = userProgression.isEarned;
 
     return Opacity(
-      opacity: userProgression.isEarned ? 1.0 : 0.5,
+      opacity: earned ? 1.0 : 0.6,
       child: AtlasCard(
-        padding: EdgeInsets.zero,
-        borderColor: userProgression.isEarned ? atlas.accent.withValues(alpha: 0.5) : null,
-        child: Stack(
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+        borderColor: earned ? atlas.accent.withValues(alpha: 0.5) : null,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 70,
-                    height: 70,
-                    child: ClipOval(
-                      child: Image.network(
-                        userProgression.trophy.image,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Center(
-                          child: Icon(Icons.emoji_events, size: 28, color: colorScheme.primary),
-                        ),
-                      ),
+            ProgressRing(
+              size: 66,
+              strokeWidth: 4,
+              value: progress,
+              color: earned ? atlas.accent : atlas.accent.withValues(alpha: 0.7),
+              child: SizedBox(
+                width: 50,
+                height: 50,
+                child: ClipOval(
+                  child: Image.network(
+                    userProgression.trophy.image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Icon(Icons.emoji_events_outlined, size: 26, color: atlas.accent),
                     ),
                   ),
-
-                  Text(
-                    userProgression.trophy.name,
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-
-                  Text(
-                    userProgression.trophy.description,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-
-                  if (userProgression.trophy.isProgressive && !userProgression.isEarned)
-                    Tooltip(
-                      message: 'Progress: ${userProgression.progressDisplay}',
-                      child: SizedBox(
-                        height: 6,
-                        child: AtlasBar(value: progress, color: atlas.accent),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
-            if (userProgression.isEarned)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(color: atlas.ok, shape: BoxShape.circle),
-                  child: Icon(Icons.check, size: 16, color: atlas.onHero),
+            const SizedBox(height: 8),
+            Text(
+              userProgression.trophy.name,
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              userProgression.trophy.description,
+              style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3, fontSize: 11),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            if (earned || userProgression.trophy.isProgressive)
+              Tooltip(
+                message: earned ? '' : 'Progress: ${userProgression.progressDisplay}',
+                child: SizedBox(
+                  height: 5,
+                  child: AtlasBar(
+                    value: progress,
+                    color: earned ? atlas.accent : colorScheme.outline,
+                  ),
                 ),
               ),
           ],

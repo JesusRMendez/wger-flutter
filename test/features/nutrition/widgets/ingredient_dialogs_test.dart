@@ -20,7 +20,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/features/nutrition/models/ingredient.dart';
 import 'package:wger/features/nutrition/models/ingredient_image.dart';
+import 'package:wger/features/nutrition/models/ingredient_weight_unit.dart';
 import 'package:wger/features/nutrition/widgets/ingredient_dialogs.dart';
+import 'package:wger/features/nutrition/widgets/nutri_score_badge.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/l10n/localizations_delegates.dart';
 
@@ -220,6 +222,57 @@ void main() {
         expect(find.byType(AlertDialog), findsNothing);
       },
     );
+  });
+
+  group('IngredientDetails portions', () {
+    testWidgets('a portion chip sets the amount and the values follow', (tester) async {
+      final ingredient = makeDetailIngredient()
+        ..weightUnits = [
+          const IngredientWeightUnit(
+            id: 1,
+            uuid: 'u',
+            ingredientId: 1,
+            name: 'cup',
+            grams: 250,
+          ),
+        ];
+      await tester.pumpWidget(detailHost(IngredientDetails(ingredient)));
+
+      // 100 g: 100 kcal
+      expect(find.text('per 100 g'), findsOneWidget);
+
+      await tester.tap(find.text('cup · 250 g'));
+      await tester.pumpAndSettle();
+      expect(find.text('per 250 g'), findsOneWidget);
+      // the amount and the energy tile
+      expect(find.text('250'), findsNWidgets(2));
+      // 250 g of an ingredient with 100 kcal per 100 g
+      expect(find.text('250 kcal'), findsOneWidget);
+    });
+
+    testWidgets('the Nutri-Score strip and the dietary chips show what is known', (tester) async {
+      final ingredient = Ingredient(
+        id: 1,
+        remoteId: '1',
+        sourceName: 'x',
+        sourceUrl: 'x',
+        code: null,
+        name: 'Oats',
+        created: DateTime.utc(2026),
+        energy: 370,
+        carbohydrates: 60,
+        protein: 13,
+        fat: 7,
+        isVegan: true,
+        isVegetarian: true,
+        nutriscore: NutriScore.a,
+      );
+      await tester.pumpWidget(detailHost(IngredientDetails(ingredient)));
+
+      expect(find.byType(NutriScoreStrip), findsOneWidget);
+      expect(find.text('Vegan'), findsOneWidget);
+      expect(find.text('Vegetarian'), findsOneWidget);
+    });
   });
 
   group('IngredientDetails widget tests', () {

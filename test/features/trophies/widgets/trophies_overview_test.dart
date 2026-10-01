@@ -56,8 +56,12 @@ void main() {
       expect(find.text('New Year, New Me'), findsOneWidget);
       expect(find.text('Work out on January 1st'), findsOneWidget);
 
-      expect(find.text('Unstoppable'), findsOneWidget);
-      expect(find.text('Maintain a 30-day workout streak'), findsOneWidget);
+      // Once in the grid and once on the card of the next trophy, which is the
+      // unearned one with progress
+      expect(find.text('Unstoppable'), findsNWidgets(2));
+      expect(find.text('Maintain a 30-day workout streak'), findsNWidgets(2));
+      expect(find.byKey(const ValueKey('trophy-next')), findsOneWidget);
+      expect(find.text('NEXT TROPHY'), findsOneWidget);
     });
   });
 
