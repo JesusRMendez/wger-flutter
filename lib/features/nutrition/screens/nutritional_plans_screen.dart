@@ -72,7 +72,7 @@ class NutritionalPlansScreen extends ConsumerWidget {
             ),
           );
         },
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add),
       ),
       body: const WidescreenWrapper(child: NutritionalPlansList()),
     );

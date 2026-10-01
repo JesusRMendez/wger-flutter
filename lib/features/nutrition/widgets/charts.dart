@@ -113,6 +113,100 @@ class FlNutritionalPlanGoalWidget extends StatelessWidget {
   }
 }
 
+/// The day at a glance: a big ring for the energy and one small ring each for
+/// protein, carbohydrates and fat, logged against planned.
+class DiaryRings extends StatelessWidget {
+  const DiaryRings({super.key, required this.planned, required this.logged});
+
+  final NutritionalValues planned;
+  final NutritionalValues logged;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final atlas = context.atlas;
+
+    double frac(double l, double p) => p > 0 ? l / p : 0;
+    final surplus = planned.energy > 0 && logged.energy > planned.energy;
+
+    Widget small(String label, double l, double p, Color color) {
+      final over = p > 0 && l > p;
+      return Expanded(
+        child: Column(
+          children: [
+            ProgressRing(
+              size: 64,
+              strokeWidth: 7,
+              value: frac(l, p),
+              color: over ? COLOR_SURPLUS : color,
+              child: MonoText(l.toStringAsFixed(0), size: 14),
+            ),
+            const SizedBox(height: 6),
+            Text(label, style: theme.textTheme.bodySmall),
+            MonoText(
+              planned.protein == 0 && p == 0 ? '' : '/ ${p.toStringAsFixed(0)} ${i18n.g}',
+              size: 11,
+              weight: FontWeight.w500,
+              color: atlas.ink3,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            ProgressRing(
+              size: 128,
+              strokeWidth: 11,
+              value: frac(logged.energy, planned.energy),
+              color: surplus ? COLOR_SURPLUS : theme.colorScheme.onSurface,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MonoText(logged.energy.toStringAsFixed(0), size: 26),
+                  Text(
+                    i18n.kcal,
+                    style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(i18n.logged, style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3)),
+                  MonoText(i18n.kcalValue(logged.energy.toStringAsFixed(0)), size: 18),
+                  const SizedBox(height: 10),
+                  Text(i18n.planned, style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3)),
+                  MonoText(
+                    i18n.kcalValue(planned.energy.toStringAsFixed(0)),
+                    size: 18,
+                    color: atlas.ink2,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            small(i18n.protein, logged.protein, planned.protein, atlas.protein),
+            small(i18n.carbohydrates, logged.carbohydrates, planned.carbohydrates, atlas.carbs),
+            small(i18n.fat, logged.fat, planned.fat, atlas.fat),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class NutritionData {
   final String name;
   final double value;

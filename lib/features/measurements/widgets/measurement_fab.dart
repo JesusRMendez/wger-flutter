@@ -33,7 +33,7 @@ class MeasurementsFab extends StatelessWidget {
     return FloatingActionButton(
       onPressed: () => showMetricPicker(context),
       tooltip: AppLocalizations.of(context).trackNewMetric,
-      child: const Icon(Icons.add, color: Colors.white),
+      child: const Icon(Icons.add),
     );
   }
 }
