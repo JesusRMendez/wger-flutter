@@ -16,7 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/app_settings_notifier.dart';
+import 'package:wger/core/settings_dashboard_widgets_screen.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
 import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/account/widgets/settings/certs_not_verified.dart';
@@ -33,13 +36,13 @@ import 'package:wger/features/routines/screens/settings_plates_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 import 'package:wger/theme/atlas.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends ConsumerWidget {
   static String routeName = '/SettingsPage';
 
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final i18n = AppLocalizations.of(context);
 
     return Scaffold(
@@ -56,35 +59,51 @@ class SettingsPage extends StatelessWidget {
               SettingsDataPrivacy(),
               HealthSyncSettingsTile(topDivider: true),
             ]),
-            _SettingsSection(i18n.others, [
-              const SettingsLanguage(),
-              const SettingsTheme(),
-              ListTile(
-                title: Text(i18n.selectAvailablePlates),
-                onTap: () {
-                  Navigator.of(context).pushNamed(ConfigurePlatesScreen.routeName);
-                },
-                trailing: const Icon(Icons.chevron_right),
-              ),
-              ListTile(
-                title: Text(i18n.coachMyAi),
-                onTap: () => Navigator.of(context).pushNamed(MyAiScreen.routeName),
-                trailing: const Icon(Icons.chevron_right),
-              ),
-              ListTile(
-                key: const ValueKey('settings-training-locations'),
-                title: Text(i18n.locationsTitle),
-                onTap: () => Navigator.of(context).pushNamed(LocationsScreen.routeName),
-                trailing: const Icon(Icons.chevron_right),
-              ),
-              ListTile(
-                key: const ValueKey('settings-glossary'),
-                title: Text(i18n.glossaryTitle),
-                onTap: () => Navigator.of(context).pushNamed(GlossaryScreen.routeName),
-                trailing: const Icon(Icons.chevron_right),
-              ),
-              const SettingsVerboseLogging(),
+            _SettingsSection(i18n.settingsAppearance, const [
+              SettingsTheme(),
+              SettingsLanguage(),
             ]),
+            _SettingsSection(i18n.settingsTraining, [
+              _SettingsLink(
+                key: const ValueKey('settings-plates'),
+                icon: Icons.album_outlined,
+                title: i18n.selectAvailablePlates,
+                route: ConfigurePlatesScreen.routeName,
+              ),
+              _SettingsLink(
+                key: const ValueKey('settings-training-locations'),
+                icon: Icons.place_outlined,
+                title: i18n.locationsTitle,
+                route: LocationsScreen.routeName,
+              ),
+              _SettingsLink(
+                key: const ValueKey('settings-dashboard-widgets'),
+                icon: Icons.widgets_outlined,
+                title: i18n.dashboardWidgets,
+                route: ConfigureDashboardWidgetsScreen.routeName,
+                value: i18n.settingsDashboardWidgetsValue(
+                  ref
+                      .watch(appSettingsProvider)
+                      .maybeWhen(
+                        data: (s) => s.dashboardItems.visibleWidgets.length,
+                        orElse: () => defaultDashboardItems.length,
+                      ),
+                ),
+              ),
+              _SettingsLink(
+                key: const ValueKey('settings-my-ai'),
+                icon: Icons.auto_awesome_outlined,
+                title: i18n.coachMyAi,
+                route: MyAiScreen.routeName,
+              ),
+              _SettingsLink(
+                key: const ValueKey('settings-glossary'),
+                icon: Icons.menu_book_outlined,
+                title: i18n.glossaryTitle,
+                route: GlossaryScreen.routeName,
+              ),
+            ]),
+            _SettingsSection(i18n.others, const [SettingsVerboseLogging()]),
           ],
         ),
       ),
@@ -123,6 +142,48 @@ class _SettingsSection extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A row that opens another screen: a round icon, the title, what is set now
+/// (when there is something to say) and a chevron.
+class _SettingsLink extends StatelessWidget {
+  const _SettingsLink({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.route,
+    this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String route;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: () => Navigator.of(context).pushNamed(route),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            IconBadge(icon, size: 40, color: atlas.ink2),
+            const SizedBox(width: 14),
+            Expanded(child: Text(title, style: theme.textTheme.titleSmall)),
+            if (value != null) ...[
+              Text(value!, style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3)),
+              const SizedBox(width: 4),
+            ],
+            Icon(Icons.chevron_right, color: atlas.ink3),
+          ],
+        ),
       ),
     );
   }

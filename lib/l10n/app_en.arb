@@ -3083,5 +3083,34 @@
         "type": "int"
       }
     }
+  },
+  "themeSystemShort": "System",
+  "@themeSystemShort": {
+    "description": "Short label of the system theme in the theme selector"
+  },
+  "themeDarkShort": "Dark",
+  "@themeDarkShort": {
+    "description": "Short label of the dark theme in the theme selector"
+  },
+  "themeLightShort": "Light",
+  "@themeLightShort": {
+    "description": "Short label of the light theme in the theme selector"
+  },
+  "settingsAppearance": "Appearance",
+  "@settingsAppearance": {
+    "description": "Title of the settings section for theme, color and language"
+  },
+  "settingsTraining": "Training",
+  "@settingsTraining": {
+    "description": "Title of the settings section for training related options"
+  },
+  "settingsDashboardWidgetsValue": "{count} active",
+  "@settingsDashboardWidgetsValue": {
+    "description": "Number of dashboard widgets that are shown, trailing value of a settings row",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -101,13 +101,39 @@ void main() {
     });
   });
 
+  group('Training rows', () {
+    testWidgets('link to their screens and say how many dashboard widgets are shown', (
+      tester,
+    ) async {
+      await tester.pumpWidget(createSettingsScreen());
+      await tester.pumpAndSettle();
+
+      for (final key in [
+        'settings-plates',
+        'settings-training-locations',
+        'settings-dashboard-widgets',
+        'settings-my-ai',
+        'settings-glossary',
+      ]) {
+        expect(find.byKey(ValueKey(key), skipOffstage: false), findsOneWidget, reason: key);
+      }
+      expect(
+        find.text('${DashboardWidget.values.length} active', skipOffstage: false),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('Theme settings', () {
     testWidgets('Test changing the theme mode in preferences', (WidgetTester tester) async {
       await tester.pumpWidget(createSettingsScreen());
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('themeModeDropdown')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Always light mode'));
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('themeModeSegmented')),
+          matching: find.text('Light'),
+        ),
+      );
       await tester.pumpAndSettle();
 
       verify(mockSharedPreferences.setBool(PREFS_USER_DARK_THEME, false)).called(1);
@@ -144,7 +170,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('useDynamicColorSwitch')), findsNothing);
-      expect(find.byKey(const ValueKey('themeModeDropdown')), findsOneWidget);
+      expect(find.byKey(const ValueKey('themeModeSegmented')), findsOneWidget);
     });
   });
 
