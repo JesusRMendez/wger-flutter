@@ -3305,5 +3305,23 @@
         "type": "int"
       }
     }
+  },
+  "newRecords": "{count, plural, =1{1 new record (PR)} other{{count} new records (PR)}}",
+  "@newRecords": {
+    "description": "Heading of the personal records card of the workout summary",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "estimatedOneRepMax": "1RM est. {value}",
+  "@estimatedOneRepMax": {
+    "description": "Estimated one rep max under a personal record",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
   }
 }
