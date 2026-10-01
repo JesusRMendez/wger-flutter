@@ -3479,5 +3479,18 @@
   "exerciseAlternativesEmpty": "No variations of this exercise.",
   "@exerciseAlternativesEmpty": {
     "description": "Empty state of the alternatives tab"
+  },
+  "musicOpen": "Open",
+  "@musicOpen": {
+    "description": "Button that opens a music service search"
+  },
+  "musicServiceHint": "Search playlists for {range} BPM",
+  "@musicServiceHint": {
+    "description": "Hint under a music service on the music card",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
   }
 }

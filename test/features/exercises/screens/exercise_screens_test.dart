@@ -36,6 +36,7 @@ import 'package:wger/l10n/localizations_delegates.dart';
 
 import '../../../../test_data/screenshots/exercises.dart';
 import '../../../../test_data/screenshots/routines.dart';
+import '../../../helpers/fake_connectivity.dart';
 
 class _FakeFilters extends ExerciseListFiltersNotifier {
   _FakeFilters(this.exercises);
@@ -75,6 +76,7 @@ Widget _app(Widget home, List<Override> overrides) => ProviderScope(
 );
 
 void main() {
+  installFakeConnectivity();
   final exercises = getScreenshotExercises();
 
   testWidgets('exercise list: search hint with the total, category chips and a count', (
@@ -146,5 +148,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('exercise-tab-alternatives')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('exercise-alternatives-empty')), findsOneWidget);
+
+    // Let the pending provider timers run out
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 5));
   });
 }

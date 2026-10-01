@@ -60,6 +60,35 @@ void main() {
     expect(find.text('Recommended tempo: 100-120 BPM'), findsOneWidget);
   });
 
+  testWidgets('shows the phase against rest as tiles', (tester) async {
+    await tester.pumpWidget(render());
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('music-tile-phase')),
+        matching: find.text('120-140'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('music-tile-contrast')),
+        matching: find.text('90-110'),
+      ),
+      findsOneWidget,
+    );
+
+    // The rest phase is shown against the strength phase
+    await tester.tap(find.byKey(const ValueKey('music-phase-rest')));
+    await tester.pump();
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('music-tile-contrast')),
+        matching: find.text('120-140'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('opens Spotify and YouTube Music for the phase', (tester) async {
     await tester.pumpWidget(render(phase: MusicPhase.hiit));
 
