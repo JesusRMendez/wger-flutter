@@ -104,14 +104,22 @@ void main() {
 
       expect(find.text('3 day workout'), findsOneWidget);
 
+      // One tab per day, the first day is shown with its summary and exercises
+      expect(find.byKey(const ValueKey('day-tab-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('day-tab-1')), findsOneWidget);
       expect(find.text('first day'), findsOneWidget);
-      expect(find.text('chest, shoulders'), findsOneWidget);
-
       expect(find.text('second day'), findsOneWidget);
-      expect(find.text('legs'), findsOneWidget);
+      expect(find.textContaining(' sets · ≈ '), findsOneWidget);
+      expect(find.byKey(const ValueKey('slot-card-1')), findsOneWidget);
 
-      expect(find.byType(Card), findsWidgets);
-      // expect(find.byType(Card), findsNWidgets(4));
+      // Starting the shown day
+      expect(find.byKey(const ValueKey('routine-start-day')), findsOneWidget);
+      expect(find.text('Start first day'), findsOneWidget);
+
+      // Switching the tab switches the day and the button
+      await tester.tap(find.byKey(const ValueKey('day-tab-1')));
+      await tester.pumpAndSettle();
+      expect(find.text('Start second day'), findsOneWidget);
     },
     tags: ['golden'],
   );

@@ -65,12 +65,14 @@ void main() {
     ),
   );
 
-  Widget render() => ProviderScope(
+  Widget render({bool showSetup = false}) => ProviderScope(
     child: MaterialApp(
       locale: const Locale('en'),
       localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: GuidedRoutineView(steps())),
+      home: Scaffold(
+        body: GuidedRoutineView(steps(), showSetup: showSetup, title: 'Home circuit'),
+      ),
     ),
   );
 
@@ -205,5 +207,73 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('glossary-help-button')));
     await tester.pumpAndSettle();
     expect(find.text('Glossary'), findsOneWidget);
+  });
+
+  testWidgets('the setup page lists the exercises, adjusts the times and starts', (tester) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    PlatformCalls.install(tester);
+
+    await tester.pumpWidget(render(showSetup: true));
+
+    // Nothing runs before the start button
+    expect(find.byKey(const ValueKey('guided-setup')), findsOneWidget);
+    expect(find.text('Home circuit'), findsOneWidget);
+    expect(find.byKey(const ValueKey('guided-setup-row-0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('guided-setup-row-2')), findsOneWidget);
+    expect(find.text('2 sets · 5 Seconds'), findsOneWidget);
+    expect(find.byKey(const ValueKey('guided-phase')), findsNothing);
+    await seconds(tester, 5);
+    expect(find.byKey(const ValueKey('guided-phase')), findsNothing);
+
+    // 2 timed sets of 5 s, 8 reps (45 s assumed), max reps (45 s assumed), the
+    // countdowns and the rests between the sets
+    final base = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byKey(const ValueKey('guided-estimate')),
+            matching: find.byType(Text),
+          ),
+        )
+        .data!;
+    await tester.tap(find.byKey(const ValueKey('guided-work-delta-plus')));
+    await tester.tap(find.byKey(const ValueKey('guided-rest-delta-plus')));
+    await tester.pump();
+    final more = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byKey(const ValueKey('guided-estimate')),
+            matching: find.byType(Text),
+          ),
+        )
+        .data!;
+    expect(more, isNot(base));
+    expect(find.text('+5 s'), findsNWidgets(2));
+
+    // The adjustments reach the running routine: 5 s of work become 10 s
+    await tester.tap(find.byKey(const ValueKey('guided-start-button')));
+    await tester.pump();
+    expect(phase(tester), 'Get ready');
+    await seconds(tester, 3);
+    expect(phase(tester), 'Work');
+    expect(find.text('0:10'), findsOneWidget);
+    expect(find.byKey(const ValueKey('guided-segments')), findsOneWidget);
+  });
+
+  testWidgets('a reps set shows a ring with the plan', (tester) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    PlatformCalls.install(tester);
+    await tester.pumpWidget(render());
+    for (var i = 0; i < 12; i++) {
+      if (find.byKey(const ValueKey('guided-reps-ring')).evaluate().isNotEmpty) {
+        break;
+      }
+      await tester.tap(find.byKey(const ValueKey('guided-skip-button')));
+      await tester.pump();
+    }
+    expect(find.byKey(const ValueKey('guided-reps-ring')), findsOneWidget);
   });
 }

@@ -121,8 +121,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nutritional plans'), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(2));
-    expect(find.byType(ListTile), findsNWidgets(2));
+    // The newest plan is the active one (hero card), the other is listed below
+    expect(find.text('ACTIVE PLAN'), findsOneWidget);
+    expect(find.text('Other plans'), findsOneWidget);
+    expect(find.text('test plan 2'), findsOneWidget);
+    expect(find.text('test plan 1'), findsOneWidget);
   });
 
   testWidgets('Test deleting an item using the Delete button', (WidgetTester tester) async {
@@ -189,7 +192,7 @@ void main() {
 
     // note .. "(open ended)" at the time, depending on localisation strings
     expect(find.textContaining('from 1/1/2021 ('), findsOneWidget);
-    expect(find.textContaining('from 1/10/2021 ('), findsOneWidget);
+    expect(find.textContaining('from 1/10/2021'), findsOneWidget);
   });
 
   testWidgets('Tests the localization of dates - DE', (WidgetTester tester) async {
@@ -198,6 +201,6 @@ void main() {
     // note .. "(open ended)" at the time, depending on localisation strings
 
     expect(find.textContaining('from 1.1.2021 ('), findsOneWidget);
-    expect(find.textContaining('from 10.1.2021 ('), findsOneWidget);
+    expect(find.textContaining('10.1.2021'), findsOneWidget);
   });
 }

@@ -105,7 +105,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final initial = container.read(appSettingsProvider).requireValue.dashboardItems.visibleWidgets;
-    expect(initial[0], DashboardWidget.trophies);
+    expect(initial[0], DashboardWidget.activity);
     expect(initial[1], DashboardWidget.routines);
     expect(initial[2], DashboardWidget.nutrition);
 
@@ -117,7 +117,7 @@ void main() {
 
     final updated = container.read(appSettingsProvider).requireValue.dashboardItems.visibleWidgets;
     expect(updated, isNot(orderedEquals(initial)));
-    expect(updated.indexOf(DashboardWidget.trophies), greaterThan(0));
+    expect(updated.indexOf(DashboardWidget.activity), greaterThan(0));
   });
 }
 

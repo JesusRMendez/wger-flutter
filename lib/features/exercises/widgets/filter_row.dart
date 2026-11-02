@@ -18,10 +18,12 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:wger/core/network/network_provider.dart';
+import 'package:wger/core/i18n.dart';
+import 'package:wger/core/widgets/atlas.dart';
+import 'package:wger/features/exercises/models/category.dart';
 import 'package:wger/features/exercises/providers/exercise_filters_notifier.dart';
-import 'package:wger/features/exercises/screens/add_exercise_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 import 'filter_modal.dart';
 
@@ -56,78 +58,96 @@ class _FilterRowState extends ConsumerState<FilterRow> {
       });
   }
 
+  /// Selects exactly [category], or nothing for null ("All")
+  void _selectCategory(ExerciseCategory? category) {
+    final filters = ref.read(exerciseListFiltersProvider).filters;
+    final items = {
+      for (final c in filters.exerciseCategories.items.keys) c: category != null && c == category,
+    };
+    ref
+        .read(exerciseListFiltersProvider.notifier)
+        .setFilters(
+          filters.copyWith(
+            exerciseCategories: filters.exerciseCategories.copyWith(items: items),
+          ),
+          Localizations.localeOf(context).languageCode,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isOnline = ref.watch(networkStatusProvider);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: _exerciseNameController,
-              decoration: InputDecoration(
-                hintText: '${AppLocalizations.of(context).exerciseName}...',
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              IconButton(
-                onPressed: () async {
+    final i18n = AppLocalizations.of(context);
+    final atlas = context.atlas;
+    final state = ref.watch(exerciseListFiltersProvider);
+    final categories = state.filters.exerciseCategories;
+    final selected = categories.selected;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+          child: TextFormField(
+            key: const ValueKey('exercise-search'),
+            controller: _exerciseNameController,
+            decoration: InputDecoration(
+              hintText: i18n.exercisesSearchHint(state.exercises.length),
+              prefixIcon: Icon(Icons.search, color: atlas.ink3),
+              suffixIcon: IconButton(
+                key: const ValueKey('exercise-filter-button'),
+                tooltip: i18n.filter,
+                icon: Icon(Icons.tune, color: atlas.ink2),
+                onPressed: () {
                   showModalBottomSheet(
                     context: context,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
+                        topLeft: Radius.circular(AtlasRadius.sheet),
+                        topRight: Radius.circular(AtlasRadius.sheet),
                       ),
                     ),
                     builder: (context) => const ExerciseFilterModalBody(),
                   );
                 },
-                icon: const Icon(Icons.filter_alt),
               ),
-              PopupMenuButton<ExerciseMoreOption>(
-                itemBuilder: (context) {
-                  return [
-                    PopupMenuItem<ExerciseMoreOption>(
-                      value: ExerciseMoreOption.ADD_EXERCISE,
-                      enabled: isOnline,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(AppLocalizations.of(context).contributeExercise),
-                          if (!isOnline) ...[
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.cloud_off,
-                              size: 16,
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ];
-                },
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                onSelected: (ExerciseMoreOption selectedOption) {
-                  switch (selectedOption) {
-                    case ExerciseMoreOption.ADD_EXERCISE:
-                      Navigator.of(context).pushNamed(AddExerciseScreen.routeName);
-                      break;
-                  }
-                },
-                icon: const Icon(Icons.more_vert),
-              ),
-            ],
+            ),
           ),
-        ],
-      ),
+        ),
+        if (categories.items.isNotEmpty)
+          SizedBox(
+            height: 44,
+            child: ListView(
+              key: const ValueKey('exercise-category-chips'),
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                Center(
+                  child: PillChip(
+                    i18n.filterAll,
+                    key: const ValueKey('category-chip-all'),
+                    selected: selected.isEmpty,
+                    height: 36,
+                    fontSize: 14,
+                    onTap: () => _selectCategory(null),
+                  ),
+                ),
+                for (final c in categories.items.keys) ...[
+                  const SizedBox(width: 8),
+                  Center(
+                    child: PillChip(
+                      getServerStringTranslation(c.name, context),
+                      key: ValueKey('category-chip-${c.id}'),
+                      selected: selected.length == 1 && selected.first == c,
+                      height: 36,
+                      fontSize: 14,
+                      onTap: () => _selectCategory(c),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -137,5 +157,3 @@ class _FilterRowState extends ConsumerState<FilterRow> {
     super.dispose();
   }
 }
-
-enum ExerciseMoreOption { ADD_EXERCISE }

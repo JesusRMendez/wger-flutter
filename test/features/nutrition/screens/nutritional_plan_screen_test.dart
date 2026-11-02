@@ -20,6 +20,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:clock/clock.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -134,7 +136,7 @@ void main() {
 
   testWidgets(
     'Test the widgets on the nutritional plan screen',
-    (tester) async {
+    (tester) => _atNoon(() async {
       tester.view.physicalSize = const Size(500, 1000);
       tester.view.devicePixelRatio = 1.0; // Ensure correct pixel ratio
       addTearDown(tester.view.reset);
@@ -151,14 +153,15 @@ void main() {
         );
       }
 
-      // Default view shows plan description, info button, and no ingredients
+      // Default view shows the plan, the meals with their items and the info buttons
       expect(find.text('Less fat, more protein'), findsOneWidget);
       expect(find.byIcon(Icons.info_outline), findsNWidgets(3)); // 2 meals, 1 "other logs"
       expect(find.byIcon(Icons.info), findsNothing);
-      expect(find.text('100 g Water'), findsNothing);
-      expect(find.text('75 g Burger soup'), findsNothing);
+      expect(find.text('Water'), findsOneWidget);
+      expect(find.text('Burger soup'), findsOneWidget);
+      expect(find.textContaining('100 g ·'), findsOneWidget);
 
-      // tap the first info button changes it and reveals ingredients for the first meal
+      // tap the first info button changes it and reveals the macros of the first meal
       var infoOutlineButtons = find.byIcon(Icons.info_outline);
       await tester.tap(infoOutlineButtons.first); // 2nd button shows up also, but is off-screen
       await tester.pumpAndSettle();
@@ -170,10 +173,6 @@ void main() {
         );
       }
 
-      // Ingredients show up now
-      expect(find.text('100 g Water'), findsOneWidget);
-      expect(find.text('75 g Burger soup'), findsOneWidget);
-
       // .. and the button icon has changed
       expect(find.byIcon(Icons.info_outline), findsNWidgets(2));
       expect(find.byIcon(Icons.info), findsOneWidget);
@@ -183,7 +182,6 @@ void main() {
       infoOutlineButtons = find.byIcon(Icons.info_outline);
 
       await tester.scrollUntilVisible(infoOutlineButtons.first, 30);
-      expect(find.text('300 g Broccoli cake'), findsNothing);
 
       await tester.tap(infoOutlineButtons.first);
       await tester.pumpAndSettle();
@@ -196,17 +194,15 @@ void main() {
       }
 
       expect(find.byIcon(Icons.info_outline), findsOneWidget);
-      expect(find.byIcon(Icons.info), findsNWidgets(2));
+      expect(find.byIcon(Icons.info, skipOffstage: false), findsNWidgets(2));
 
-      await tester.scrollUntilVisible(find.text('300 g Broccoli cake'), 30);
-      expect(find.text('300 g Broccoli cake'), findsOneWidget);
-
-      expect(find.byType(Card), findsNWidgets(3));
+      await tester.scrollUntilVisible(find.text('Broccoli cake'), 30);
+      expect(find.text('Broccoli cake'), findsOneWidget);
 
       // Restore the original window size.
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
-    },
+    }),
     tags: ['golden'],
   );
 
@@ -244,23 +240,31 @@ void main() {
     }
   });
 
-  testWidgets('Tests the localization of times - EN', (WidgetTester tester) async {
-    final container = makeContainer();
-    await tester.pumpWidget(createNutritionalPlan(container: container));
-    await tester.tap(find.byType(TextButton));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Tests the localization of times - EN',
+    (WidgetTester tester) => _atNoon(() async {
+      final container = makeContainer();
+      await tester.pumpWidget(createNutritionalPlan(container: container));
+      await tester.tap(find.byType(TextButton));
+      await tester.pumpAndSettle();
 
-    expect(find.textContaining('5:00 PM'), findsOneWidget);
-  });
+      // The meal row starts with its time; the "next meal" banner may repeat it
+      // depending on the time of day the test runs
+      expect(find.textContaining(RegExp(r'^5:00 PM')), findsOneWidget);
+    }),
+  );
 
-  testWidgets('Tests the localization of times - DE', (WidgetTester tester) async {
-    final container = makeContainer();
-    await tester.pumpWidget(createNutritionalPlan(locale: 'de', container: container));
-    await tester.tap(find.byType(TextButton));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Tests the localization of times - DE',
+    (WidgetTester tester) => _atNoon(() async {
+      final container = makeContainer();
+      await tester.pumpWidget(createNutritionalPlan(locale: 'de', container: container));
+      await tester.tap(find.byType(TextButton));
+      await tester.pumpAndSettle();
 
-    expect(find.textContaining('17:00'), findsOneWidget);
-  });
+      expect(find.textContaining(RegExp(r'^17:00')), findsOneWidget);
+    }),
+  );
 
   testWidgets('a plan deleted from the stream routes away instead of showing a phantom', (
     tester,
@@ -296,3 +300,9 @@ void main() {
     expect(find.byType(NutritionalPlanScreen), findsNothing);
   });
 }
+
+/// Runs [body] at a fixed date and time of day, so the date header and the
+/// "next meal" banner (and with them the goldens) don't depend on when the
+/// tests run
+Future<void> _atNoon(Future<void> Function() body) =>
+    withClock(Clock.fixed(DateTime(2026, 10, 1, 12)), body);

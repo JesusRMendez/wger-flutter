@@ -18,9 +18,12 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/i18n.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
 import 'package:wger/features/exercises/screens/exercise_screen.dart';
 import 'package:wger/features/exercises/widgets/images.dart';
+import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class ExerciseListTile extends StatelessWidget {
   const ExerciseListTile({super.key, required this.exercise});
@@ -29,34 +32,71 @@ class ExerciseListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double IMG_SIZE = 60;
+    const double IMG_SIZE = 54;
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    final i18n = AppLocalizations.of(context);
+    final equipment = exercise.equipment
+        .map((e) => getServerStringTranslation(e.name, context))
+        .join(', ');
 
-    return ListTile(
-      leading: SizedBox(
-        height: IMG_SIZE,
-        width: IMG_SIZE,
-        child: CircleAvatar(
-          backgroundColor: const Color(0x00ffffff),
-          child: ClipOval(
-            child: SizedBox(
-              height: IMG_SIZE,
-              width: IMG_SIZE,
-              child: ExerciseImageWidget(image: exercise.getMainImage),
-            ),
-          ),
-        ),
-      ),
-      title: Text(
-        exercise.getTranslation(Localizations.localeOf(context).languageCode).name,
-        overflow: TextOverflow.ellipsis,
-        maxLines: 2,
-      ),
-      subtitle: Text(
-        '${getServerStringTranslation(exercise.category.name, context)} / ${exercise.equipment.map((e) => getServerStringTranslation(e.name, context)).toList().join(', ')}',
-      ),
+    return Pressable(
+      borderRadius: BorderRadius.circular(AtlasRadius.card),
       onTap: () {
         Navigator.pushNamed(context, ExerciseDetailScreen.routeName, arguments: exercise);
       },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              height: IMG_SIZE,
+              width: IMG_SIZE,
+              decoration: BoxDecoration(
+                color: atlas.card,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: atlas.line),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: ExerciseImageWidget(image: exercise.getMainImage),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exercise.getTranslation(Localizations.localeOf(context).languageCode).name,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      getServerStringTranslation(exercise.category.name, context),
+                      if (equipment.isNotEmpty) equipment,
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: atlas.ink3),
+                  ),
+                ],
+              ),
+            ),
+            if (exercise.videos.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              PillChip(
+                i18n.video,
+                key: const ValueKey('exercise-video-chip'),
+                icon: Icons.play_arrow,
+                height: 28,
+                fontSize: 12,
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

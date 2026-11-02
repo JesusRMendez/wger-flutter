@@ -19,11 +19,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
-import 'package:wger/core/widgets/app_bar.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
 import 'package:wger/core/widgets/error.dart';
 import 'package:wger/core/widgets/object_gone_redirect.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
+import 'package:wger/features/routines/widgets/app_bar.dart';
 import 'package:wger/features/routines/widgets/routine_edit.dart';
 
 class RoutineEditScreen extends ConsumerWidget {
@@ -48,7 +48,7 @@ class RoutineEditScreen extends ConsumerWidget {
           return objectGoneRedirect(context);
         }
         return Scaffold(
-          appBar: EmptyAppBar(routine.name),
+          appBar: RoutineEditAppBar(routine),
           body: WidescreenWrapper(child: RoutineEdit(routine)),
         );
       },

@@ -45,6 +45,7 @@ class GuidedModeScreen extends ConsumerStatefulWidget {
 class _GuidedModeScreenState extends ConsumerState<GuidedModeScreen> {
   final _logger = Logger('GuidedModeScreen');
   Future<List<GuidedStep>>? _steps;
+  String? _title;
 
   Future<List<GuidedStep>> _load(GymModeArguments args) async {
     await yieldPastBuild();
@@ -74,6 +75,7 @@ class _GuidedModeScreenState extends ConsumerState<GuidedModeScreen> {
     final day = routine.dayDataGym.firstWhere(
       (d) => d.iteration == args.iteration && d.day?.id == args.dayId,
     );
+    _title = day.day?.name;
     return buildGuidedSteps(day);
   }
 
@@ -96,7 +98,7 @@ class _GuidedModeScreenState extends ConsumerState<GuidedModeScreen> {
                   child: StreamErrorIndicator(snapshot.error!, stacktrace: snapshot.stackTrace),
                 );
               }
-              return GuidedRoutineView(snapshot.data!);
+              return GuidedRoutineView(snapshot.data!, title: _title);
             },
           ),
         ),

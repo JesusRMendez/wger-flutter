@@ -42,10 +42,10 @@ void main() {
   testWidgets('Test the detail view for the nutritional plan', (WidgetTester tester) async {
     await tester.pumpWidget(getWidget());
 
-    expect(find.byType(FlNutritionalPlanPieChartWidget), findsOneWidget);
+    expect(find.byType(DiaryRings), findsOneWidget);
     expect(find.byType(Table), findsOneWidget);
 
-    expect(find.text('519 kcal'), findsOneWidget, reason: 'find total energy');
+    expect(find.text('519 kcal'), findsWidgets, reason: 'find total energy');
     expect(find.text('6 g'), findsOneWidget, reason: 'find grams of protein');
     expect(find.text('18 g'), findsOneWidget, reason: 'find grams of carbs');
     expect(find.text('4 g'), findsOneWidget, reason: 'find grams of sugar');

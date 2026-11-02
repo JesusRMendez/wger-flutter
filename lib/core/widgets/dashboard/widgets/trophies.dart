@@ -19,12 +19,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/network/network_provider.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/core.dart';
 import 'package:wger/core/widgets/wger_image.dart';
 import 'package:wger/features/trophies/models/trophy.dart';
 import 'package:wger/features/trophies/providers/trophy_notifier.dart';
 import 'package:wger/features/trophies/screens/trophy_screen.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class DashboardTrophiesWidget extends ConsumerWidget {
   const DashboardTrophiesWidget();
@@ -35,55 +37,50 @@ class DashboardTrophiesWidget extends ConsumerWidget {
     final isOnline = ref.watch(networkStatusProvider);
     final i18n = AppLocalizations.of(context);
 
-    return Card(
-      color: Colors.transparent,
-      shadowColor: Colors.transparent,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (trophiesState.nonPrTrophies.isEmpty)
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    title: Text(
-                      i18n.trophies,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    trailing: isOnline
-                        ? null
-                        : Icon(Icons.cloud_off, color: Theme.of(context).colorScheme.outline),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (trophiesState.nonPrTrophies.isEmpty)
+          AtlasCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CardHeader(
+                  icon: Icons.emoji_events_outlined,
+                  title: i18n.trophies,
+                  trailing: isOnline
+                      ? null
+                      : Icon(Icons.cloud_off, color: Theme.of(context).colorScheme.outline),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  i18n.noTrophies,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.atlas.ink2,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      i18n.noTrophies,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else
-            SizedBox(
-              height: 140,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                scrollDirection: Axis.horizontal,
-                itemCount: trophiesState.nonPrTrophies.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final userTrophy = trophiesState.nonPrTrophies[index];
-
-                  return SizedBox(
-                    width: 220,
-                    child: TrophyCard(trophy: userTrophy.trophy),
-                  );
-                },
-              ),
+                ),
+              ],
             ),
-        ],
-      ),
+          )
+        else
+          SizedBox(
+            height: 112,
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              scrollDirection: Axis.horizontal,
+              itemCount: trophiesState.nonPrTrophies.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final userTrophy = trophiesState.nonPrTrophies[index];
+
+                return SizedBox(
+                  width: 240,
+                  child: TrophyCard(trophy: userTrophy.trophy),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 }
@@ -98,57 +95,51 @@ class TrophyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card.filled(
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).pushNamed(TrophyScreen.routeName);
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return AtlasCard(
+      padding: const EdgeInsets.all(12),
+      onTap: () => Navigator.of(context).pushNamed(TrophyScreen.routeName),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  WgerImage(
-                    mediaPath: trophy.image,
-                    width: 60,
-                    height: 60,
-                    cacheWidth: 180,
-                    borderRadius: BorderRadius.circular(30),
-                    errorWidget: const CircleIconAvatar(
-                      Icon(Icons.emoji_events, color: Colors.grey),
-                      radius: 30,
+              WgerImage(
+                mediaPath: trophy.image,
+                width: 60,
+                height: 60,
+                cacheWidth: 180,
+                borderRadius: BorderRadius.circular(30),
+                errorWidget: const CircleIconAvatar(
+                  Icon(Icons.emoji_events, color: Colors.grey),
+                  radius: 30,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      trophy.name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          trophy.name,
-                          style: Theme.of(context).textTheme.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          trophy.description,
-                          style: Theme.of(context).textTheme.bodySmall,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      trophy.description,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }

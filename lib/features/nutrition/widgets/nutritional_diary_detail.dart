@@ -17,11 +17,13 @@
  */
 
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/nutrition/models/nutritional_plan.dart';
 import 'package:wger/features/nutrition/models/nutritional_values.dart';
 import 'package:wger/features/nutrition/widgets/charts.dart';
 import 'package:wger/features/nutrition/widgets/nutrition_tiles.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class NutritionalDiaryDetailWidget extends StatelessWidget {
   final NutritionalPlan _nutritionalPlan;
@@ -40,29 +42,34 @@ class NutritionalDiaryDetailWidget extends StatelessWidget {
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Card(
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(15),
-                height: 220,
-                child: FlNutritionalPlanPieChartWidget(valuesLogged),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: NutritionDiaryTable(
-                  planned: nutritionalGoals.toValues(),
-                  logged: valuesLogged,
-                ),
-              ),
-            ],
+        AtlasCard(
+          child: DiaryRings(planned: nutritionalGoals.toValues(), logged: valuesLogged),
+        ),
+        const SizedBox(height: 12),
+        AtlasCard(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: NutritionDiaryTable(
+            planned: nutritionalGoals.toValues(),
+            logged: valuesLogged,
           ),
         ),
-        const SizedBox(height: 15),
-        const DiaryheaderTile(),
-        ...logs.map(
-          (e) => DiaryEntryTile(diaryEntry: e, nutritionalPlan: _nutritionalPlan),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 4),
+          child: SectionEyebrow(AppLocalizations.of(context).logged),
+        ),
+        AtlasCard(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Column(
+            children: [
+              for (final (i, e) in logs.indexed) ...[
+                if (i > 0) Divider(color: context.atlas.line),
+                DiaryEntryTile(diaryEntry: e, nutritionalPlan: _nutritionalPlan),
+              ],
+            ],
+          ),
         ),
       ],
     );
@@ -87,8 +94,11 @@ class NutritionDiaryTable extends StatelessWidget {
     Widget columnHeader(bool left, String title) => Padding(
       padding: const EdgeInsets.symmetric(vertical: tablePadding),
       child: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: context.atlas.ink3,
+          letterSpacing: 0.6,
+        ),
         textAlign: left ? TextAlign.left : TextAlign.right,
       ),
     );
@@ -101,9 +111,25 @@ class NutritionDiaryTable extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: tablePadding, horizontal: indent * 12),
             child: Text(title),
           ),
-          Text(valFn(get(planned).toStringAsFixed(0)), textAlign: TextAlign.right),
-          Text(valFn(get(logged).toStringAsFixed(0)), textAlign: TextAlign.right),
-          Text((get(logged) - get(planned)).toStringAsFixed(0), textAlign: TextAlign.right),
+          MonoText(
+            valFn(get(planned).toStringAsFixed(0)),
+            size: 13.5,
+            weight: FontWeight.w500,
+            textAlign: TextAlign.right,
+          ),
+          MonoText(
+            valFn(get(logged).toStringAsFixed(0)),
+            size: 13.5,
+            weight: FontWeight.w500,
+            textAlign: TextAlign.right,
+          ),
+          MonoText(
+            (get(logged) - get(planned)).toStringAsFixed(0),
+            size: 13.5,
+            weight: FontWeight.w500,
+            color: context.atlas.ink2,
+            textAlign: TextAlign.right,
+          ),
         ],
       );
     }
@@ -111,9 +137,9 @@ class NutritionDiaryTable extends StatelessWidget {
     return Table(
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       border: TableBorder(
-        horizontalInside: BorderSide(width: 1, color: Theme.of(context).colorScheme.outline),
+        horizontalInside: BorderSide(width: 1, color: context.atlas.line),
       ),
-      columnWidths: const {0: FractionColumnWidth(0.4)},
+      columnWidths: const {0: FractionColumnWidth(0.32)},
       children: [
         TableRow(
           children: [

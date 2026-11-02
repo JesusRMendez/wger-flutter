@@ -465,6 +465,605 @@
   "@addIngredient": {},
   "logIngredient": "Log ingredient to nutrition diary",
   "@logIngredient": {},
+  "kcalLeft": "kcal left",
+  "@kcalLeft": {
+    "description": "Caption under the remaining calories in the energy ring"
+  },
+  "consumed": "Consumed",
+  "@consumed": {
+    "description": "Label of the energy eaten so far today"
+  },
+  "goalToday": "Goal today",
+  "@goalToday": {
+    "description": "Label of today's energy target"
+  },
+  "nextMealBanner": "Next: {meal} at {time} · {kcal} kcal planned",
+  "@nextMealBanner": {
+    "description": "Banner with the next meal of the plan",
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      },
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "allMealsLogged": "All of today's meals are logged",
+  "@allMealsLogged": {
+    "description": "Banner shown when every meal of the plan has been logged today"
+  },
+  "planDetails": "Plan details",
+  "@planDetails": {
+    "description": "Section label above the goals table of a nutritional plan"
+  },
+  "planActive": "Active plan",
+  "@planActive": {
+    "description": "Eyebrow of the card of the current nutritional plan"
+  },
+  "calcTitle": "Calculate goals",
+  "@calcTitle": {
+    "description": "Title of the card that estimates calorie and macro goals"
+  },
+  "newBadge": "NEW",
+  "@newBadge": {
+    "description": "Small badge on a new feature"
+  },
+  "goalLoseFat": "Lose fat",
+  "@goalLoseFat": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "goalMaintain": "Maintain",
+  "@goalMaintain": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "goalGainMuscle": "Gain muscle",
+  "@goalGainMuscle": {
+    "description": "Goal option of the calorie calculator"
+  },
+  "calcBasedOn": "From your weight ({weight}) and a moderately active week:",
+  "@calcBasedOn": {
+    "description": "Line above the estimated calories",
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "calcNoWeight": "Log your weight to get an estimate of your goals.",
+  "@calcNoWeight": {
+    "description": "Shown by the calorie calculator without a weight entry"
+  },
+  "kcalPerDay": "kcal/day",
+  "@kcalPerDay": {
+    "description": "Unit of the daily energy goal"
+  },
+  "calcDeficit": "Deficit of {pct} % · about {kg} kg less per week.",
+  "@calcDeficit": {
+    "description": "Explanation of a calorie deficit",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "calcSurplus": "Surplus of {pct} % · about {kg} kg more per week.",
+  "@calcSurplus": {
+    "description": "Explanation of a calorie surplus",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "calcMaintenance": "Maintenance: your weight should stay about the same.",
+  "@calcMaintenance": {
+    "description": "Explanation of eating at maintenance"
+  },
+  "generateMealsAi": "Generate meals with AI",
+  "@generateMealsAi": {
+    "description": "Button that opens the coach meal plan generator"
+  },
+  "otherPlans": "Other plans",
+  "@otherPlans": {
+    "description": "Heading of the list of the not active nutritional plans"
+  },
+  "planArchived": "Archived",
+  "@planArchived": {
+    "description": "Status chip of a nutritional plan that ended"
+  },
+  "planUpcoming": "Upcoming",
+  "@planUpcoming": {
+    "description": "Status chip of a nutritional plan that did not start yet"
+  },
+  "planGoalsOnly": "Goals only · no meals",
+  "@planGoalsOnly": {
+    "description": "Subtitle of a plan that has goals but no meals"
+  },
+  "kcalGoalPerDay": "kcal goal per day",
+  "@kcalGoalPerDay": {
+    "description": "Label under the daily energy goal of a plan"
+  },
+  "kcalAverage7Days": "kcal 7-day average",
+  "@kcalAverage7Days": {
+    "description": "Label under the average energy logged in the last 7 days"
+  },
+  "macroSplit": "Protein {p} % · carbs {c} % · fat {f} %",
+  "@macroSplit": {
+    "description": "Share of each macro nutrient in the energy",
+    "placeholders": {
+      "p": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "f": {
+        "type": "String"
+      }
+    }
+  },
+  "proteinAbbr": "prot.",
+  "@proteinAbbr": {
+    "description": "Short label for protein under a figure"
+  },
+  "carbsAbbr": "carb.",
+  "@carbsAbbr": {
+    "description": "Short label for carbohydrates under a figure"
+  },
+  "fatAbbr": "fat",
+  "@fatAbbr": {
+    "description": "Short label for fat under a figure"
+  },
+  "nutritionalInformation": "Nutritional information",
+  "@nutritionalInformation": {
+    "description": "Heading of the nutrition table of an ingredient"
+  },
+  "perAmount": "per {amount}",
+  "@perAmount": {
+    "description": "Reference amount of a nutrition table, e.g. per 125 g",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "calorieSplit": "Calorie split: protein {p} % · carbohydrates {c} % · fat {f} %",
+  "@calorieSplit": {
+    "description": "Share of the energy by macro nutrient",
+    "placeholders": {
+      "p": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "f": {
+        "type": "String"
+      }
+    }
+  },
+  "ingredientSource": "{brand} · {source}",
+  "@ingredientSource": {
+    "description": "Brand and source line under an ingredient name",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "addToMeal": "Add to {meal}",
+  "@addToMeal": {
+    "description": "Button that adds an ingredient to a meal",
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "recents": "Recent",
+  "@recents": {
+    "description": "Filter chip for the ingredients added lately"
+  },
+  "allIngredients": "All",
+  "@allIngredients": {
+    "description": "Filter chip for all ingredients"
+  },
+  "ingredientCount": "{count} foods",
+  "@ingredientCount": {
+    "description": "Number of ingredients in the list",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "addToLog": "Add",
+  "@addToLog": {
+    "description": "Button that adds an ingredient to the diary"
+  },
+  "portion": "Portion",
+  "@portion": {
+    "description": "Heading of the portion stepper when logging a meal"
+  },
+  "coachGoalOnTrack": "On track",
+  "@coachGoalOnTrack": {
+    "description": "Status chip of a goal that progresses as planned"
+  },
+  "coachGoalWatch": "Watch",
+  "@coachGoalWatch": {
+    "description": "Status chip of a goal that falls behind"
+  },
+  "coachFinalGoal": "Final goal",
+  "@coachFinalGoal": {
+    "description": "Eyebrow of the card of the goal at the end of the plan"
+  },
+  "coachDataLow": "Low",
+  "@coachDataLow": {
+    "description": "Level of the data quality when it is low"
+  },
+  "coachDataMedium": "Medium",
+  "@coachDataMedium": {
+    "description": "Level of the data quality when it is medium"
+  },
+  "coachDataHigh": "High",
+  "@coachDataHigh": {
+    "description": "Level of the data quality when it is high"
+  },
+  "coachRecommendationAccuracy": "Accuracy of the recommendations",
+  "@coachRecommendationAccuracy": {
+    "description": "Caption above the level of the data quality"
+  },
+  "coachDataTitle": "Data for your coach",
+  "@coachDataTitle": {
+    "description": "Title of the data quality screen"
+  },
+  "coachDataSubtitle": "What the AI needs to adjust your plan",
+  "@coachDataSubtitle": {
+    "description": "Subtitle of the data quality screen"
+  },
+  "coachDataToDo": "To do",
+  "@coachDataToDo": {
+    "description": "Status chip of a data signal that is missing"
+  },
+  "coachDataSeeAll": "See all",
+  "@coachDataSeeAll": {
+    "description": "Link to the full data quality screen"
+  },
+  "coachDataAllGood": "Nothing is missing, your data is complete.",
+  "@coachDataAllGood": {
+    "description": "Shown when the coach has no missing data"
+  },
+  "coachYouAreHere": "You are here",
+  "@coachYouAreHere": {
+    "description": "Eyebrow of the card with the current plan phase"
+  },
+  "coachPhaseDone": "Done",
+  "@coachPhaseDone": {
+    "description": "Status chip of a plan phase that is over"
+  },
+  "coachPhaseNow": "Now",
+  "@coachPhaseNow": {
+    "description": "Status chip of the current plan phase"
+  },
+  "coachPhaseUpcoming": "Upcoming",
+  "@coachPhaseUpcoming": {
+    "description": "Status chip of a plan phase that did not start yet"
+  },
+  "coachPhaseWeeks": "Weeks {from}-{to}",
+  "@coachPhaseWeeks": {
+    "description": "Week range of a plan phase",
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "coachPhaseAdaptationHint": "Learn the movements and find your starting loads. Keep the effort moderate.",
+  "@coachPhaseAdaptationHint": {
+    "description": "Guidance of the adaptation phase"
+  },
+  "coachPhaseProgressionHint": "Add load or reps whenever you finish all sets with some reps in reserve.",
+  "@coachPhaseProgressionHint": {
+    "description": "Guidance of the progression phase"
+  },
+  "coachPhaseDeloadHint": "Lower the volume to recover. Keep the technique sharp.",
+  "@coachPhaseDeloadHint": {
+    "description": "Guidance of the deload phase"
+  },
+  "coachPhaseConsolidationHint": "Watch your strength and adherence and keep what you gained.",
+  "@coachPhaseConsolidationHint": {
+    "description": "Guidance of the consolidation phase"
+  },
+  "coachFollowUp": "Weekly follow-up",
+  "@coachFollowUp": {
+    "description": "Title of the weekly review screen"
+  },
+  "coachFollowUpSubtitle": "Review of the last {days} days",
+  "@coachFollowUpSubtitle": {
+    "description": "Subtitle of the weekly review screen",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "coachFollowUpOnPlan": "You are on plan",
+  "@coachFollowUpOnPlan": {
+    "description": "Verdict of the weekly review when nothing needs attention"
+  },
+  "coachFollowUpAttention": "A few things need attention",
+  "@coachFollowUpAttention": {
+    "description": "Verdict of the weekly review when there are warnings"
+  },
+  "coachFollowUpWeekPhase": "Week {week} · {phase}",
+  "@coachFollowUpWeekPhase": {
+    "description": "Eyebrow of the weekly review",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      },
+      "phase": {
+        "type": "String"
+      }
+    }
+  },
+  "coachFollowUpAdjustments": "Recommended adjustments",
+  "@coachFollowUpAdjustments": {
+    "description": "Heading of the recommendations of the weekly review"
+  },
+  "coachFollowUpPending": "{count} pending",
+  "@coachFollowUpPending": {
+    "description": "Number of recommendations",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coachFollowUpIndicators": "Indicators",
+  "@coachFollowUpIndicators": {
+    "description": "Heading of the indicators of the weekly review"
+  },
+  "coachFollowUpOpenRoutine": "Open routine",
+  "@coachFollowUpOpenRoutine": {
+    "description": "Button of a recommendation that opens the routine"
+  },
+  "coachFollowUpNone": "No plan data yet. Start a plan and come back after your first week.",
+  "@coachFollowUpNone": {
+    "description": "Weekly review without a plan"
+  },
+  "coachSubtitle": "Knows your routines, meals and progress",
+  "@coachSubtitle": {
+    "description": "Subtitle of the coach screen"
+  },
+  "coachWorkoutPlanHint": "Based on time, place and equipment",
+  "@coachWorkoutPlanHint": {
+    "description": "Subtitle of the workout plan tile of the coach"
+  },
+  "coachMealPlanHint": "Macros, tastes and budget",
+  "@coachMealPlanHint": {
+    "description": "Subtitle of the meal plan tile of the coach"
+  },
+  "coachDietVegetarian": "Vegetarian",
+  "@coachDietVegetarian": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietLactoseFree": "Lactose free",
+  "@coachDietLactoseFree": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietLowBudget": "Low budget",
+  "@coachDietLowBudget": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachDietQuick": "Quick to cook",
+  "@coachDietQuick": {
+    "description": "Preference chip of the meal plan generator"
+  },
+  "coachPlanTotal": "Plan total",
+  "@coachPlanTotal": {
+    "description": "Title of the totals card of a proposed meal plan"
+  },
+  "coachMealPlanTarget": "{kcal} / {target} kcal",
+  "@coachMealPlanTarget": {
+    "description": "Energy of the plan against the target",
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "coachEditEquipment": "Edit equipment",
+  "@coachEditEquipment": {
+    "description": "Link to the training locations from the workout plan form"
+  },
+  "coachPlanGoals": "Plan goals",
+  "@coachPlanGoals": {
+    "description": "Eyebrow of the card that lists the goals of the plan"
+  },
+  "progressSubtitleFollowUp": "Plan check, adjustments and data quality",
+  "@progressSubtitleFollowUp": {
+    "description": "Subtitle of the weekly follow-up row on the progress tab"
+  },
+  "measurementSourceManual": "Manual",
+  "@measurementSourceManual": {
+    "description": "Source label of an entry the user wrote"
+  },
+  "measurementSourceImported": "Imported",
+  "@measurementSourceImported": {
+    "description": "Source label of an entry that came from another app"
+  },
+  "measurementSourceCalculated": "Calculated",
+  "@measurementSourceCalculated": {
+    "description": "Source label of an entry computed from other data"
+  },
+  "weightProjection": "Projection",
+  "@weightProjection": {
+    "description": "Title of the card that projects when the weight goal is reached"
+  },
+  "weightProjectionReach": "At your current pace ({rate} {unit}/week) you will reach {target} {unit} around {date}.",
+  "@weightProjectionReach": {
+    "description": "Projection of the weight",
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "weightProjectionAway": "Right now your weight is moving away from {target} {unit}.",
+  "@weightProjectionAway": {
+    "description": "Projection of the weight when the trend goes the wrong way",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "registerWeight": "Log weight",
+  "@registerWeight": {
+    "description": "Button that opens the form of a new weight entry"
+  },
+  "galleryTitle": "Progress photos",
+  "@galleryTitle": {
+    "description": "Title of the photo gallery"
+  },
+  "galleryCompare": "Compare",
+  "@galleryCompare": {
+    "description": "Tab of the gallery with the before and after slider"
+  },
+  "galleryAllCount": "All · {count}",
+  "@galleryAllCount": {
+    "description": "Tab of the gallery with all photos and their number",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryNeedTwo": "Add at least two photos to compare them.",
+  "@galleryNeedTwo": {
+    "description": "Shown in the gallery compare tab with fewer than two photos"
+  },
+  "galleryPickPhoto": "Pick a photo",
+  "@galleryPickPhoto": {
+    "description": "Title of the dialog to choose a photo to compare"
+  },
+  "trophyNext": "Next trophy",
+  "@trophyNext": {
+    "description": "Eyebrow of the card of the trophy closest to being earned"
+  },
+  "authHero1": "Your training.",
+  "@authHero1": {
+    "description": "First line of the welcome headline"
+  },
+  "authHero2": "Your data.",
+  "@authHero2": {
+    "description": "Second line of the welcome headline"
+  },
+  "authHero3": "Your server.",
+  "@authHero3": {
+    "description": "Third line of the welcome headline, in the accent colour"
+  },
+  "authSubtitle": "Routines, nutrition and progress in a free app that syncs with wger.",
+  "@authSubtitle": {
+    "description": "Subtitle of the welcome screen"
+  },
+  "authServerHeading": "Server",
+  "@authServerHeading": {
+    "description": "Heading above the choice of the server on the welcome screen"
+  },
+  "authServerOfficial": "Official server",
+  "@authServerOfficial": {
+    "description": "Name of the official wger server in the server choice"
+  },
+  "authServerOfficialSub": "wger.de · official server",
+  "@authServerOfficialSub": {
+    "description": "Subtitle of the official wger server in the server choice"
+  },
+  "authServerCustom": "My server",
+  "@authServerCustom": {
+    "description": "Name of the own server in the server choice"
+  },
+  "authServerCustomSub": "Your own wger instance",
+  "@authServerCustomSub": {
+    "description": "Subtitle of the own server in the server choice when no address is set"
+  },
+  "authFooter": "Open source · AGPL-3.0 · No ads or tracking",
+  "@authFooter": {
+    "description": "Line at the bottom of the welcome screen"
+  },
+  "glossarySubtitle": "Terms and abbreviations of wger",
+  "@glossarySubtitle": {
+    "description": "Subtitle of the glossary"
+  },
+  "glossarySearchHint": "Search: RIR, 1RM, kcal…",
+  "@glossarySearchHint": {
+    "description": "Hint of the glossary search field"
+  },
+  "glossaryCategoryAll": "All",
+  "@glossaryCategoryAll": {
+    "description": "Glossary filter chip showing every term"
+  },
+  "glossaryCategoryTraining": "Training",
+  "@glossaryCategoryTraining": {
+    "description": "Glossary filter chip for training terms"
+  },
+  "glossaryCategoryNutrition": "Nutrition",
+  "@glossaryCategoryNutrition": {
+    "description": "Glossary filter chip for nutrition terms"
+  },
+  "glossaryCategoryProgress": "Progress",
+  "@glossaryCategoryProgress": {
+    "description": "Glossary filter chip for progress terms"
+  },
+  "glossaryCategoryHealth": "Health",
+  "@glossaryCategoryHealth": {
+    "description": "Glossary filter chip for health terms"
+  },
+  "glossaryTermCount": "{count} terms",
+  "@glossaryTermCount": {
+    "description": "Number of glossary terms shown",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "glossaryFooter": "On any screen, tap an underlined word or the help button to see its explanation.",
+  "@glossaryFooter": {
+    "description": "Hint at the bottom of the glossary"
+  },
   "searchIngredient": "Search ingredient",
   "@searchIngredient": {
     "description": "Label (or Hint text) on ingredient search form"
@@ -2726,5 +3325,791 @@
   "glossaryBpmName": "Beats per minute",
   "glossaryBpmWhat": "The tempo of a song. Here it is used to pick music that matches the phase of your workout.",
   "glossaryBpmHow": "A steady beat helps you keep a rhythm and can make hard work feel easier. Slower music suits rest, faster music suits intervals.",
-  "glossaryBpmExample": "100-120 BPM for warm-up, 120-140 for strength, 150-170 for HIIT and 90-110 for rest or cooldown."
+  "glossaryBpmExample": "100-120 BPM for warm-up, 120-140 for strength, 150-170 for HIIT and 90-110 for rest or cooldown.",
+  "dashboardActivity": "Week and streak",
+  "@dashboardActivity": {
+    "description": "Title of the dashboard card holding the week strip, the readiness and the streak"
+  },
+  "readiness": "Readiness",
+  "@readiness": {
+    "description": "Eyebrow of the dashboard card that rates how recovered the user is"
+  },
+  "readinessHigh": "High",
+  "@readinessHigh": {
+    "description": "Readiness level, 75 or more of 100"
+  },
+  "readinessMedium": "Medium",
+  "@readinessMedium": {
+    "description": "Readiness level, 50 to 74 of 100"
+  },
+  "readinessLow": "Low",
+  "@readinessLow": {
+    "description": "Readiness level, below 50 of 100"
+  },
+  "readinessSleep": "Sleep {duration}",
+  "@readinessSleep": {
+    "description": "Readiness card line with last night's sleep, e.g. 'Sleep 7 h 40'",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "readinessNoData": "Log your sleep or sync it from Health to see your readiness.",
+  "@readinessNoData": {
+    "description": "Readiness card hint shown when there is no sleep data"
+  },
+  "streak": "Streak",
+  "@streak": {
+    "description": "Eyebrow of the dashboard card counting consecutive training weeks"
+  },
+  "streakWeeks": "{count, plural, one{week in a row} other{weeks in a row}}",
+  "@streakWeeks": {
+    "description": "Unit next to the streak count, shown under the number of consecutive training weeks",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "labelBottomNavProgress": "Progress",
+  "@labelBottomNavProgress": {
+    "description": "Label of the bottom navigation tab that gathers weight, measurements, photos and trophies"
+  },
+  "quickAddTitle": "Log",
+  "@quickAddTitle": {
+    "description": "Title of the sheet the central plus button of the navigation bar opens"
+  },
+  "quickAddWorkoutHint": "Start today's session",
+  "@quickAddWorkoutHint": {
+    "description": "Hint of the quick-add tile that starts today's workout"
+  },
+  "quickAddWorkoutNone": "Open your routines",
+  "@quickAddWorkoutNone": {
+    "description": "Hint of the quick-add tile for a workout when no session is scheduled today"
+  },
+  "quickAddMeal": "Meal",
+  "@quickAddMeal": {
+    "description": "Quick-add tile that opens the nutrition diary"
+  },
+  "quickAddMealHint": "Search food",
+  "@quickAddMealHint": {
+    "description": "Hint of the quick-add meal tile"
+  },
+  "quickAddWeightHint": "Scale or manual",
+  "@quickAddWeightHint": {
+    "description": "Hint of the quick-add weight tile"
+  },
+  "quickAddMeasurementHint": "Waist, arm…",
+  "@quickAddMeasurementHint": {
+    "description": "Hint of the quick-add measurement tile"
+  },
+  "quickAddPhoto": "Photo",
+  "@quickAddPhoto": {
+    "description": "Quick-add tile that adds a progress photo"
+  },
+  "quickAddPhotoHint": "Body progress",
+  "@quickAddPhotoHint": {
+    "description": "Hint of the quick-add photo tile"
+  },
+  "quickAddCoachHint": "Ask anything",
+  "@quickAddCoachHint": {
+    "description": "Hint of the quick-add coach tile"
+  },
+  "progressSubtitleWeight": "Entries and chart",
+  "@progressSubtitleWeight": {
+    "description": "Subtitle of the weight row on the progress tab"
+  },
+  "progressSubtitleMeasurements": "Body measurements and health metrics",
+  "@progressSubtitleMeasurements": {
+    "description": "Subtitle of the measurements row on the progress tab"
+  },
+  "progressSubtitleGallery": "Photos over time",
+  "@progressSubtitleGallery": {
+    "description": "Subtitle of the gallery row on the progress tab"
+  },
+  "progressSubtitleTrophies": "Achievements and streaks",
+  "@progressSubtitleTrophies": {
+    "description": "Subtitle of the trophies row on the progress tab"
+  },
+  "progressSubtitleGoals": "Weekly, monthly and plan goals",
+  "@progressSubtitleGoals": {
+    "description": "Subtitle of the goals row on the progress tab"
+  },
+  "gymSessionOrder": "Session order",
+  "@gymSessionOrder": {
+    "description": "Title of the sheet that lists the exercises of the running workout in order"
+  },
+  "gymWhyThisOrder": "Why this order",
+  "@gymWhyThisOrder": {
+    "description": "Heading of the box that explains the order of the exercises"
+  },
+  "gymOrderZoneRoute": "Grouped by zone: {route} · {changes, plural, =0{no zone changes} one{1 zone change} other{{changes} zone changes}}",
+  "@gymOrderZoneRoute": {
+    "description": "Explains that the exercises are ordered by training zone, with the route and the number of zone changes",
+    "placeholders": {
+      "route": {
+        "type": "String"
+      },
+      "changes": {
+        "type": "int"
+      }
+    }
+  },
+  "gymOrderNow": "Now",
+  "@gymOrderNow": {
+    "description": "Chip marking the exercise that is being done right now in the session order sheet"
+  },
+  "gymOrderGoNow": "Go now",
+  "@gymOrderGoNow": {
+    "description": "Button in the session order sheet that jumps to an exercise"
+  },
+  "gymOrderSetsDone": "{done}/{total} sets",
+  "@gymOrderSetsDone": {
+    "description": "Progress of an exercise in the session order sheet",
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "gymOrderRest": "rest {time}",
+  "@gymOrderRest": {
+    "description": "Rest time of an exercise in the session order sheet, e.g. 'rest 2:30'",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "gymEditExercises": "Swap or add exercises",
+  "@gymEditExercises": {
+    "description": "Button of the session order sheet that opens the editor to swap or add exercises"
+  },
+  "gymSetHeader": "Exercise {exercise}/{exercises} · Set {set}/{sets}",
+  "@gymSetHeader": {
+    "description": "Eyebrow above the exercise name on the set screen",
+    "placeholders": {
+      "exercise": {
+        "type": "int"
+      },
+      "exercises": {
+        "type": "int"
+      },
+      "set": {
+        "type": "int"
+      },
+      "sets": {
+        "type": "int"
+      }
+    }
+  },
+  "gymMinutesLeft": "≈ {minutes} min left",
+  "@gymMinutesLeft": {
+    "description": "Estimated time left of the workout, shown under the elapsed time",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gymSettingsSheetTitle": "Sound, alerts and countdown",
+  "@gymSettingsSheetTitle": {
+    "description": "Title of the settings sheet of the gym mode"
+  },
+  "gymSettingsDone": "Done",
+  "@gymSettingsDone": {
+    "description": "Button that closes the gym mode settings sheet"
+  },
+  "gymUseSuggestion": "Use",
+  "@gymUseSuggestion": {
+    "description": "Button that applies the planned weight and repetitions to the set form"
+  },
+  "gymSuggested": "Planned {value}",
+  "@gymSuggested": {
+    "description": "Planned load of the set, shown on the set screen",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "gymRestTitle": "Rest · {exercise}",
+  "@gymRestTitle": {
+    "description": "Eyebrow of the rest timer, with the name of the exercise just done",
+    "placeholders": {
+      "exercise": {
+        "type": "String"
+      }
+    }
+  },
+  "gymRestNext": "Up next",
+  "@gymRestNext": {
+    "description": "Label above the next set on the rest screen"
+  },
+  "gymRestLess": "−15 s",
+  "@gymRestLess": {
+    "description": "Button that shortens the rest by 15 seconds"
+  },
+  "gymRestMore": "+15 s",
+  "@gymRestMore": {
+    "description": "Button that extends the rest by 15 seconds"
+  },
+  "gymRestSkip": "Skip",
+  "@gymRestSkip": {
+    "description": "Button that ends the rest early"
+  },
+  "gymIntroEyebrow": "Next · {exercise} of {exercises}",
+  "@gymIntroEyebrow": {
+    "description": "Eyebrow of the exercise introduction page",
+    "placeholders": {
+      "exercise": {
+        "type": "int"
+      },
+      "exercises": {
+        "type": "int"
+      }
+    }
+  },
+  "gymIntroSets": "{sets} × {reps}",
+  "@gymIntroSets": {
+    "description": "Sets and repetitions chip on the exercise introduction page",
+    "placeholders": {
+      "sets": {
+        "type": "String"
+      },
+      "reps": {
+        "type": "String"
+      }
+    }
+  },
+  "gymIntroRest": "Rest {time}",
+  "@gymIntroRest": {
+    "description": "Rest chip on the exercise introduction page",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "gymIntroStart": "Start set {set}",
+  "@gymIntroStart": {
+    "description": "Button on the exercise introduction page that goes to the first set",
+    "placeholders": {
+      "set": {
+        "type": "int"
+      }
+    }
+  },
+  "gymIntroLast": "Last time {value}",
+  "@gymIntroLast": {
+    "description": "Last logged value of the exercise, on the exercise introduction page",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "routinesWeekOf": "Week {week} of {weeks}",
+  "@routinesWeekOf": {
+    "description": "Position within the weeks of the running routine",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      },
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "routinesStartToday": "{day} · today",
+  "@routinesStartToday": {
+    "description": "Button on the running routine that starts today's training day",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "routinesProgram": "Program",
+  "@routinesProgram": {
+    "description": "Button on the running routine that opens it"
+  },
+  "routinesGenerateTitle": "Generate with a goal",
+  "@routinesGenerateTitle": {
+    "description": "Title of the tile that opens the coach's workout plan generator"
+  },
+  "routinesGenerateHint": "Time, place, equipment and goals → routine with AI",
+  "@routinesGenerateHint": {
+    "description": "Hint of the tile that opens the coach's workout plan generator"
+  },
+  "routinesGuidedTitle": "Timed guided routine",
+  "@routinesGuidedTitle": {
+    "description": "Title of the tile that opens the guided mode"
+  },
+  "routinesGuidedHint": "Circuit, core or mobility · no weights to log",
+  "@routinesGuidedHint": {
+    "description": "Hint of the tile that opens the guided mode"
+  },
+  "routinesNewBadge": "New",
+  "@routinesNewBadge": {
+    "description": "Badge on a tile for a new feature"
+  },
+  "routinesMine": "My routines",
+  "@routinesMine": {
+    "description": "Eyebrow above the list of routines"
+  },
+  "gymStatSets": "sets",
+  "@gymStatSets": {
+    "description": "Label under the number of sets in the gym mode start page"
+  },
+  "gymStatRest": "rest",
+  "@gymStatRest": {
+    "description": "Label under the average rest in the gym mode start page"
+  },
+  "gymStatVolume": "volume",
+  "@gymStatVolume": {
+    "description": "Label under the planned volume in the gym mode start page"
+  },
+  "gymStartMinutes": "Start · {minutes} min",
+  "@gymStartMinutes": {
+    "description": "Label of the start button of the gym mode, with the estimated duration",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "themeSystemShort": "System",
+  "@themeSystemShort": {
+    "description": "Short label of the system theme in the theme selector"
+  },
+  "themeDarkShort": "Dark",
+  "@themeDarkShort": {
+    "description": "Short label of the dark theme in the theme selector"
+  },
+  "themeLightShort": "Light",
+  "@themeLightShort": {
+    "description": "Short label of the light theme in the theme selector"
+  },
+  "settingsAppearance": "Appearance",
+  "@settingsAppearance": {
+    "description": "Title of the settings section for theme, color and language"
+  },
+  "settingsTraining": "Training",
+  "@settingsTraining": {
+    "description": "Title of the settings section for training related options"
+  },
+  "settingsDashboardWidgetsValue": "{count} active",
+  "@settingsDashboardWidgetsValue": {
+    "description": "Number of dashboard widgets that are shown, trailing value of a settings row",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "measurementHeroChange": "{delta} {unit} in {days, plural, one{1 day} other{{days} days}}",
+  "@measurementHeroChange": {
+    "description": "Change of a measurement over the chart range, e.g. '-1.7 kg in 90 days'",
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "trophiesEarned": "earned",
+  "@trophiesEarned": {
+    "description": "Label under the number of trophies the user has earned"
+  },
+  "trophiesToEarn": "to earn",
+  "@trophiesToEarn": {
+    "description": "Label under the number of trophies still to be earned"
+  },
+  "trophiesPersonalRecords": "personal records",
+  "@trophiesPersonalRecords": {
+    "description": "Label under the number of personal record trophies"
+  },
+  "dashboardWater": "Water",
+  "@dashboardWater": {
+    "description": "Title of the dashboard card that counts glasses of water, and of its entry in the dashboard settings"
+  },
+  "waterValue": "{value} / {goal} L",
+  "@waterValue": {
+    "description": "Water drunk today against the daily goal, in litres",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "waterAddGlass": "Add a glass of water",
+  "@waterAddGlass": {
+    "description": "Tooltip of the button that adds a glass of water"
+  },
+  "waterRemoveGlass": "Remove a glass of water",
+  "@waterRemoveGlass": {
+    "description": "Tooltip of the long press that takes a glass of water back"
+  },
+  "waterLocalOnly": "Kept on this device",
+  "@waterLocalOnly": {
+    "description": "Hint on the water card that the glasses are not synced"
+  },
+  "gymTabWeight": "Weight",
+  "@gymTabWeight": {
+    "description": "Tab on the set screen that shows the load"
+  },
+  "gymTabPhotos": "Photos",
+  "@gymTabPhotos": {
+    "description": "Tab on the set screen that shows the photos of the exercise"
+  },
+  "gymTabVideo": "Video",
+  "@gymTabVideo": {
+    "description": "Tab on the set screen that shows the video of the exercise"
+  },
+  "gymTabSteps": "Steps",
+  "@gymTabSteps": {
+    "description": "Tab on the set screen that shows how the exercise is done"
+  },
+  "routineDaySummary": "{sets} sets · ≈ {minutes} min",
+  "@routineDaySummary": {
+    "description": "Summary line of a training day in the routine: number of sets and estimated duration",
+    "placeholders": {
+      "sets": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "coachDisclaimer": "Generated by AI from your data in wger. Check it, and ask a professional if you have injuries or conditions.",
+  "@coachDisclaimer": {
+    "description": "Notice under the coach conversation that the answers come from an AI"
+  },
+  "coachSuggestShortWeek": "This week I only have 30 min",
+  "@coachSuggestShortWeek": {
+    "description": "Quick question chip of the coach chat"
+  },
+  "coachSuggestProtein": "What should I eat to reach my protein?",
+  "@coachSuggestProtein": {
+    "description": "Quick question chip of the coach chat"
+  },
+  "coachSuggestDeload": "How do I deload?",
+  "@coachSuggestDeload": {
+    "description": "Quick question chip of the coach chat"
+  },
+  "progression": "Progression",
+  "@progression": {
+    "description": "Label above the progression rule chips of an exercise"
+  },
+  "progressionLinear": "Linear",
+  "@progressionLinear": {
+    "description": "Progression rule: add a fixed weight each week"
+  },
+  "progressionDouble": "Double progression",
+  "@progressionDouble": {
+    "description": "Progression rule: reps first, then weight"
+  },
+  "progressionManual": "Manual",
+  "@progressionManual": {
+    "description": "Progression rule: no automatic progression"
+  },
+  "changeExercise": "Change exercise",
+  "@changeExercise": {
+    "description": "Button that swaps the exercise of a slot"
+  },
+  "superset": "Superset",
+  "@superset": {
+    "description": "Button and label for a superset"
+  },
+  "removeSet": "Remove set",
+  "@removeSet": {
+    "description": "Tooltip of the minus button of the sets stepper"
+  },
+  "editDayTitle": "Edit {name}",
+  "@editDayTitle": {
+    "description": "Title of the routine edit screen",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dragToReorderHint": "Drag to reorder · tap to set up the sets",
+  "@dragToReorderHint": {
+    "description": "Hint above the exercises of a day in the editor"
+  },
+  "deleteDay": "Delete day",
+  "@deleteDay": {
+    "description": "Button that deletes the day in the editor"
+  },
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "description": "Number of days of a routine",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "restShort": "Rest",
+  "@restShort": {
+    "description": "Short label of the rest time field"
+  },
+  "slotChipRest": "Rest {time}",
+  "@slotChipRest": {
+    "description": "Rest time chip on an exercise card of the routine",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "slotChipRir": "RIR {rir}",
+  "@slotChipRir": {
+    "description": "Reps in reserve chip on an exercise card",
+    "placeholders": {
+      "rir": {
+        "type": "String"
+      }
+    }
+  },
+  "routineStartDay": "Start {day}",
+  "@routineStartDay": {
+    "description": "Button that starts the selected training day",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "routineWeekChip": "W{week}",
+  "@routineWeekChip": {
+    "description": "Short label of a week chip in the routine",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "newRecords": "{count, plural, =1{1 new record (PR)} other{{count} new records (PR)}}",
+  "@newRecords": {
+    "description": "Heading of the personal records card of the workout summary",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "estimatedOneRepMax": "1RM est. {value}",
+  "@estimatedOneRepMax": {
+    "description": "Estimated one rep max under a personal record",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedSetupSubtitle": "Time, reps or weight per exercise",
+  "@guidedSetupSubtitle": {
+    "description": "Subtitle of the guided routine setup"
+  },
+  "guidedAdjustWork": "Work",
+  "@guidedAdjustWork": {
+    "description": "Setup of the guided routine: adjusts the time of timed sets"
+  },
+  "guidedAdjustWorkHint": "added to the timed sets",
+  "@guidedAdjustWorkHint": {
+    "description": "Hint under the work adjustment"
+  },
+  "guidedAdjustRest": "Rest",
+  "@guidedAdjustRest": {
+    "description": "Setup of the guided routine: adjusts the rests"
+  },
+  "guidedAdjustRestHint": "added to every rest",
+  "@guidedAdjustRestHint": {
+    "description": "Hint under the rest adjustment"
+  },
+  "guidedEstimatedDuration": "Estimated duration",
+  "@guidedEstimatedDuration": {
+    "description": "Setup of the guided routine"
+  },
+  "guidedStart": "Start",
+  "@guidedStart": {
+    "description": "Button that starts the guided routine"
+  },
+  "guidedRestShort": "rest {time}",
+  "@guidedRestShort": {
+    "description": "Rest after an exercise in the guided setup list",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedSetsLine": "{count, plural, =1{1 set} other{{count} sets}}",
+  "@guidedSetsLine": {
+    "description": "Number of sets of an exercise in the guided setup list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "guidedSeconds": "{value} s",
+  "@guidedSeconds": {
+    "description": "Seconds, e.g. in the guided setup adjustment",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedProgressLine": "Step {current} of {total}",
+  "@guidedProgressLine": {
+    "description": "Position in the guided routine, in the header",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "guidedTimeLeft": "{left} left",
+  "@guidedTimeLeft": {
+    "description": "Estimated time left in the guided routine",
+    "placeholders": {
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "guidedPrevious": "Previous",
+  "@guidedPrevious": {
+    "description": "Tooltip of the previous set button"
+  },
+  "historySessionsIn": "sessions {month}",
+  "@historySessionsIn": {
+    "description": "Label under the number of sessions of the month in the training history",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTraining": "training",
+  "@historyTraining": {
+    "description": "Label under the hours trained in the month, training history"
+  },
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "description": "A duration in minutes, e.g. on the session card of the history",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "video": "Video",
+  "@video": {
+    "description": "Label of the video chip on an exercise"
+  },
+  "filterAll": "All",
+  "@filterAll": {
+    "description": "First chip of a filter row, selects everything"
+  },
+  "exercisesSearchHint": "Search among {count} exercises",
+  "@exercisesSearchHint": {
+    "description": "Hint of the search field of the exercise list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exercisesCount": "{count, plural, =1{1 exercise} other{{count} exercises}}",
+  "@exercisesCount": {
+    "description": "Number of exercises shown in the list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exerciseTabTechnique": "Technique",
+  "@exerciseTabTechnique": {
+    "description": "Tab of the exercise page with the description and muscles"
+  },
+  "exerciseTabHistory": "History",
+  "@exerciseTabHistory": {
+    "description": "Tab of the exercise page with your logged sets"
+  },
+  "exerciseTabAlternatives": "Alternatives",
+  "@exerciseTabAlternatives": {
+    "description": "Tab of the exercise page with variations of the exercise"
+  },
+  "exerciseHistoryEmpty": "You have not logged this exercise yet.",
+  "@exerciseHistoryEmpty": {
+    "description": "Empty state of the history tab of the exercise page"
+  },
+  "exerciseHistorySessions": "Sessions",
+  "@exerciseHistorySessions": {
+    "description": "Label of the number of sessions that include the exercise"
+  },
+  "exerciseHistoryBest": "Best 1RM est.",
+  "@exerciseHistoryBest": {
+    "description": "Label of the best estimated one rep max of the exercise"
+  },
+  "exerciseAlternativesEmpty": "No variations of this exercise.",
+  "@exerciseAlternativesEmpty": {
+    "description": "Empty state of the alternatives tab"
+  },
+  "musicOpen": "Open",
+  "@musicOpen": {
+    "description": "Button that opens a music service search"
+  },
+  "musicServiceHint": "Search playlists for {range} BPM",
+  "@musicServiceHint": {
+    "description": "Hint under a music service on the music card",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "locationsSubtitle": "Used to suggest weights and exercises",
+  "@locationsSubtitle": {
+    "description": "Subtitle of the equipment screen"
+  },
+  "locationsCountOf": "{selected} of {total}",
+  "@locationsCountOf": {
+    "description": "How many pieces of equipment are available of all that exist",
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "locationsNoCatalog": "The equipment list is not available yet.",
+  "@locationsNoCatalog": {
+    "description": "Shown on the equipment screen while the equipment catalogue is empty"
+  }
 }

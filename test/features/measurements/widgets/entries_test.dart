@@ -62,6 +62,8 @@ void main() {
     MeasurementCategory category,
     Map<String, List<MeasurementEntry>> entries, {
     MockMeasurementRepository? repo,
+    bool showHero = false,
+    num? projectionTarget,
   }) {
     final mockRepo = repo ?? MockMeasurementRepository();
     stubMeasurementReads(mockRepo, [category], entries);
@@ -84,12 +86,74 @@ void main() {
               category,
               range: ChartRange.last3Months,
               onRangeChanged: (_) {},
+              showHero: showHero,
+              projectionTarget: projectionTarget,
             ),
           ),
         ),
       ),
     );
   }
+
+  group('weight style list', () {
+    final category = MeasurementCategory(id: 'c1', name: 'Weight', unit: 'kg');
+
+    // One reading a day for 21 days, losing 0.1 kg a day (newest first)
+    Map<String, List<MeasurementEntry>> losing() {
+      final now = DateTime.now();
+      return {
+        'c1': [
+          for (var i = 0; i < 21; i++)
+            MeasurementEntry(
+              id: 'e$i',
+              categoryId: 'c1',
+              date: DateTime(now.year, now.month, now.day).subtract(Duration(days: i)),
+              value: 80 + i * 0.1,
+              notes: '',
+              source: i == 0 ? 'user' : 'apple',
+            ),
+        ],
+      };
+    }
+
+    testWidgets('rows say where the reading comes from', (tester) async {
+      await tester.pumpWidget(createEntriesList(category, losing(), showHero: true));
+      await tester.pumpAndSettle();
+
+      expect(find.text(' · Manual'), findsOneWidget);
+      expect(find.text(' · Imported'), findsWidgets);
+      // Manual readings can be edited, imported ones are marked
+      expect(find.byTooltip('Show menu'), findsOneWidget);
+    });
+
+    testWidgets('projects when the goal weight is reached at the current pace', (tester) async {
+      await tester.pumpWidget(
+        createEntriesList(category, losing(), showHero: true, projectionTarget: 78),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Projection'), findsOneWidget);
+      // 0.1 kg per day is 0.70 kg per week towards 78 kg
+      expect(find.textContaining('-0.70 kg/week'), findsOneWidget);
+      expect(find.textContaining('you will reach 78.0 kg'), findsOneWidget);
+    });
+
+    testWidgets('warns when the weight moves away from the goal', (tester) async {
+      await tester.pumpWidget(
+        createEntriesList(category, losing(), showHero: true, projectionTarget: 90),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('moving away from 90.0 kg'), findsOneWidget);
+    });
+
+    testWidgets('no projection without a goal', (tester) async {
+      await tester.pumpWidget(createEntriesList(category, losing(), showHero: true));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Projection'), findsNothing);
+    });
+  });
 
   testWidgets('Imported entries show a badge instead of the edit menu', (
     WidgetTester tester,

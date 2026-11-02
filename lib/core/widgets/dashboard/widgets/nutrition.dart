@@ -21,6 +21,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/form_screen.dart';
 import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/dashboard/widgets/nothing_found.dart';
 import 'package:wger/core/widgets/error.dart';
 import 'package:wger/core/widgets/svg_icon.dart';
@@ -44,16 +45,14 @@ class DashboardNutritionWidget extends ConsumerWidget {
     Widget? trailing,
     Widget? child,
   }) {
-    return Card(
+    return AtlasCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            title: Text(title, style: Theme.of(context).textTheme.headlineSmall),
-            subtitle: Text(subtitle),
-            leading: Icon(
-              Icons.restaurant,
-              color: Theme.of(context).textTheme.headlineSmall!.color,
-            ),
+          CardHeader(
+            icon: Icons.restaurant,
+            title: title,
+            subtitle: subtitle,
             trailing: trailing,
           ),
           ?child,
@@ -83,7 +82,7 @@ class DashboardNutritionWidget extends ConsumerWidget {
         context,
         title: i18n.nutritionalPlan,
         subtitle: i18n.anErrorOccurred,
-        trailing: const Icon(Icons.error_outline, color: Colors.red),
+        trailing: Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
         child: StreamErrorIndicator(e, stacktrace: st),
       ),
       data: (state) {
@@ -101,26 +100,18 @@ class DashboardNutritionWidget extends ConsumerWidget {
           );
         }
 
-        return Card(
+        return AtlasCard(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ListTile(
-                title: Text(plan.description, style: Theme.of(context).textTheme.headlineSmall),
-                subtitle: Text(
-                  localizedDate(context).format(plan.creationDate),
-                ),
-                leading: Icon(
-                  Icons.restaurant,
-                  color: Theme.of(context).textTheme.headlineSmall!.color,
-                ),
+              CardHeader(
+                icon: Icons.restaurant,
+                title: plan.description,
+                subtitle: localizedDate(context).format(plan.creationDate),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 15),
-                  child: FlNutritionalPlanGoalWidget(nutritionalPlan: plan),
-                ),
-              ),
+              const SizedBox(height: 16),
+              FlNutritionalPlanGoalWidget(nutritionalPlan: plan),
+              const SizedBox(height: 8),
               LayoutBuilder(
                 builder: (context, constraints) {
                   return SingleChildScrollView(

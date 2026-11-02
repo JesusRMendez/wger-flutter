@@ -47,6 +47,23 @@ class Meal {
   List<LogItem> get diaryEntriesToday =>
       diaryEntries.where((element) => element.datetime.isSameDayAs(DateTime.now())).toList();
 
+  /// The diary entry of today that logs [item] of this meal, if any
+  LogItem? loggedEntryFor(MealItem item) {
+    for (final log in diaryEntriesToday) {
+      if (log.ingredientId == item.ingredientId &&
+          log.weightUnitId == item.weightUnitId &&
+          log.amount == item.amount &&
+          (log.mealId == null || log.mealId == id)) {
+        return log;
+      }
+    }
+    return null;
+  }
+
+  /// Whether every item of the meal was logged today
+  bool get isCompletedToday =>
+      mealItems.isNotEmpty && mealItems.every((i) => loggedEntryFor(i) != null);
+
   Meal({
     this.id,
     String? plan,

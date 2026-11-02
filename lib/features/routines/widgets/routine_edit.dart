@@ -18,6 +18,7 @@
 
 import 'package:collection/collection.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/routines/models/day.dart';
 import 'package:wger/features/routines/models/routine.dart';
 import 'package:wger/features/routines/widgets/forms/day.dart';
@@ -47,13 +48,15 @@ class _RoutineEditState extends State<RoutineEdit> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SingleChildScrollView(
+        padding: const EdgeInsets.only(top: 4, bottom: 32),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            RoutineForm(widget._routine, useListView: false),
-            Container(height: 10),
-            Text(i18n.routineDays, style: Theme.of(context).textTheme.titleLarge),
+            AtlasCard(child: RoutineForm(widget._routine, useListView: false)),
+            const SizedBox(height: 20),
+            SectionEyebrow(i18n.routineDays, padding: const EdgeInsets.only(bottom: 10)),
             ReorderableDaysList(
               routineId: widget._routine.id!,
               days: widget._routine.days.where((day) => day.id != null).toList(),
@@ -69,9 +72,8 @@ class _RoutineEditState extends State<RoutineEdit> {
               },
             ),
             if (selectedDay != null) DayFormWidget(key: ValueKey(selectedDayId), day: selectedDay),
-            const SizedBox(height: 25),
-            Text(i18n.resultingRoutine, style: Theme.of(context).textTheme.titleLarge),
-            const Divider(),
+            const SizedBox(height: 24),
+            SectionEyebrow(i18n.resultingRoutine, padding: const EdgeInsets.only(bottom: 4)),
             RoutineDetail(widget._routine, viewMode: true),
           ],
         ),

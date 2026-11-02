@@ -18,6 +18,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/features/nutrition/models/ingredient.dart';
+import 'package:wger/theme/atlas.dart';
 
 const _nutriScoreColors = {
   NutriScore.a: Color(0xFF0d8949),
@@ -101,6 +102,48 @@ class NutriScoreBadge extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+/// The five Nutri-Score letters as equal tiles across the full width, the
+/// active one taller.
+class NutriScoreStrip extends StatelessWidget {
+  const NutriScoreStrip({super.key, required this.score});
+
+  final NutriScore score;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: Row(
+        spacing: 6,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          for (final s in NutriScore.values)
+            Expanded(
+              child: AnimatedContainer(
+                duration: AtlasMotion.of(context),
+                curve: AtlasMotion.curve,
+                height: s == score ? 44 : 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _nutriScoreColors[s],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  s.name.toUpperCase(),
+                  style: TextStyle(
+                    color: s == NutriScore.c ? const Color(0xFF3A2D00) : Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: s == score ? 18 : 14,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

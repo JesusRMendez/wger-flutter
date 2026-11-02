@@ -1,0 +1,161 @@
+name: Publish Android
+# Reusable: builds the customized, signed app bundle and uploads it to Google
+# Play. Called by publish-qa.yml (internal track) and publish-production.yml
+# (production track). See docs/ci-publishing.md for the secrets and variables.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'GitHub Environment the job runs in (qa or production)'
+        required: true
+        type: string
+      ref:
+        description: 'Branch, tag or SHA to build'
+        required: true
+        type: string
+      lane:
+        description: 'fastlane android lane: internal or production_custom'
+        required: true
+        type: string
+      server_url_var:
+        description: 'Name of the variable holding the default server (QA_SERVER_URL or PROD_SERVER_URL)'
+        required: true
+        type: string
+      release_status:
+        description: 'Play release status (completed or draft). Empty: the lane default, or the PLAY_RELEASE_STATUS variable'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Android (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 60
+    env:
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_OPT_OUT_USAGE: '1'
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Check secrets and variables
+        env:
+          PREFLIGHT_ENVIRONMENT: ${{ inputs.environment }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          APP_ID_ANDROID: ${{ vars.APP_ID_ANDROID }}
+          APP_NAME: ${{ vars.APP_NAME }}
+          QA_SERVER_URL: ${{ vars.QA_SERVER_URL }}
+          PROD_SERVER_URL: ${{ vars.PROD_SERVER_URL }}
+        run: |
+          ./.github/scripts/preflight.sh \
+            secret:ANDROID_KEYSTORE_BASE64 \
+            secret:ANDROID_KEYSTORE_PASSWORD \
+            secret:ANDROID_KEY_ALIAS \
+            secret:ANDROID_KEY_PASSWORD \
+            secret:PLAY_SERVICE_ACCOUNT_JSON \
+            var:APP_ID_ANDROID \
+            var:APP_NAME \
+            "var:${{ inputs.server_url_var }}"
+
+      - name: Resolve app identity, server and build number
+        id: config
+        uses: ./.github/actions/publish-config
+        with:
+          platform: android
+          app-id: ${{ vars.APP_ID_ANDROID }}
+          app-name: ${{ vars.APP_NAME }}
+          server-url: ${{ vars[inputs.server_url_var] }}
+          build-number-offset: ${{ vars.BUILD_NUMBER_OFFSET }}
+          run-number: ${{ github.run_number }}
+
+      - name: Common flutter setup
+        uses: ./.github/actions/flutter-common
+
+      - name: Set up signing
+        uses: ./.github/actions/android-sign
+        with:
+          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      # android/app/build.gradle reads the identity from these two variables
+      # and falls back to the upstream values when they are not set
+      - name: Build app bundle
+        env:
+          WGER_APP_ID: ${{ steps.config.outputs.app-id }}
+          WGER_APP_NAME: ${{ steps.config.outputs.app-name }}
+          BUILD_NUMBER: ${{ steps.config.outputs.build-number }}
+          SERVER_URL: ${{ steps.config.outputs.server-url }}
+        run: |
+          flutter build appbundle --release \
+            --build-number "$BUILD_NUMBER" \
+            --dart-define="WGER_DEFAULT_SERVER=$SERVER_URL"
+          test -f build/app/outputs/bundle/release/app-release.aab
+
+      - name: Upload app bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: aab-${{ inputs.environment }}-${{ github.run_number }}
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 4.0
+          bundler-cache: true
+
+      - name: Write Google Play service account
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          umask 077
+          key_file="$RUNNER_TEMP/play-service-account.json"
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "$key_file"
+          if ! jq -e '.client_email and .private_key' "$key_file" > /dev/null; then
+            echo "::error title=Invalid PLAY_SERVICE_ACCOUNT_JSON::The secret is not a Google service account key (json with client_email and private_key)."
+            exit 1
+          fi
+          echo "PLAY_JSON_KEY_FILE=$key_file" >> "$GITHUB_ENV"
+
+      - name: Upload to Google Play
+        env:
+          APP_ID_ANDROID: ${{ steps.config.outputs.app-id }}
+          AAB_PATH: build/app/outputs/bundle/release/app-release.aab
+          PLAY_RELEASE_STATUS: ${{ inputs.release_status || vars.PLAY_RELEASE_STATUS }}
+          LANE: ${{ inputs.lane }}
+        run: bundle exec fastlane android "$LANE"
+
+      - name: Summary
+        env:
+          APP_ID: ${{ steps.config.outputs.app-id }}
+          BUILD_NUMBER: ${{ steps.config.outputs.build-number }}
+          SERVER_URL: ${{ steps.config.outputs.server-url }}
+        run: |
+          {
+            echo "### Android published to Google Play"
+            echo "- Environment: \`${{ inputs.environment }}\`, lane: \`${{ inputs.lane }}\`"
+            echo "- Application id: \`$APP_ID\`, version code: \`$BUILD_NUMBER\`"
+            echo "- Default server: \`$SERVER_URL\`"
+            echo "- Commit: \`$GITHUB_SHA\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove signing material
+        if: ${{ always() }}
+        run: |
+          rm -f fastlane/metadata/envfiles/key.properties \
+            "$RUNNER_TEMP/upload-keystore.jks" \
+            "$RUNNER_TEMP/play-service-account.json"

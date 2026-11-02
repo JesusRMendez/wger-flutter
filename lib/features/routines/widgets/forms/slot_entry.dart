@@ -24,27 +24,40 @@ import 'package:wger/core/exceptions/http_exception.dart';
 import 'package:wger/core/form_validators.dart';
 import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/core/network/network_provider.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/decimal_input.dart';
 import 'package:wger/core/widgets/form_submit_button.dart';
-import 'package:wger/core/widgets/progress_indicator.dart';
 import 'package:wger/features/exercises/widgets/autocompleter.dart';
 import 'package:wger/features/routines/models/base_config.dart';
-import 'package:wger/features/routines/models/day.dart';
-import 'package:wger/features/routines/models/slot.dart';
 import 'package:wger/features/routines/models/slot_entry.dart';
 import 'package:wger/features/routines/providers/routines_notifier.dart';
 import 'package:wger/features/routines/widgets/forms/repetitions.dart';
 import 'package:wger/features/routines/widgets/forms/rir.dart';
+import 'package:wger/features/routines/widgets/forms/slot_summary.dart';
 import 'package:wger/features/routines/widgets/forms/weight.dart';
-import 'package:wger/features/routines/widgets/slot.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class SlotEntryForm extends ConsumerStatefulWidget {
   final SlotEntry entry;
   final bool simpleMode;
   final int routineId;
 
-  const SlotEntryForm(this.entry, this.routineId, {this.simpleMode = true, super.key});
+  /// Shows the exercise name and a delete button above the fields, for the
+  /// entries of a superset where the card header names no single exercise.
+  final bool showHeader;
+
+  /// Adds the "Superset" button when set
+  final VoidCallback? onAddSuperset;
+
+  const SlotEntryForm(
+    this.entry,
+    this.routineId, {
+    this.simpleMode = true,
+    this.showHeader = false,
+    this.onAddSuperset,
+    super.key,
+  });
 
   @override
   _SlotEntryFormState createState() => _SlotEntryFormState();
@@ -55,7 +68,7 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
 
   final iconSize = 18.0;
 
-  double setsSliderValue = 1.0;
+  int setsValue = 1;
 
   num? _weight;
   num? _maxWeight;
@@ -77,7 +90,7 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
   void initState() {
     super.initState();
     if (widget.entry.nrOfSetsConfigs.isNotEmpty) {
-      setsSliderValue = widget.entry.nrOfSetsConfigs.first.value.toDouble();
+      setsValue = widget.entry.nrOfSetsConfigs.first.value.round();
     }
   }
 
@@ -125,11 +138,50 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
     super.dispose();
   }
 
+  Widget _label(BuildContext context, String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.atlas.ink3),
+    ),
+  );
+
+  Widget _progressionChips(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
+    final kind = progressionOf(widget.entry);
+    final step = progressionStep(widget.entry);
+    final nf = localizedNumberFormat(context);
+
+    final labels = {
+      ProgressionKind.linear: step != null
+          ? '${i18n.progressionLinear} +${nf.format(step)}'
+          : i18n.progressionLinear,
+      ProgressionKind.doubleProgression: i18n.progressionDouble,
+      ProgressionKind.manual: i18n.progressionManual,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(context, i18n.progression),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final k in ProgressionKind.values)
+              PillChip(labels[k]!, selected: k == kind, fontSize: 12),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
     final languageCode = Localizations.localeOf(context).languageCode;
     final numberFormat = localizedNumberFormat(context);
+    final atlas = context.atlas;
 
     final provider = ref.read(routinesRiverpodProvider.notifier);
     final isOnline = ref.watch(networkStatusProvider);
@@ -137,72 +189,90 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
     return Form(
       key: _form,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           errorMessage,
-          ListTile(
-            title: Text(
-              widget.entry.exerciseObj.getTranslation(languageCode).name,
-              style: Theme.of(context).textTheme.titleMedium,
-              // textAlign: TextAlign.center,
+          if (widget.showHeader)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.entry.exerciseObj.getTranslation(languageCode).name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: i18n.delete,
+                    icon: Icon(Icons.delete_outline, size: iconSize),
+                    onPressed: isDeleting || !isOnline
+                        ? null
+                        : () async {
+                            setState(() => isDeleting = true);
+                            try {
+                              await provider.deleteSlotEntry(widget.entry.id!, widget.routineId);
+                            } on WgerHttpException catch (error) {
+                              if (context.mounted) {
+                                setState(() {
+                                  errorMessage = FormHttpErrorsWidget(error);
+                                });
+                              }
+                            } finally {
+                              if (mounted) {
+                                setState(() => isDeleting = false);
+                              }
+                            }
+                          },
+                  ),
+                ],
+              ),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+          if (_edit)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: ExerciseAutocompleter(
+                onExerciseSelected: (exercise) => setState(() {
+                  widget.entry.exercise = exercise;
+                  _edit = false;
+                }),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 12),
+            child: Row(
               children: [
-                IconButton(
-                  onPressed: () {
-                    setState(() => _edit = !_edit);
-                  },
-                  icon: _edit
-                      ? Icon(Icons.edit_off, size: iconSize)
-                      : Icon(Icons.edit, size: iconSize),
+                Expanded(
+                  child: Text(
+                    i18n.sets,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: atlas.ink2),
+                  ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.delete, size: iconSize),
-                  onPressed: isDeleting || !isOnline
-                      ? null
-                      : () async {
-                          setState(() => isDeleting = true);
-                          try {
-                            await provider.deleteSlotEntry(widget.entry.id!, widget.routineId);
-                          } on WgerHttpException catch (error) {
-                            if (context.mounted) {
-                              setState(() {
-                                errorMessage = FormHttpErrorsWidget(error);
-                              });
-                            }
-                          } finally {
-                            if (mounted) {
-                              setState(() => isDeleting = false);
-                            }
-                          }
-                        },
+                StepButton(
+                  key: const ValueKey('sets-minus'),
+                  icon: Icons.remove,
+                  size: 36,
+                  tooltip: i18n.removeSet,
+                  onPressed: setsValue > 1 ? () => setState(() => setsValue--) : null,
+                ),
+                SizedBox(
+                  width: 40,
+                  child: MonoText(
+                    '$setsValue',
+                    key: const ValueKey('sets-value'),
+                    size: 18,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                StepButton(
+                  key: const ValueKey('sets-plus'),
+                  icon: Icons.add,
+                  size: 36,
+                  tooltip: i18n.addSet,
+                  onPressed: setsValue < 20 ? () => setState(() => setsValue++) : null,
                 ),
               ],
             ),
-          ),
-          if (_edit)
-            ExerciseAutocompleter(
-              onExerciseSelected: (exercise) => setState(() {
-                widget.entry.exercise = exercise;
-                _edit = false;
-              }),
-            ),
-          Row(
-            children: [
-              Text('${i18n.sets}: ${setsSliderValue.round()}'),
-              Expanded(
-                child: Slider(
-                  value: setsSliderValue,
-                  min: 1,
-                  max: 20,
-                  divisions: 20,
-                  label: setsSliderValue.round().toString(),
-                  onChanged: (double value) {
-                    setState(() => setsSliderValue = value);
-                  },
-                ),
-              ),
-            ],
           ),
           if (!widget.simpleMode)
             DropdownButtonFormField<SlotEntryType>(
@@ -227,20 +297,57 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
               widget.entry.weightUnitObj,
               onChanged: (value) => widget.entry.weightUnit = value,
             ),
-          Row(
-            spacing: 10,
-            children: [
-              Flexible(
-                child: DecimalInputWidget(
-                  key: const ValueKey('field-weight'),
-                  value: _weight,
-                  labelText: i18n.weight,
-                  min: 0,
-                  max: BaseConfig.MAX_VALUE,
-                  onChanged: (v) => _weight = v,
+          if (widget.simpleMode)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 8,
+              children: [
+                Flexible(
+                  child: DecimalInputWidget(
+                    key: const ValueKey('field-repetitions'),
+                    value: _reps,
+                    labelText: i18n.reps,
+                    min: 0,
+                    max: BaseConfig.MAX_VALUE,
+                    onChanged: (v) => _reps = v,
+                  ),
                 ),
-              ),
-              if (!widget.simpleMode)
+                Flexible(
+                  child: DecimalInputWidget(
+                    key: const ValueKey('field-weight'),
+                    value: _weight,
+                    labelText: i18n.weight,
+                    min: 0,
+                    max: BaseConfig.MAX_VALUE,
+                    onChanged: (v) => _weight = v,
+                  ),
+                ),
+                Flexible(
+                  child: TextFormField(
+                    key: const ValueKey('field-rest'),
+                    controller: restController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: i18n.restShort, suffixText: 's'),
+                    validator: (value) =>
+                        validateOptionalIntegerInRange(value, 0, BaseConfig.MAX_REST, i18n),
+                  ),
+                ),
+              ],
+            ),
+          if (!widget.simpleMode) ...[
+            Row(
+              spacing: 10,
+              children: [
+                Flexible(
+                  child: DecimalInputWidget(
+                    key: const ValueKey('field-weight'),
+                    value: _weight,
+                    labelText: i18n.weight,
+                    min: 0,
+                    max: BaseConfig.MAX_VALUE,
+                    onChanged: (v) => _weight = v,
+                  ),
+                ),
                 Flexible(
                   child: DecimalInputWidget(
                     key: const ValueKey('field-max-weight'),
@@ -251,27 +358,25 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
                     onChanged: (v) => _maxWeight = v,
                   ),
                 ),
-            ],
-          ),
-          if (!widget.simpleMode)
+              ],
+            ),
             RepetitionUnitInputWidget(
               widget.entry.repetitionUnitObj,
               onChanged: (value) => widget.entry.repetitionUnit = value,
             ),
-          Row(
-            spacing: 10,
-            children: [
-              Flexible(
-                child: DecimalInputWidget(
-                  key: const ValueKey('field-repetitions'),
-                  value: _reps,
-                  labelText: i18n.repetitions,
-                  min: 0,
-                  max: BaseConfig.MAX_VALUE,
-                  onChanged: (v) => _reps = v,
+            Row(
+              spacing: 10,
+              children: [
+                Flexible(
+                  child: DecimalInputWidget(
+                    key: const ValueKey('field-repetitions'),
+                    value: _reps,
+                    labelText: i18n.repetitions,
+                    min: 0,
+                    max: BaseConfig.MAX_VALUE,
+                    onChanged: (v) => _reps = v,
+                  ),
                 ),
-              ),
-              if (!widget.simpleMode)
                 Flexible(
                   child: DecimalInputWidget(
                     key: const ValueKey('field-max-repetitions'),
@@ -282,9 +387,8 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
                     onChanged: (v) => _maxReps = v,
                   ),
                 ),
-            ],
-          ),
-          if (!widget.simpleMode)
+              ],
+            ),
             Row(
               spacing: 10,
               children: [
@@ -310,12 +414,37 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
                 ),
               ],
             ),
-          if (!widget.simpleMode)
             RiRInputWidget(
               rirController.text == '' ? null : num.parse(rirController.text),
               onChanged: (value) => rirController.text = value,
             ),
-          const SizedBox(height: 5),
+          ],
+          const SizedBox(height: 14),
+          _progressionChips(context),
+          const SizedBox(height: 14),
+          Row(
+            spacing: 8,
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const ValueKey('change-exercise'),
+                  onPressed: isOnline ? () => setState(() => _edit = !_edit) : null,
+                  icon: const Icon(Icons.swap_horiz, size: 18),
+                  label: Text(i18n.changeExercise),
+                ),
+              ),
+              if (widget.onAddSuperset != null)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('add-superset'),
+                    onPressed: isOnline ? widget.onAddSuperset : null,
+                    icon: const Icon(Icons.link, size: 18),
+                    label: Text(i18n.superset),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           FormSubmitButton(
             key: const Key(SUBMIT_BUTTON_KEY_NAME),
             enabled: isOnline,
@@ -330,7 +459,7 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
               await Future.wait([
                 provider.handleConfig(
                   widget.entry,
-                  setsSliderValue == 0 ? null : setsSliderValue.round(),
+                  setsValue == 0 ? null : setsValue,
                   ConfigType.sets,
                 ),
                 provider.handleConfig(widget.entry, _weight, ConfigType.weight),
@@ -357,237 +486,8 @@ class _SlotEntryFormState extends ConsumerState<SlotEntryForm> {
               await provider.editSlotEntry(widget.entry, widget.routineId);
             },
           ),
-          const SizedBox(height: 10),
         ],
       ),
-    );
-  }
-}
-
-class SlotDetailWidget extends ConsumerStatefulWidget {
-  final Slot slot;
-  final bool simpleMode;
-  final int routineId;
-
-  const SlotDetailWidget(this.slot, this.routineId, {this.simpleMode = true, super.key});
-
-  @override
-  _SlotDetailWidgetState createState() => _SlotDetailWidgetState();
-}
-
-class _SlotDetailWidgetState extends ConsumerState<SlotDetailWidget> {
-  bool _showExerciseSearchBox = false;
-  Widget errorMessage = const SizedBox.shrink();
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppLocalizations.of(context);
-    final provider = ref.read(routinesRiverpodProvider.notifier);
-
-    return Column(
-      children: [
-        errorMessage,
-        ...widget.slot.entries.map(
-          (entry) => entry.hasProgressionRules
-              ? ProgressionRulesInfoBox(entry.exerciseObj)
-              : SlotEntryForm(entry, widget.routineId, simpleMode: widget.simpleMode),
-        ),
-        const SizedBox(height: 10),
-        if (_showExerciseSearchBox || widget.slot.entries.isEmpty)
-          ExerciseAutocompleter(
-            onExerciseSelected: (exercise) async {
-              setState(() => _showExerciseSearchBox = false);
-
-              final SlotEntry entry = SlotEntry.withData(
-                slotId: widget.slot.id!,
-                order: widget.slot.entries.length + 1,
-                exercise: exercise,
-              );
-
-              try {
-                await provider.addSlotEntry(entry, widget.routineId);
-                if (context.mounted) {
-                  setState(() => errorMessage = const SizedBox.shrink());
-                }
-              } on WgerHttpException catch (error) {
-                if (context.mounted) {
-                  setState(() {
-                    errorMessage = FormHttpErrorsWidget(error);
-                  });
-                }
-              }
-            },
-          ),
-        if (widget.slot.entries.isNotEmpty)
-          FilledButton(
-            onPressed: () {
-              setState(() => _showExerciseSearchBox = !_showExerciseSearchBox);
-            },
-            child: Text(i18n.addSuperset),
-          ),
-        const SizedBox(height: 5),
-      ],
-    );
-  }
-}
-
-class ReorderableSlotList extends ConsumerStatefulWidget {
-  final List<Slot> slots;
-  final Day day;
-
-  const ReorderableSlotList(this.slots, this.day);
-
-  @override
-  _SlotFormWidgetStateNg createState() => _SlotFormWidgetStateNg();
-}
-
-class _SlotFormWidgetStateNg extends ConsumerState<ReorderableSlotList> {
-  int? selectedSlotId;
-  bool simpleMode = true;
-  bool isAddingSlot = false;
-  int? isDeletingSlot;
-  Widget errorMessage = const SizedBox.shrink();
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppLocalizations.of(context);
-    final provider = ref.read(routinesRiverpodProvider.notifier);
-    final languageCode = Localizations.localeOf(context).languageCode;
-
-    return Column(
-      children: [
-        errorMessage,
-        if (!widget.day.isRest)
-          SwitchListTile(
-            value: simpleMode,
-            title: Text(i18n.simpleMode),
-            subtitle: Text(i18n.simpleModeHelp),
-            contentPadding: const EdgeInsets.all(4),
-            onChanged: (value) {
-              setState(() => simpleMode = value);
-            },
-          ),
-        ReorderableListView.builder(
-          buildDefaultDragHandles: false,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: widget.slots.length,
-          itemBuilder: (context, index) {
-            final slot = widget.slots[index];
-            final isCurrentSlotSelected = slot.id == selectedSlotId;
-
-            return Card(
-              color: slot.entries.isEmpty ? Theme.of(context).colorScheme.inversePrimary : null,
-              key: ValueKey(slot.id),
-              child: Column(
-                children: [
-                  ListTile(
-                    title: slot.isSuperset
-                        ? Text(i18n.supersetNr((index + 1).toString()))
-                        : Text(i18n.exerciseNr((index + 1).toString())),
-                    tileColor: isCurrentSlotSelected ? Theme.of(context).highlightColor : null,
-                    leading: selectedSlotId == null
-                        ? ReorderableDragStartListener(
-                            index: index,
-                            child: const Icon(Icons.drag_handle),
-                          )
-                        : const Icon(Icons.block),
-                    subtitle: slot.entries.isEmpty
-                        ? Text(i18n.setHasNoExercises)
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ...slot.entries.map(
-                                (e) => Text(e.exerciseObj.getTranslation(languageCode).name),
-                              ),
-                            ],
-                          ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            setState(() {
-                              if (selectedSlotId == slot.id) {
-                                selectedSlotId = null;
-                              } else {
-                                selectedSlotId = slot.id;
-                              }
-                            });
-                          },
-                          icon: isCurrentSlotSelected
-                              ? const Icon(Icons.edit_off)
-                              : const Icon(Icons.edit),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: isDeletingSlot == index
-                              ? null
-                              : () async {
-                                  selectedSlotId = null;
-                                  setState(() => isDeletingSlot = index);
-                                  await provider.deleteSlot(slot.id!, widget.day.routineId);
-                                  if (mounted) {
-                                    setState(() => isDeletingSlot = null);
-                                  }
-                                },
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (isCurrentSlotSelected)
-                    SlotDetailWidget(slot, widget.day.routineId, simpleMode: simpleMode),
-                ],
-              ),
-            );
-          },
-          onReorderItem: (int oldIndex, int newIndex) {
-            setState(() {
-              // Update the order of slots in your data source
-              final item = widget.slots.removeAt(oldIndex);
-              widget.slots.insert(newIndex, item);
-
-              for (int i = 0; i < widget.slots.length; i++) {
-                widget.slots[i].order = i + 1;
-              }
-
-              try {
-                provider.editSlots(widget.slots, widget.day.routineId);
-                setState(() {
-                  errorMessage = const SizedBox.shrink();
-                });
-              } on WgerHttpException catch (error) {
-                if (context.mounted) {
-                  setState(() {
-                    errorMessage = FormHttpErrorsWidget(error);
-                  });
-                }
-              }
-            });
-          },
-        ),
-        if (!widget.day.isRest)
-          Card(
-            child: ListTile(
-              leading: isAddingSlot ? const FormProgressIndicator() : const Icon(Icons.add),
-              title: Text(i18n.addExercise, style: Theme.of(context).textTheme.titleMedium),
-              onTap: isAddingSlot
-                  ? null
-                  : () async {
-                      setState(() => isAddingSlot = true);
-
-                      final newSlot = await provider.addSlot(
-                        Slot.withData(day: widget.day.id, order: widget.slots.length + 1),
-                        widget.day.routineId,
-                      );
-                      if (mounted) {
-                        setState(() => isAddingSlot = false);
-                        setState(() => selectedSlotId = newSlot.id);
-                      }
-                    },
-            ),
-          ),
-      ],
     );
   }
 }

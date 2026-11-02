@@ -783,6 +783,46 @@ void main() {
     });
   });
 
+  group('Server cards', () {
+    testWidgets('the cards mirror the choice of the advanced sheet and set the server', (
+      WidgetTester tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(getWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Official server'), findsOneWidget);
+      expect(find.text('My server'), findsOneWidget);
+      expect(find.text('Your own wger instance'), findsOneWidget);
+
+      // Picking the own server opens the sheet to enter its address
+      await tester.tap(find.byKey(const ValueKey('server-custom')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('inputServer')), findsOneWidget);
+      await tester.enterText(find.byKey(const Key('inputServer')), 'https://my.example.com');
+      await tester.tap(find.byKey(const Key('advancedDoneButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('my.example.com'), findsOneWidget);
+      expect(find.text('· my.example.com'), findsOneWidget);
+
+      // And the official one points back at wger.de
+      await tester.tap(find.byKey(const ValueKey('server-official')));
+      await tester.pumpAndSettle();
+      expect(find.text('my.example.com'), findsNothing);
+      expect(find.text('Your own wger instance'), findsOneWidget);
+    });
+
+    testWidgets('the welcome headline and the footer are shown', (WidgetTester tester) async {
+      await tester.pumpWidget(getWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your training.'), findsOneWidget);
+      expect(find.text('Your server.'), findsOneWidget);
+      expect(find.textContaining('AGPL-3.0'), findsOneWidget);
+    });
+  });
+
   group('Registration mode', () {
     testWidgets('Registration smoke test', (WidgetTester tester) async {
       // Arrange

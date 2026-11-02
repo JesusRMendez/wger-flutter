@@ -56,8 +56,55 @@ void main() {
       expect(find.text('New Year, New Me'), findsOneWidget);
       expect(find.text('Work out on January 1st'), findsOneWidget);
 
-      expect(find.text('Unstoppable'), findsOneWidget);
-      expect(find.text('Maintain a 30-day workout streak'), findsOneWidget);
+      // Once in the grid and once on the card of the next trophy, which is the
+      // unearned one with progress
+      expect(find.text('Unstoppable'), findsNWidgets(2));
+      expect(find.text('Maintain a 30-day workout streak'), findsNWidgets(2));
+      expect(find.byKey(const ValueKey('trophy-next')), findsOneWidget);
+      expect(find.text('NEXT TROPHY'), findsOneWidget);
     });
+  });
+
+  testWidgets('counts what is earned and what is left', (WidgetTester tester) async {
+    final progression = getUserTrophyProgression();
+    await mockNetworkImagesFor(() async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            trophyStateProvider.overrideWithValue(
+              TrophyState(
+                trophyProgression: progression,
+                userTrophies: getUserTrophies(),
+                trophies: getTestTrophies(),
+              ),
+            ),
+          ],
+          child: const MaterialApp(
+            locale: Locale('en'),
+            localizationsDelegates: appLocalizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: TrophiesOverview()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    });
+
+    final earned = progression.where((t) => t.isEarned).length;
+    expect(find.text('earned'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('trophy-stat-earned')),
+        matching: find.text('$earned'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('trophy-stat-to-earn')),
+        matching: find.text('${progression.length - earned}'),
+      ),
+      findsOneWidget,
+    );
   });
 }

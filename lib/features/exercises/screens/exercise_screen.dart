@@ -19,7 +19,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/wide_screen_wrapper.dart';
 import 'package:wger/features/exercises/models/exercise.dart';
-import 'package:wger/features/exercises/widgets/exercises.dart';
+import 'package:wger/features/exercises/widgets/detail/exercise_detail_body.dart';
 
 class ExerciseDetailScreen extends StatelessWidget {
   static const routeName = '/exercise-detail';
@@ -31,15 +31,8 @@ class ExerciseDetailScreen extends StatelessWidget {
     final exercise = ModalRoute.of(context)!.settings.arguments as Exercise;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(exercise.getTranslation(Localizations.localeOf(context).languageCode).name),
-      ),
-      body: WidescreenWrapper(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: ExerciseDetail(exercise),
-        ),
-      ),
+      appBar: AppBar(),
+      body: WidescreenWrapper(child: ExerciseDetailBody(exercise)),
     );
   }
 }

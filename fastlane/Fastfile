@@ -23,6 +23,48 @@ lane :playstore do
   )
 end
 
+# The helpers and the internal / production_custom lanes below are used by the
+# publish-qa / publish-production workflows (docs/ci-publishing.md). They publish a customized build, so unlike the
+# upstream lanes above they never touch the store listing: the metadata,
+# images and screenshots in fastlane/metadata/android describe upstream wger.
+#
+# Configuration comes from the environment:
+#   PLAY_JSON_KEY_FILE   path to the Google Play service account json (required)
+#   AAB_PATH             the bundle to upload (default: flutter's release output)
+#   APP_ID_ANDROID       application id, see Appfile
+#   PLAY_RELEASE_STATUS  completed or draft
+
+def custom_build_aab
+  path = ENV["AAB_PATH"].to_s.strip
+  path = "./build/app/outputs/bundle/release/app-release.aab" if path.empty?
+  UI.user_error!("No app bundle at #{path}") unless File.exist?(path)
+  path
+end
+
+def custom_play_json_key
+  path = ENV["PLAY_JSON_KEY_FILE"].to_s.strip
+  UI.user_error!("PLAY_JSON_KEY_FILE must point to the Google Play service account json") if path.empty?
+  UI.user_error!("No service account json at #{path}") unless File.exist?(path)
+  path
+end
+
+def custom_upload_to_play(track:, release_status:)
+  unless %w[completed draft].include?(release_status)
+    UI.user_error!("release_status must be 'completed' or 'draft', got '#{release_status}'")
+  end
+  upload_to_play_store(
+    json_key: custom_play_json_key,
+    track: track,
+    aab: custom_build_aab,
+    release_status: release_status,
+    skip_upload_apk: true,
+    skip_upload_metadata: true,
+    skip_upload_changelogs: true,
+    skip_upload_images: true,
+    skip_upload_screenshots: true,
+  )
+end
+
 platform :android do
 
   desc "Check playstore configuration, does not upload any files"
@@ -51,6 +93,19 @@ platform :android do
         release_status: "completed", #"draft",
       )
     end
+  end
+
+
+  desc "Upload the custom build to the internal testing track (QA)"
+  lane :internal do
+    status = ENV["PLAY_RELEASE_STATUS"].to_s.strip
+    custom_upload_to_play(track: "internal", release_status: status.empty? ? "completed" : status)
+  end
+
+  desc "Upload the custom build to the production track, as a draft unless PLAY_RELEASE_STATUS=completed"
+  lane :production_custom do
+    status = ENV["PLAY_RELEASE_STATUS"].to_s.strip
+    custom_upload_to_play(track: "production", release_status: status.empty? ? "draft" : status)
   end
 
 

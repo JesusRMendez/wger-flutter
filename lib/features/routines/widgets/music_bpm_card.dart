@@ -18,10 +18,12 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/glossary/glossary_term.dart';
 import 'package:wger/features/glossary/widgets/glossary_widgets.dart';
 import 'package:wger/features/routines/logic/music_bpm.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 String musicPhaseLabel(AppLocalizations i18n, MusicPhase phase) {
   switch (phase) {
@@ -70,65 +72,178 @@ class _MusicBpmCardState extends State<MusicBpmCard> {
     }
   }
 
+  Widget _tile(BuildContext context, String label, MusicPhase phase, {Key? key}) {
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    return Container(
+      key: key,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: atlas.surface2,
+        borderRadius: BorderRadius.circular(AtlasRadius.input),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MonoText(phase.range, size: 20, color: theme.colorScheme.onSurface),
+                const SizedBox(width: 4),
+                Text('BPM', style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _service(
+    BuildContext context, {
+    required Key key,
+    required String name,
+    required String hint,
+    required VoidCallback onOpen,
+  }) {
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: atlas.surface2,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(Icons.volume_up_outlined, size: 20, color: atlas.ink2),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: theme.textTheme.titleSmall),
+              Text(
+                hint,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(color: atlas.ink3),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          key: key,
+          icon: const Icon(Icons.open_in_new, size: 16),
+          label: Text(AppLocalizations.of(context).musicOpen),
+          onPressed: onOpen,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
+    final atlas = context.atlas;
 
-    return Card(
+    // The phase the user plays against: work against rest
+    final contrast = _phase == MusicPhase.rest ? MusicPhase.strength : MusicPhase.rest;
+
+    return AtlasCard(
       key: const ValueKey('music-bpm-card'),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.music_note),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(i18n.musicByBpm, style: Theme.of(context).textTheme.titleMedium),
-                ),
-                const AbbreviationChip(GlossaryTerm.bpm),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Wrap(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.music_note, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(i18n.musicByBpm, style: Theme.of(context).textTheme.titleMedium),
+              ),
+              const AbbreviationChip(GlossaryTerm.bpm),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
               spacing: 8,
               children: [
                 for (final phase in MusicPhase.values)
-                  ChoiceChip(
+                  PillChip(
+                    musicPhaseLabel(i18n, phase),
                     key: ValueKey('music-phase-${phase.name}'),
-                    label: Text(musicPhaseLabel(i18n, phase)),
                     selected: phase == _phase,
-                    onSelected: (_) => setState(() => _phase = phase),
+                    height: 36,
+                    fontSize: 13,
+                    onTap: () => setState(() => _phase = phase),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              i18n.musicRecommendation(_phase.range),
-              key: const ValueKey('music-recommendation'),
-            ),
-            Wrap(
-              spacing: 8,
-              children: [
-                TextButton.icon(
-                  key: const ValueKey('music-spotify'),
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: Text(i18n.musicOpenSpotify),
-                  onPressed: () => _open(spotifySearchUri(_phase)),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            spacing: 10,
+            children: [
+              Expanded(
+                child: _tile(
+                  context,
+                  musicPhaseLabel(i18n, _phase),
+                  _phase,
+                  key: const ValueKey('music-tile-phase'),
                 ),
-                TextButton.icon(
-                  key: const ValueKey('music-youtube'),
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: Text(i18n.musicOpenYoutubeMusic),
-                  onPressed: () => _open(youtubeMusicSearchUri(_phase)),
+              ),
+              Expanded(
+                child: _tile(
+                  context,
+                  musicPhaseLabel(i18n, contrast),
+                  contrast,
+                  key: const ValueKey('music-tile-contrast'),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            i18n.musicRecommendation(_phase.range),
+            key: const ValueKey('music-recommendation'),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: atlas.ink3),
+          ),
+          const SizedBox(height: 14),
+          _service(
+            context,
+            key: const ValueKey('music-spotify'),
+            name: 'Spotify',
+            hint: i18n.musicServiceHint(_phase.range),
+            onOpen: () => _open(spotifySearchUri(_phase)),
+          ),
+          const SizedBox(height: 12),
+          _service(
+            context,
+            key: const ValueKey('music-youtube'),
+            name: 'YouTube Music',
+            hint: i18n.musicServiceHint(_phase.range),
+            onOpen: () => _open(youtubeMusicSearchUri(_phase)),
+          ),
+        ],
       ),
     );
   }

@@ -78,8 +78,35 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    // Opens on the before / after slider with the oldest and the newest photo
+    expect(find.byKey(const ValueKey('gallery-compare')), findsOneWidget);
+    expect(find.text('2/22/2021'), findsOneWidget);
+    expect(find.text('5/30/2021'), findsOneWidget);
+    expect(find.byType(SliverMasonryGrid), findsNothing);
+
+    await mockNetworkImagesFor(() async {
+      await tester.tap(find.text('All · 4'));
+      await tester.pumpAndSettle();
+    });
+
     expect(find.byType(SliverMasonryGrid), findsOneWidget);
-    expect(find.byType(GestureDetector, skipOffstage: false), findsNWidgets(4));
+    for (final id in [1, 2, 3, 4]) {
+      expect(find.byKey(Key('image-$id'), skipOffstage: false), findsOneWidget);
+    }
+    expect(find.byKey(const ValueKey('gallery-compare')), findsNothing);
+  });
+
+  testWidgets('The slider follows a drag', (WidgetTester tester) async {
+    await mockNetworkImagesFor(() async {
+      await tester.pumpWidget(renderScreen());
+      await tester.pumpAndSettle();
+    });
+
+    final handle = find.byIcon(Icons.swap_horiz);
+    final start = tester.getCenter(handle);
+    await tester.drag(find.byKey(const ValueKey('gallery-compare')), const Offset(-100, 0));
+    await tester.pumpAndSettle();
+    expect(tester.getCenter(handle).dx, lessThan(start.dx - 50));
   });
 
   testWidgets('Tests the localization of dates - EN', (WidgetTester tester) async {

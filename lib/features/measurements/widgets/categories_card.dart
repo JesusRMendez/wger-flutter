@@ -71,6 +71,21 @@ class CategoriesCard extends ConsumerWidget {
     this.onShowDetails,
   });
 
+  /// The card surface. Embedded in a dashboard card (elevation 0) it is flat
+  /// and borderless, so the two do not draw their outline twice.
+  Widget _card(Widget child) {
+    if (elevation == 0) {
+      return Card(
+        elevation: 0,
+        color: Colors.transparent,
+        margin: EdgeInsets.zero,
+        shape: const RoundedRectangleBorder(),
+        child: child,
+      );
+    }
+    return Card(elevation: elevation, child: child);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (currentCategory.hasChildren) {
@@ -78,9 +93,8 @@ class CategoriesCard extends ConsumerWidget {
     }
 
     final cardTitle = title ?? currentCategory.displayName(context);
-    return Card(
-      elevation: elevation,
-      child: SingleChildScrollView(
+    return _card(
+      SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Column(
           children: [
@@ -237,11 +251,10 @@ class CategoriesCard extends ConsumerWidget {
   /// chart, then one row per component with its latest reading; new readings
   /// are entered for all components at once.
   Widget _buildGroupCard(BuildContext context, WidgetRef ref) {
-    return Card(
-      elevation: elevation,
+    return _card(
       // Scrolls like the leaf card above: a group of five components (the
       // sleep stages) is taller than the box the dashboard carousel gives it
-      child: SingleChildScrollView(
+      SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Column(
           mainAxisSize: MainAxisSize.min,

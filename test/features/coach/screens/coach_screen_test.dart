@@ -46,6 +46,32 @@ void main() {
     expect(repo.calls, ['chat:How do I deload?:0']);
   });
 
+  testWidgets('a suggestion chip asks the question and the answer carries the disclaimer', (
+    tester,
+  ) async {
+    final repo = FakeCoachRepository();
+    await pumpCoach(tester, const CoachScreen(), repo);
+
+    expect(find.byKey(const ValueKey('coach-disclaimer')), findsNothing);
+    await tester.tap(find.text('This week I only have 30 min'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Echo: This week I only have 30 min'), findsOneWidget);
+    expect(repo.calls, ['chat:This week I only have 30 min:0']);
+    expect(
+      find.byKey(const ValueKey('coach-disclaimer'), skipOffstage: false),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('no suggestions without AI', (tester) async {
+    final repo = FakeCoachRepository()
+      ..access = const CoachAccess(id: 1, effectiveMode: CoachMode.none);
+    await pumpCoach(tester, const CoachScreen(), repo);
+
+    expect(find.byKey(const ValueKey('coach-suggestions')), findsNothing);
+  });
+
   testWidgets('without AI the badge links to My AI and chat is disabled', (tester) async {
     final repo = FakeCoachRepository()
       ..access = const CoachAccess(id: 1, effectiveMode: CoachMode.none);
@@ -82,6 +108,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('AI is not available for your account'), findsOneWidget);
+    await tester.ensureVisible(find.text('Set up My AI'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Set up My AI'));
     await tester.pumpAndSettle();
     expect(pushed, [MyAiScreen.routeName]);

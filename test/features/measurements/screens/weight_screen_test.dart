@@ -108,7 +108,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Weight'), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(2));
     expect(find.byType(ListTile), findsNWidgets(2));
 
     // The seeded entries are from 2021, so they only show in the full history
@@ -182,7 +181,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(WeightForm), findsNothing);
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.text('Log weight'));
     await tester.pumpAndSettle();
     expect(find.byType(WeightForm), findsOneWidget);
   });

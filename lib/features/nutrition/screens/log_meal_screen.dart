@@ -19,12 +19,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/snackbar.dart';
+import 'package:wger/core/widgets/atlas.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/core/widgets/datetime_input.dart';
 import 'package:wger/features/nutrition/models/meal.dart';
 import 'package:wger/features/nutrition/providers/nutrition_notifier.dart';
 import 'package:wger/features/nutrition/widgets/meal.dart';
-import 'package:wger/features/nutrition/widgets/nutrition_tiles.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class LogMealArguments {
   final Meal meal;
@@ -58,109 +60,205 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
           .toList(),
     );
 
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+    final totals = meal.plannedNutritionalValues;
+
+    Future<void> save() async {
+      final loggedDate = DateTime(
+        _date.year,
+        _date.month,
+        _date.day,
+        _time.hour,
+        _time.minute,
+      );
+      await ref.read(nutritionProvider.notifier).logMealToDiary(meal, loggedDate);
+
+      if (context.mounted) {
+        showSnackbar(context, i18n.mealLogged, center: true);
+
+        Navigator.of(context).pop();
+        if (args.popTwice) {
+          Navigator.of(context).pop();
+        }
+      }
+    }
+
     return Scaffold(
-      appBar: AppBar(title: Text(i18n.logMeal)),
       body: Consumer(
         builder: (context, ref, child) {
           ref.watch(nutritionProvider);
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-              child: Column(
-                children: [
-                  Text(
-                    meal.name,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  if (meal.mealItems.isEmpty)
-                    ListTile(title: Text(i18n.noIngredientsDefined))
-                  else
-                    Column(
-                      children: [
-                        const DiaryheaderTile(),
-                        ...meal.mealItems.map(
-                          (item) => MealItemEditableFullTile(item, ViewMode.withAllDetails, false),
-                        ),
-                        const SizedBox(height: 32),
-                        Text(
-                          'Portion: ${portionPct.round()} %',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        Slider.adaptive(
-                          min: 0,
-                          max: 150,
-                          divisions: 30,
-                          onChanged: (value) => setState(() => portionPct = value),
-                          value: portionPct,
-                        ),
-                      ],
-                    ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      const Padding(padding: EdgeInsets.symmetric(horizontal: 12)),
-                      Expanded(
-                        child: DateInputWidget(
-                          key: const ValueKey('field-date'),
-                          value: _date,
-                          labelText: i18n.date,
-                          firstDate: DateTime.now().subtract(const Duration(days: 3000)),
-                          lastDate: DateTime.now(),
-                          onChanged: (date) => _date = date,
-                        ),
-                      ),
-                      const Padding(padding: EdgeInsets.symmetric(horizontal: 12)),
-                      Expanded(
-                        child: TimeInputWidget(
-                          key: const ValueKey('field-time'),
-                          value: _time,
-                          labelText: i18n.time,
-                          onChanged: (time) => _time = time,
-                        ),
-                      ),
-                      const Padding(padding: EdgeInsets.symmetric(horizontal: 12)),
-                    ],
-                  ),
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (meal.mealItems.isNotEmpty)
-                        TextButton(
-                          child: Text(i18n.save),
-                          onPressed: () async {
-                            final loggedDate = DateTime(
-                              _date.year,
-                              _date.month,
-                              _date.day,
-                              _time.hour,
-                              _time.minute,
-                            );
-                            await ref
-                                .read(nutritionProvider.notifier)
-                                .logMealToDiary(meal, loggedDate);
-
-                            if (context.mounted) {
-                              showSnackbar(context, i18n.mealLogged, center: true);
-
-                              Navigator.of(context).pop();
-                              if (args.popTwice) {
-                                Navigator.of(context).pop();
-                              }
-                            }
-                          },
-                        ),
-                      TextButton(
-                        child: Text(
-                          MaterialLocalizations.of(context).cancelButtonLabel,
-                        ),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
+          return Column(
+            children: [
+              AtlasHeader(
+                showBack: false,
+                eyebrow: i18n.logMeal,
+                title: meal.name,
+                actions: [
+                  RoundIconButton(
+                    icon: Icons.close,
+                    tooltip: MaterialLocalizations.of(context).cancelButtonLabel,
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
-            ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (meal.mealItems.isEmpty)
+                        AtlasCard(child: Text(i18n.noIngredientsDefined))
+                      else ...[
+                        AtlasCard(
+                          padding: EdgeInsets.zero,
+                          child: Column(
+                            children: [
+                              for (final (i, item) in meal.mealItems.indexed) ...[
+                                if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+                                MealItemEditableFullTile(item, ViewMode.base, false),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        AtlasCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(i18n.portion, style: theme.textTheme.titleMedium),
+                                        MonoText(
+                                          i18n.kcalValue(totals.energy.toStringAsFixed(0)),
+                                          size: 13,
+                                          weight: FontWeight.w500,
+                                          color: atlas.ink3,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  StepButton(
+                                    icon: Icons.remove,
+                                    tooltip: '-10 %',
+                                    onPressed: portionPct > 0
+                                        ? () => setState(
+                                            () => portionPct = (portionPct - 10).clamp(0, 150),
+                                          )
+                                        : null,
+                                  ),
+                                  SizedBox(
+                                    width: 78,
+                                    child: Center(
+                                      child: MonoText(
+                                        '${portionPct.round()} %',
+                                        size: 22,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  StepButton(
+                                    icon: Icons.add,
+                                    tooltip: '+10 %',
+                                    onPressed: portionPct < 150
+                                        ? () => setState(
+                                            () => portionPct = (portionPct + 10).clamp(0, 150),
+                                          )
+                                        : null,
+                                  ),
+                                ],
+                              ),
+                              Slider.adaptive(
+                                min: 0,
+                                max: 150,
+                                divisions: 30,
+                                onChanged: (value) => setState(() => portionPct = value),
+                                value: portionPct,
+                              ),
+                              Row(
+                                spacing: 8,
+                                children: [
+                                  Expanded(
+                                    child: MacroTile(
+                                      value: totals.protein.toStringAsFixed(0),
+                                      unit: ' g',
+                                      label: i18n.proteinAbbr,
+                                      color: atlas.protein,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: MacroTile(
+                                      value: totals.carbohydrates.toStringAsFixed(0),
+                                      unit: ' g',
+                                      label: i18n.carbsAbbr,
+                                      color: atlas.carbs,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: MacroTile(
+                                      value: totals.fat.toStringAsFixed(0),
+                                      unit: ' g',
+                                      label: i18n.fatAbbr,
+                                      color: atlas.fat,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      AtlasCard(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: DateInputWidget(
+                                key: const ValueKey('field-date'),
+                                value: _date,
+                                labelText: i18n.date,
+                                firstDate: DateTime.now().subtract(const Duration(days: 3000)),
+                                lastDate: DateTime.now(),
+                                onChanged: (date) => _date = date,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TimeInputWidget(
+                                key: const ValueKey('field-time'),
+                                value: _time,
+                                labelText: i18n.time,
+                                onChanged: (time) => _time = time,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (meal.mealItems.isNotEmpty)
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: FilledButton(
+                        onPressed: save,
+                        child: Text(i18n.save),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),

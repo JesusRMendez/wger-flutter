@@ -29,7 +29,7 @@ import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
 
 /// Formats a single number, or a range if there is a different maximum
-String _formatRange(num value, num? max) {
+String formatRange(num value, num? max) {
   final out = formatNum(value).toString();
   if (max == null || max == value) {
     return out;
@@ -72,7 +72,7 @@ String plannedSetSummary(SetConfigData config, {required String Function(String)
   final parts = <String>[];
 
   if (hasReps) {
-    parts.add(_formatRange(config.repetitions!, config.maxRepetitions));
+    parts.add(formatRange(config.repetitions!, config.maxRepetitions));
     // The default unit is left out if there is a weight, "8 × 50 kg" is clear
     // enough. Every other unit is always shown.
     if (repUnit != null &&
@@ -86,7 +86,7 @@ String plannedSetSummary(SetConfigData config, {required String Function(String)
 
   if (hasWeight) {
     parts.add('×');
-    parts.add(_formatRange(config.weight!, config.maxWeight));
+    parts.add(formatRange(config.weight!, config.maxWeight));
     parts.add(translate(weightUnit!.name));
   } else if (valuelessWeightUnit) {
     if (parts.isNotEmpty) {

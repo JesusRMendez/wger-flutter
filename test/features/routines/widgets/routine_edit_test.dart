@@ -90,22 +90,16 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('edit-day-1')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byIcon(Icons.edit),
-      findsNWidgets(3),
-      reason: 'also for the days',
-    );
+    expect(find.byIcon(Icons.edit), findsOne, reason: 'the other day');
     expect(find.byIcon(Icons.edit_off), findsOne);
     expect(find.text('Is rest day'), findsOne);
 
-    expect(find.text('Exercise 1'), findsOne);
     expect(
       find.text('Bench press'),
       findsNWidgets(2),
       reason: 'resulting routine plus edit',
     );
 
-    expect(find.text('Exercise 2'), findsOne);
     expect(
       find.text('Side raises'),
       findsNWidgets(2),

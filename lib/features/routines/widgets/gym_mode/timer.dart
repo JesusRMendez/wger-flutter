@@ -23,11 +23,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/consts.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/features/routines/providers/gym_state_notifier.dart';
 import 'package:wger/features/routines/widgets/gym_mode/countdown_alert.dart';
 import 'package:wger/features/routines/widgets/gym_mode/navigation.dart';
 import 'package:wger/features/routines/widgets/gym_mode/next_exercise_preview.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class TimerWidget extends StatefulWidget {
   final PageController _controller;
@@ -76,11 +78,10 @@ class _TimerWidgetState extends State<TimerWidget> {
         ),
         Expanded(
           child: Center(
-            child: Text(
-              DateFormat('m:ss').format(displayTime),
-              style: Theme.of(
-                context,
-              ).textTheme.displayLarge!.copyWith(color: Theme.of(context).colorScheme.primary),
+            child: _RestRing(
+              time: DateFormat('m:ss').format(displayTime),
+              progress: displaySeconds / _maxSeconds,
+              label: AppLocalizations.of(context).pause,
             ),
           ),
         ),
@@ -120,6 +121,9 @@ class _TimerCountdownWidgetState extends ConsumerState<TimerCountdownWidget> {
 
   late DateTime _endTime;
   late int _remainingSeconds;
+
+  /// What the ring drains from: the planned rest, longer if the user added time
+  late int _totalSeconds;
   Timer? _uiTimer;
   Timer? _secondHapticTimer;
   bool _finished = false;
@@ -129,6 +133,7 @@ class _TimerCountdownWidgetState extends ConsumerState<TimerCountdownWidget> {
     super.initState();
     _endTime = clock.now().add(Duration(seconds: widget._seconds));
     _remainingSeconds = widget._seconds;
+    _totalSeconds = widget._seconds;
 
     _uiTimer = Timer.periodic(_checkInterval, (_) => _onTick());
   }
@@ -163,7 +168,7 @@ class _TimerCountdownWidgetState extends ConsumerState<TimerCountdownWidget> {
     final gymState = ref.read(gymStateProvider);
     final alert = countdownAlertFor(
       remainingSeconds: remaining,
-      totalSeconds: widget._seconds,
+      totalSeconds: _totalSeconds,
       alertAt20s: gymState.alertAt20s,
       alertLast5s: gymState.alertLast5s,
       alertAtEnd: gymState.alertOnCountdownEnd,
@@ -229,29 +234,143 @@ class _TimerCountdownWidgetState extends ConsumerState<TimerCountdownWidget> {
     );
   }
 
+  /// Shortens or extends the rest, never below one second: ending it is what
+  /// skipping is for
+  void _adjust(int seconds) {
+    if (_finished) {
+      return;
+    }
+    final remaining = _calculateRemainingSeconds() + seconds;
+    final next = remaining < 1 ? 1 : remaining;
+    setState(() {
+      _endTime = clock.now().add(Duration(seconds: next));
+      _remainingSeconds = next;
+      if (next > _totalSeconds) {
+        _totalSeconds = next;
+      }
+    });
+  }
+
+  /// Ends the rest and goes to what follows
+  void _skip() {
+    _finished = true;
+    _uiTimer?.cancel();
+    widget._controller.nextPage(
+      duration: DEFAULT_ANIMATION_DURATION,
+      curve: DEFAULT_ANIMATION_CURVE,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final i18n = AppLocalizations.of(context);
     final displayTime = DateTime(2000, 1, 1, 0, 0, 0).add(Duration(seconds: _remainingSeconds));
+
+    // The exercise that was just done, the rest belongs to it
+    final slotPage = widget.slotUuid == null
+        ? null
+        : ref.watch(gymStateProvider).getSlotPageByUUID(widget.slotUuid!);
+    final exercise = slotPage?.setConfigData?.exercise
+        .getTranslation(Localizations.localeOf(context).languageCode)
+        .name;
 
     return Column(
       children: [
         NavigationHeader(
-          AppLocalizations.of(context).pause,
+          i18n.pause,
           widget._controller,
+          showSettings: true,
         ),
         Expanded(
-          child: Center(
-            child: Text(
-              DateFormat('m:ss').format(displayTime),
-              style: Theme.of(
-                context,
-              ).textTheme.displayLarge!.copyWith(color: Theme.of(context).colorScheme.primary),
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (exercise != null) ...[
+                SectionEyebrow(i18n.gymRestTitle(exercise), key: const ValueKey('rest-eyebrow')),
+                const SizedBox(height: 16),
+              ],
+              Flexible(
+                child: _RestRing(
+                  time: DateFormat('m:ss').format(displayTime),
+                  progress: _totalSeconds == 0 ? 0 : _remainingSeconds / _totalSeconds,
+                  label: i18n.pause,
+                  urgent: _remainingSeconds > 0 && _remainingSeconds <= 5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  OutlinedButton(
+                    key: const ValueKey('rest-less'),
+                    onPressed: () => _adjust(-15),
+                    child: Text(i18n.gymRestLess),
+                  ),
+                  const SizedBox(width: 10),
+                  OutlinedButton(
+                    key: const ValueKey('rest-more'),
+                    onPressed: () => _adjust(15),
+                    child: Text(i18n.gymRestMore),
+                  ),
+                  const SizedBox(width: 10),
+                  FilledButton(
+                    key: const ValueKey('rest-skip'),
+                    onPressed: _skip,
+                    child: Text(i18n.gymRestSkip),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         if (widget.slotUuid != null) NextExercisePreview(widget.slotUuid!),
         NavigationFooter(widget._controller),
       ],
+    );
+  }
+}
+
+/// The rest timer: a big ring that drains with the time and the time in the
+/// middle. The last seconds turn it to the accent color.
+class _RestRing extends StatelessWidget {
+  const _RestRing({
+    required this.time,
+    required this.progress,
+    required this.label,
+    this.urgent = false,
+  });
+
+  final String time;
+  final double progress;
+  final String label;
+  final bool urgent;
+
+  @override
+  Widget build(BuildContext context) {
+    final atlas = context.atlas;
+    final theme = Theme.of(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = (constraints.biggest.shortestSide - 32).clamp(120.0, 280.0);
+
+        return ProgressRing(
+          size: size,
+          strokeWidth: 14,
+          value: progress,
+          color: urgent ? atlas.accent : theme.colorScheme.primary,
+          // The ring follows the clock, it does not ease behind it
+          duration: const Duration(milliseconds: 240),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MonoText(time, size: size * 0.26, color: theme.colorScheme.onSurface),
+              const SizedBox(height: 4),
+              SectionEyebrow(label),
+            ],
+          ),
+        );
+      },
     );
   }
 }

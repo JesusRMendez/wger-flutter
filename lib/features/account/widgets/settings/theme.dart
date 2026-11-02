@@ -23,30 +23,29 @@ class SettingsTheme extends ConsumerWidget {
 
     return Column(
       children: [
-        ListTile(
-          title: Text(i18n.themeMode),
-          trailing: DropdownButton<ThemeMode>(
-            key: const ValueKey('themeModeDropdown'),
-            value: currentMode,
-            onChanged: (ThemeMode? newValue) {
-              if (newValue != null) {
-                ref.read(appSettingsProvider.notifier).setThemeMode(newValue);
-              }
-            },
-            items: ThemeMode.values.map<DropdownMenuItem<ThemeMode>>((ThemeMode value) {
-              final label = (() {
-                switch (value) {
-                  case ThemeMode.system:
-                    return i18n.systemMode;
-                  case ThemeMode.light:
-                    return i18n.lightMode;
-                  case ThemeMode.dark:
-                    return i18n.darkMode;
-                }
-              })();
-
-              return DropdownMenuItem<ThemeMode>(value: value, child: Text(label));
-            }).toList(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(i18n.themeMode, style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<ThemeMode>(
+                  key: const ValueKey('themeModeSegmented'),
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(value: ThemeMode.system, label: Text(i18n.themeSystemShort)),
+                    ButtonSegment(value: ThemeMode.dark, label: Text(i18n.themeDarkShort)),
+                    ButtonSegment(value: ThemeMode.light, label: Text(i18n.themeLightShort)),
+                  ],
+                  selected: {currentMode},
+                  onSelectionChanged: (selection) =>
+                      ref.read(appSettingsProvider.notifier).setThemeMode(selection.first),
+                ),
+              ),
+            ],
           ),
         ),
         if (showDynamicColor)

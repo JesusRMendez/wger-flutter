@@ -357,4 +357,51 @@ void main() {
       expect(find.text('0:30'), findsOneWidget);
     });
   });
+
+  group('Adjusting the rest', () {
+    testWidgets('names the exercise the rest belongs to', (tester) async {
+      await pumpTimerPage(tester);
+
+      expect(find.byKey(const ValueKey('rest-eyebrow')), findsOneWidget);
+      expect(find.textContaining('REST ·'), findsOneWidget);
+    });
+
+    testWidgets('adds and removes 15 seconds', (tester) async {
+      await pumpTimerPage(tester);
+      expect(find.text('0:30'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('rest-more')));
+      await tester.pump();
+      expect(find.text('0:45'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('rest-less')));
+      await tester.tap(find.byKey(const ValueKey('rest-less')));
+      await tester.pump();
+      expect(find.text('0:15'), findsOneWidget);
+
+      // The countdown continues from the adjusted time
+      await elapse(tester, 5);
+      expect(find.text('0:10'), findsOneWidget);
+    });
+
+    testWidgets('never goes below one second', (tester) async {
+      await pumpTimerPage(tester);
+
+      for (var i = 0; i < 4; i++) {
+        await tester.tap(find.byKey(const ValueKey('rest-less')));
+        await tester.pump();
+      }
+      expect(find.text('0:01'), findsOneWidget);
+    });
+
+    testWidgets('skip leaves the rest for the next page', (tester) async {
+      await pumpTimerPage(tester);
+      expect(harness.controller.page, 2);
+
+      await tester.tap(find.byKey(const ValueKey('rest-skip')));
+      await tester.pumpAndSettle();
+
+      expect(harness.controller.page, 3);
+    });
+  });
 }

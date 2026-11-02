@@ -25,9 +25,15 @@ import 'package:wger/core/formatting/formatting.dart';
 import 'package:wger/features/health/providers/health_repository.dart';
 import 'package:wger/features/health/providers/health_sync.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class HealthSyncSettingsTile extends ConsumerStatefulWidget {
-  const HealthSyncSettingsTile({super.key});
+  /// [topDivider] draws the hairline that separates this tile from the row
+  /// above. The tile owns it because it can collapse to nothing, and a divider
+  /// the parent draws for it would then dangle at the end of the card.
+  const HealthSyncSettingsTile({super.key, this.topDivider = false});
+
+  final bool topDivider;
 
   @override
   ConsumerState<HealthSyncSettingsTile> createState() => _HealthSyncSettingsTileState();
@@ -63,9 +69,14 @@ class _HealthSyncSettingsTileState extends ConsumerState<HealthSyncSettingsTile>
 
     final i18n = AppLocalizations.of(context);
 
+    final divider = widget.topDivider
+        ? Divider(height: 1, indent: 16, endIndent: 16, color: context.atlas.line)
+        : const SizedBox.shrink();
+
     if (_availability != HealthPlatformAvailability.available) {
       return Column(
         children: [
+          divider,
           ListTile(
             title: Text(i18n.health, style: Theme.of(context).textTheme.headlineSmall),
           ),
@@ -76,6 +87,7 @@ class _HealthSyncSettingsTileState extends ConsumerState<HealthSyncSettingsTile>
 
     return Column(
       children: [
+        divider,
         ListTile(
           title: Text(i18n.health, style: Theme.of(context).textTheme.headlineSmall),
         ),

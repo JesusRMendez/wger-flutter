@@ -34,11 +34,15 @@ import 'package:wger/features/account/providers/account_notifier.dart';
 import 'package:wger/features/account/widgets/forms.dart';
 import 'package:wger/features/account/widgets/settings.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class MainAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String _title;
 
-  const MainAppBar(this._title);
+  /// A muted line above the title, e.g. the date on the dashboard
+  final String? subtitle;
+
+  const MainAppBar(this._title, {this.subtitle});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,15 +54,32 @@ class MainAppBar extends ConsumerWidget implements PreferredSizeWidget {
     );
 
     return AppBar(
-      title: Text(_title),
+      toolbarHeight: preferredSize.height,
+      titleSpacing: 16,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (subtitle != null)
+            Text(
+              subtitle!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.atlas.ink3, fontSize: 13),
+            ),
+          Text(_title, style: Theme.of(context).textTheme.headlineLarge),
+        ],
+      ),
       actions: [
         IconButton(
+          style: _actionStyle(context),
           icon: const Icon(Icons.widgets_outlined),
           onPressed: () {
             Navigator.of(context).pushNamed(ConfigureDashboardWidgetsScreen.routeName);
           },
         ),
         IconButton(
+          style: _actionStyle(context),
           icon: Icon(status.icon),
           onPressed: () {
             // The dialog watches the sync state itself; the server URL and
@@ -104,6 +125,7 @@ class MainAppBar extends ConsumerWidget implements PreferredSizeWidget {
           },
         ),
         IconButton(
+          style: _actionStyle(context),
           icon: const Icon(Icons.settings),
           onPressed: () async {
             return showDialog(
@@ -114,12 +136,27 @@ class MainAppBar extends ConsumerWidget implements PreferredSizeWidget {
             );
           },
         ),
+        const SizedBox(width: 12),
       ],
     );
   }
 
+  /// Round 44px button with a 1px line, the "ib" of the design
+  static ButtonStyle _actionStyle(BuildContext context) {
+    final atlas = context.atlas;
+    return IconButton.styleFrom(
+      backgroundColor: atlas.card,
+      foregroundColor: Theme.of(context).colorScheme.onSurface,
+      side: BorderSide(color: atlas.line),
+      fixedSize: const Size(44, 44),
+      minimumSize: const Size(44, 44),
+      padding: EdgeInsets.zero,
+      iconSize: 20,
+    );
+  }
+
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(subtitle == null ? 68 : 80);
 }
 
 class MainSettingsDialog extends ConsumerWidget {

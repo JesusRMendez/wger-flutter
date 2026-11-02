@@ -18,6 +18,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wger/core/widgets/atlas_life.dart';
 import 'package:wger/features/nutrition/providers/ingredient_filters_notifier.dart';
 import 'package:wger/features/nutrition/widgets/ingredient_filter_dialog.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
@@ -58,7 +59,7 @@ class _IngredientFilterRowState extends ConsumerState<IngredientFilterRow> {
     // clear-icon's visibility depends on the search term, so it lives in
     // its own Consumer
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: Row(
         children: [
           Expanded(
@@ -72,16 +73,14 @@ class _IngredientFilterRowState extends ConsumerState<IngredientFilterRow> {
               ),
             ),
           ),
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => showDialog(
-                  context: context,
-                  builder: (_) => const IngredientFilterDialog(),
-                ),
-                icon: const Icon(Icons.filter_alt),
-              ),
-            ],
+          const SizedBox(width: 8),
+          RoundIconButton(
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => const IngredientFilterDialog(),
+            ),
+            icon: Icons.tune,
+            tooltip: i18n.filter,
           ),
         ],
       ),

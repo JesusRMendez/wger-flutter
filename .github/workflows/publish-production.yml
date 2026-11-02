@@ -1,0 +1,108 @@
+name: Publish production
+# Customized build for the stores: Google Play production track and App Store
+# Connect. Manual only: run it from the Actions tab (workflow_dispatch, pick the
+# branch or tag in "Use workflow from") or push a tag like v2.1.0. Secrets and variables live in the GitHub Environment
+# "production", whose required reviewers have to approve before anything is
+# built with them. See docs/ci-publishing.md.
+on:
+  workflow_dispatch:
+    inputs:
+      publish_android:
+        description: 'Publish to Google Play'
+        required: true
+        default: true
+        type: boolean
+      publish_ios:
+        description: 'Upload to App Store Connect'
+        required: true
+        default: true
+        type: boolean
+      android_release_status:
+        description: 'Play release status: draft stays in the Play Console until you roll it out'
+        required: true
+        default: draft
+        type: choice
+        options:
+          - draft
+          - completed
+      ios_submit_for_review:
+        description: 'Also submit the uploaded build for App Store review'
+        required: true
+        default: false
+        type: boolean
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-production
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.pin.outputs.sha }}
+    steps:
+      # The commit of the tag that was pushed, or of the branch/tag chosen in
+      # "Use workflow from" for a manual run. No free text ref is checked out:
+      # that would let an unreviewed ref run with the default branch's cache.
+      - uses: actions/checkout@v7
+
+      # Android and iOS build exactly this commit, even if the branch moves
+      # while the run waits for approval
+      - name: Pin the commit and check the version
+        id: pin
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          version="$(sed -n 's/^version: *\([0-9][0-9.]*\).*/\1/p' pubspec.yaml | head -1)"
+          echo "Commit $sha, pubspec version $version"
+          if [[ "$EVENT_NAME" == "push" && "$REF_NAME" != "v$version" ]]; then
+            echo "::error title=Tag does not match pubspec.yaml::The tag is $REF_NAME but pubspec.yaml says version $version. Fix the version or push the right tag."
+            exit 1
+          fi
+          {
+            echo "### Release candidate"
+            echo "- Commit: \`$sha\`"
+            echo "- Version: \`$version\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  ci:
+    name: CI
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+
+  android:
+    name: Android
+    needs: [ prepare, ci ]
+    # Tag pushes have no inputs and publish both platforms
+    if: ${{ github.event_name == 'push' || inputs.publish_android }}
+    uses: ./.github/workflows/publish-android.yml
+    with:
+      environment: production
+      ref: ${{ needs.prepare.outputs.sha }}
+      lane: production_custom
+      server_url_var: PROD_SERVER_URL
+      release_status: ${{ inputs.android_release_status || 'draft' }}
+    secrets: inherit
+
+  ios:
+    name: iOS
+    needs: [ prepare, ci ]
+    if: ${{ github.event_name == 'push' || inputs.publish_ios }}
+    uses: ./.github/workflows/publish-ios.yml
+    with:
+      environment: production
+      ref: ${{ needs.prepare.outputs.sha }}
+      lane: production_custom
+      server_url_var: PROD_SERVER_URL
+      submit_for_review: ${{ inputs.ios_submit_for_review || false }}
+    secrets: inherit

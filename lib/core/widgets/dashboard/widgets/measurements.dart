@@ -18,9 +18,9 @@
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wger/core/widgets/async_value_widget.dart';
+import 'package:wger/core/widgets/atlas.dart';
 import 'package:wger/core/widgets/dashboard/widgets/nothing_found.dart';
 import 'package:wger/features/measurements/models/measurement_category.dart';
 import 'package:wger/features/measurements/providers/measurement_notifier.dart';
@@ -28,6 +28,7 @@ import 'package:wger/features/measurements/screens/measurement_categories_screen
 import 'package:wger/features/measurements/widgets/categories_card.dart';
 import 'package:wger/features/measurements/widgets/forms/category.dart';
 import 'package:wger/l10n/generated/app_localizations.dart';
+import 'package:wger/theme/atlas.dart';
 
 class DashboardMeasurementWidget extends ConsumerStatefulWidget {
   const DashboardMeasurementWidget();
@@ -62,22 +63,13 @@ class _DashboardMeasurementWidgetState extends ConsumerState<DashboardMeasuremen
           );
         }
 
-        return Card(
+        return AtlasCard(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                title: Text(
-                  AppLocalizations.of(context).measurements,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                leading: FaIcon(
-                  FontAwesomeIcons.chartLine,
-                  color: Theme.of(context).textTheme.headlineSmall!.color,
-                ),
-                // TODO: this icon feels out of place and inconsistent with all
-                // other dashboard widgets.
-                // maybe we should just add a "Go to all" at the bottom of the widget
+              CardHeader(
+                icon: Icons.show_chart,
+                title: AppLocalizations.of(context).measurements,
                 trailing: IconButton(
                   icon: const Icon(Icons.arrow_forward),
                   onPressed: () => Navigator.pushNamed(
@@ -115,19 +107,20 @@ class _DashboardMeasurementWidgetState extends ConsumerState<DashboardMeasuremen
                           children: categoriesList.asMap().entries.map((entry) {
                             return GestureDetector(
                               onTap: () => _controller.animateToPage(entry.key),
-                              child: Container(
-                                width: 12.0,
-                                height: 12.0,
+                              child: AnimatedContainer(
+                                duration: AtlasMotion.of(context),
+                                curve: AtlasMotion.curve,
+                                width: _current == entry.key ? 20.0 : 8.0,
+                                height: 8.0,
                                 margin: const EdgeInsets.symmetric(
                                   vertical: 8.0,
-                                  horizontal: 4.0,
+                                  horizontal: 3.0,
                                 ),
                                 decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Theme.of(context).textTheme.headlineSmall!.color!
-                                      .withValues(
-                                        alpha: _current == entry.key ? 0.9 : 0.4,
-                                      ),
+                                  borderRadius: BorderRadius.circular(AtlasRadius.pill),
+                                  color: _current == entry.key
+                                      ? Theme.of(context).colorScheme.onSurface
+                                      : context.atlas.surface3,
                                 ),
                               ),
                             );

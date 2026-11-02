@@ -179,7 +179,7 @@ void main() {
         expect(find.text('Bench press'), findsOneWidget);
         expect(find.text('Side raises'), findsOneWidget);
         expect(find.byIcon(Icons.close), findsOneWidget);
-        expect(find.byIcon(Icons.menu), findsOneWidget);
+        expect(find.byIcon(Icons.format_list_bulleted), findsOneWidget);
         expect(find.byIcon(Icons.chevron_left), findsNothing);
         expect(find.byIcon(Icons.chevron_right), findsOneWidget);
         await tester.tap(find.byIcon(Icons.chevron_right));
@@ -191,7 +191,7 @@ void main() {
         expect(find.text('Bench press'), findsOneWidget);
         expect(find.byType(ExerciseOverview), findsOneWidget);
         expect(find.byIcon(Icons.close), findsOneWidget);
-        expect(find.byIcon(Icons.menu), findsOneWidget);
+        expect(find.byIcon(Icons.format_list_bulleted), findsOneWidget);
         expect(find.byIcon(Icons.chevron_left), findsOneWidget);
         expect(find.byIcon(Icons.chevron_right), findsOneWidget);
         await tester.drag(find.byType(ExerciseOverview), const Offset(-500.0, 0.0));
@@ -203,13 +203,14 @@ void main() {
         expect(find.text('Bench press'), findsOneWidget);
         expect(find.byType(LogPage), findsOneWidget);
         expect(find.byType(Form), findsOneWidget);
-        expect(find.text('10 × 10 kg (1.5 RiR)'), findsOneWidget);
-        expect(find.text('12 × 10 kg (2 RiR)'), findsOneWidget);
+        // The earlier logs are one-tap chips: date, reps × weight
+        expect(find.textContaining('10×10'), findsOneWidget);
+        expect(find.textContaining('12×10'), findsOneWidget);
 
         // TODO: commented out for now
         // expect(find.text('Make sure to warm up'), findsOneWidget, reason: 'Set comment');
         expect(find.byIcon(Icons.close), findsOneWidget);
-        expect(find.byIcon(Icons.menu), findsOneWidget);
+        expect(find.byIcon(Icons.format_list_bulleted), findsOneWidget);
         expect(find.byIcon(Icons.chevron_left), findsOneWidget);
         expect(find.byIcon(Icons.chevron_right), findsOneWidget);
 
@@ -238,7 +239,7 @@ void main() {
         expect(find.text('Pause'), findsOneWidget);
         expect(find.byType(TimerCountdownWidget), findsOneWidget);
         expect(find.byIcon(Icons.close), findsOneWidget);
-        expect(find.byIcon(Icons.menu), findsOneWidget);
+        expect(find.byIcon(Icons.format_list_bulleted), findsOneWidget);
         expect(find.byIcon(Icons.chevron_left), findsOneWidget);
         expect(find.byIcon(Icons.chevron_right), findsOneWidget);
         await tester.tap(find.byIcon(Icons.chevron_right));
@@ -453,15 +454,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // Jump straight to the summary via the menu's "End workout" shortcut.
-      await tester.tap(find.byIcon(Icons.menu));
+      await tester.tap(find.byIcon(Icons.format_list_bulleted));
       await tester.pumpAndSettle();
       await tester.tap(find.text('End workout'));
       await tester.pumpAndSettle();
 
       expect(find.byType(WorkoutSummary), findsOneWidget);
       expect(find.byType(StreamErrorIndicator), findsNothing);
-      expect(find.text('Duration'), findsOneWidget);
-      expect(find.text('Volume'), findsOneWidget);
+      expect(find.text('DURATION'), findsOneWidget);
+      expect(find.text('VOLUME'), findsOneWidget);
     });
   });
 
@@ -495,14 +496,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Jump straight to the summary via the menu's "End workout" shortcut.
-      await tester.tap(find.byIcon(Icons.menu));
+      await tester.tap(find.byIcon(Icons.format_list_bulleted));
       await tester.pumpAndSettle();
       await tester.tap(find.text('End workout'));
       await tester.pumpAndSettle();
 
       expect(find.byType(WorkoutSummary), findsOneWidget);
       expect(find.byType(StreamErrorIndicator), findsOneWidget);
-      expect(find.text('Duration'), findsNothing);
+      expect(find.text('DURATION'), findsNothing);
     });
   });
 
